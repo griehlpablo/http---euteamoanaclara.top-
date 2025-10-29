@@ -18,7 +18,7 @@ Arquivos nesta pasta:
      git add .
      git commit -m "Primeiro deploy do site"
      git branch -M main
-     git remote add origin https://github.com/SEU_USUARIO/NOME_DO_REPO.git
+     git remote add origin https://github.com/griehlpablo/http---euteamoanaclara.top-
      git push -u origin main
      ```
    - No GitHub: `Settings -> Pages`, selecione `main` e `/ (root)`. O GitHub vai detectar `CNAME` e configurar o domínio automaticamente.

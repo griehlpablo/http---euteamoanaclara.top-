@@ -21,9 +21,11 @@
       background: radial-gradient(circle at 10% 20%, #fff3f8 0%, transparent 15%), linear-gradient(135deg,var(--bg1),var(--bg2));
       overflow-x:hidden;
       color:#333;
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-top: calc(16px + env(safe-area-inset-top));
     }
     .stage{
-      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:48px;
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:48px 20px;
     }
     .card{
       width:100%; max-width:980px; background:var(--card); border-radius:20px; padding:28px; box-shadow:0 10px 30px rgba(0,0,0,0.12);
@@ -34,6 +36,7 @@
     header{display:flex; gap:16px; align-items:center}
     .logo{
       width:84px; height:84px; border-radius:20px; background:linear-gradient(180deg,var(--accent),var(--accent-2)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:28px; font-family: 'Great Vibes', cursive; box-shadow:0 6px 20px rgba(255,77,166,0.18);
+      flex-shrink:0;
     }
     h1{margin:0; font-size:26px}
     p.lead{margin:4px 0 0 0; opacity:0.9}
@@ -44,14 +47,14 @@
     .left-col{padding:12px}
     .right-col{padding:12px}
 
-    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8)); border-radius:12px; padding:14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9)); border-radius:12px; padding:14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);}
 
     .range-wrap{display:flex; flex-direction:column; gap:8px}
     .range-value{font-weight:700; font-size:18px; color:var(--accent)}
-    input[type=range]{width:100%; accent-color:var(--accent)}
+    input[type=range]{width:100%; accent-color:var(--accent); height:36px}
 
     .forgive{display:flex; gap:10px}
-    .btn{padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:700}
+    .btn{padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:700; touch-action:manipulation}
     .btn-sim{background:linear-gradient(90deg,#ff9fc9,#ff4da6); color:white}
     .btn-nao{background:linear-gradient(90deg,#ffd6d6,#ffc9ff); color:#333}
 
@@ -89,6 +92,45 @@
       to{transform:translateY(120vh) rotate(360deg); opacity:0.05}
     }
     @keyframes floaty{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+
+    /* Responsive tweaks for mobile (iPhone 11 ~414px, iPhone 15 ~393px) */
+    @media (max-width:420px){
+      .card{padding:18px; border-radius:16px}
+      header{gap:12px}
+      .logo{width:70px;height:70px;font-size:24px}
+      h1{font-size:20px}
+      .overlay-card{padding:20px}
+      .overlay-card h2{font-size:34px}
+
+      .main-grid{grid-template-columns:1fr}
+      .right-col{order:2}
+      .left-col{order:1}
+
+      .forgive{flex-direction:column}
+      .forgive .btn{width:100%; padding:12px; font-size:16px}
+      .action-row{flex-direction:column}
+      .action-row .btn{width:100%}
+
+      .thumb{width:60px;height:60px}
+      .message-box textarea{min-height:100px}
+
+      /* increase heart sizes on mobile to be more visible */
+      .heart{font-size:26px}
+    }
+
+    /* extra small phones */
+    @media (max-width:360px){
+      .logo{width:60px;height:60px;font-size:20px}
+      h1{font-size:18px}
+      .overlay-card h2{font-size:28px}
+      .thumb{width:52px;height:52px}
+    }
+
+    /* friendly hit targets for touch devices */
+    @media (hover:none){
+      .btn{padding:14px 16px; border-radius:12px}
+      input[type=range]{height:44px}
+    }
 
   </style>
 </head>
@@ -320,7 +362,7 @@
 
     // tiny toast
     function showTinyNote(text){
-      const t = document.createElement('div'); 
+      const t = document.createElement('div');
       t.style.position='fixed'; t.style.right='18px'; t.style.bottom='18px'; t.style.padding='10px 14px'; t.style.background='linear-gradient(90deg,#ff9fc9,#ff4da6)'; t.style.color='white'; t.style.borderRadius='12px'; t.style.boxShadow='0 6px 20px rgba(0,0,0,0.18)'; t.style.zIndex=999; t.innerText=text;
       document.body.appendChild(t);
       setTimeout(()=> t.style.opacity=0, 1600);

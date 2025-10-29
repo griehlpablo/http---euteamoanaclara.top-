@@ -216,29 +216,29 @@
     // Love slider logic
     const loveRange = document.getElementById('loveRange');
     const loveVal = document.getElementById('loveVal');
-    loveRange.oninput = function(){
-      // allow temporary lowering — but revert to 10 after 1s of inactivity
+
+    // Allow the user to lower the slider briefly; if it stays below 10 for 1s of inactivity, snap back to 10
+    loveRange.addEventListener('input', function(){
       const v = Number(this.value);
       loveVal.innerText = v;
-      // clear any pending revert
+
+      // clear any pending revert while user is still interacting
       if(window._loveRevertTimeout) clearTimeout(window._loveRevertTimeout);
+
       if(v < 10){
-        // set a timeout to snap back after 1 second
+        // schedule a revert after 1s of no changes
         window._loveRevertTimeout = setTimeout(()=>{
-          this.value = 10;
+          loveRange.value = 10;
           loveVal.innerText = 10;
           popupHeartsBurst();
           showTinyNote('Pra sempre 10/10 ✨');
           window._loveRevertTimeout = null;
         }, 1000);
       } else {
-        // if it's 10 or more, cancel any revert
+        // if set to 10, cancel any pending revert
         if(window._loveRevertTimeout){ clearTimeout(window._loveRevertTimeout); window._loveRevertTimeout = null; }
       }
-    } else {
-        loveVal.innerText = v;
-      }
-    }
+    });
 
     // forgive buttons
     const btnSim = document.getElementById('btnSim');
@@ -249,12 +249,12 @@
       popupHeartsBurst();
     }
     btnNao.onclick = ()=>{
-      // auto change to SIM
+      // visual cheeky response: show a quick message then treat as SIM
       btnSim.innerText = 'SIM ❤';
       btnNao.innerText = 'NÃO ➜ agora é SIM';
-      setTimeout(()=>{ btnNao.innerText = 'NÃO'; }, 900);
-      // ensure logical state: treat as SIM
       popupHeartsBurst();
+      // after a short delay, revert the button text back
+      setTimeout(()=>{ btnNao.innerText = 'NÃO'; }, 900);
     }
 
     // file input preview
@@ -320,7 +320,7 @@
 
     // tiny toast
     function showTinyNote(text){
-      const t = document.createElement('div');
+      const t = document.createElement('div'); 
       t.style.position='fixed'; t.style.right='18px'; t.style.bottom='18px'; t.style.padding='10px 14px'; t.style.background='linear-gradient(90deg,#ff9fc9,#ff4da6)'; t.style.color='white'; t.style.borderRadius='12px'; t.style.boxShadow='0 6px 20px rgba(0,0,0,0.18)'; t.style.zIndex=999; t.innerText=text;
       document.body.appendChild(t);
       setTimeout(()=> t.style.opacity=0, 1600);

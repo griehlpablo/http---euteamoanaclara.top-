@@ -25,5 +25,3 @@ Arquivos nesta pasta:
    - No painel do seu registrador (onde comprou o domínio), aponte o DNS conforme instruções do GitHub Pages (A records) ou siga o passo a passo do seu provedor se estiver usando Vercel/Netlify (se quiser, eu te guio no painel do provedor).
 
 4. Alternativa (Vercel/Netlify): importe o repositório e faça deploy automático. Depois adicione o domínio `euteamoanaclara.top` no painel do serviço.
-
-Se quiser, eu gero também uma versão com imagens de exemplo dentro da pasta `images/` — basta me dizer. 😉

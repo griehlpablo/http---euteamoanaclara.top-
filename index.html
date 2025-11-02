@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Eu te amo Ana Clara ❤</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&family=Great+Vibes&display=swap" rel="stylesheet">
   <style>
@@ -59,7 +59,7 @@
     .btn-nao{background:linear-gradient(90deg,#ffd6d6,#ffc9ff); color:#333}
 
     .gallery{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
-    .thumb{width:72px;height:72px; border-radius:8px; object-fit:cover; border:3px solid white; box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+    .thumb{width:72px;height:72px; border-radius:8px; object-fit:cover; border:3px solid white; box-shadow:0 6px 18px rgba(0,0,0,0.08); cursor:pointer}
 
     .message-box{margin-top:12px; border-radius:12px; padding:12px; background:var(--glass)}
     .message-box textarea{width:100%; min-height:120px; border-radius:8px; padding:12px; border:0; resize:vertical; font-size:15px}
@@ -168,9 +168,15 @@
             </div>
 
             <div style="margin-top:12px">
-              <label class="small">Fotos nossas (adicione quantas quiser):</label>
-              <input id="fileInput" type="file" accept="image/*" multiple style="display:block; margin-top:8px">
-              <div class="gallery" id="gallery"></div>
+              <label class="small">Fotos nossas (já carregadas):</label>
+              <div class="gallery" id="gallery">
+                <!-- Preloaded thumbnails -->
+                <img class="thumb" src="images/ana_e_eu_zoo.jpg" alt="foto1" data-full="images/ana_e_eu_zoo.jpg">
+                <img class="thumb" src="images/us_beach.jpg" alt="foto2" data-full="images/us_beach.jpg">
+                <img class="thumb" src="images/us_zoo.jpg" alt="foto3" data-full="images/us_zoo.jpg">
+                <img class="thumb" src="images/wedding.jpg" alt="casando" data-full="images/wedding.jpg">
+              </div>
+              <input id="fileInput" type="file" accept="image/*" multiple style="display:block; margin-top:10px">
             </div>
 
           </div>
@@ -192,9 +198,9 @@
         <aside class="right-col">
           <div class="panel" style="text-align:center">
             <h3>Galeria & momento</h3>
-            <p class="small">Adicione fotos e clique em uma pra ver maior.</p>
+            <p class="small">Toque em uma miniatura para ver maior.</p>
             <div style="margin-top:10px">
-              <img id="heroImg" src="" alt="" style="width:100%; border-radius:12px; display:none; object-fit:cover; max-height:320px">
+              <img id="heroImg" src="images/wedding.jpg" alt="" style="width:100%; border-radius:12px; display:block; object-fit:cover; max-height:320px">
             </div>
             <div style="margin-top:12px; text-align:left">
               <small class="small">Dica: se o slider ficar menor que 10, ele volta pra 10 automaticamente — porque você merece tudo.</small>
@@ -216,7 +222,7 @@
       </div>
 
       <footer>
-        Feito com ♥ por Pablo — EU TE AMO, PARA DE PENSAR BESTEIRA. 
+        Feito com ♥ por Pablo — EU TE AMO BOBONA, PARA DE PENSAR BESTEIRA. 
       </footer>
 
     </div>
@@ -299,27 +305,31 @@
       setTimeout(()=>{ btnNao.innerText = 'NÃO'; }, 900);
     }
 
-    // file input preview
-    const fileInput = document.getElementById('fileInput');
+    // gallery: clicking a thumb sets hero image
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
-    fileInput.onchange = async function(){
-      gallery.innerHTML = '';
+    function setHeroFromSrc(src){ heroImg.src = src; heroImg.style.display = 'block'; }
+    gallery.addEventListener('click', (e)=>{
+      const t = e.target.closest('.thumb');
+      if(!t) return;
+      const full = t.getAttribute('data-full') || t.src;
+      setHeroFromSrc(full);
+      popupHeartsBurst();
+    });
+
+    // file input preview (adds new thumbs and makes them clickable)
+    const fileInput = document.getElementById('fileInput');
+    fileInput.addEventListener('change', function(){
       const files = Array.from(this.files).slice(0,12);
       for(const f of files){
         if(!f.type.startsWith('image/')) continue;
         const url = URL.createObjectURL(f);
         const img = document.createElement('img');
-        img.src = url; img.className = 'thumb';
-        img.onclick = ()=>{
-          heroImg.src = url; heroImg.style.display='block';
-          // small hearts when opening a photo
-          spawnHeart(50);
-          popupHeartsBurst();
-        }
+        img.src = url; img.className = 'thumb'; img.setAttribute('data-full', url);
+        img.onclick = ()=> setHeroFromSrc(url);
         gallery.appendChild(img);
       }
-    }
+    });
 
     // overlay big message
     const overlay = document.getElementById('overlay');

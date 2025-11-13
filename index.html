@@ -65,7 +65,7 @@
     .message-box textarea{width:100%; min-height:120px; border-radius:8px; padding:12px; border:0; resize:vertical; font-size:15px}
     .big-love{display:flex; gap:8px; align-items:center; justify-content:space-between}
 
-    .action-row{display:flex; gap:10px; margin-top:12px}
+    .action-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
 
     footer{margin-top:14px; text-align:center; opacity:0.8}
 
@@ -78,11 +78,46 @@
     .burst .bheart{position:absolute; font-size:20px}
 
     /* overlay message */
-    .overlay{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60}
+    .overlay{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60; padding:16px}
     .overlay.show{display:flex}
     .overlay-card{background:linear-gradient(180deg,#fff,#ffeef8); border-radius:18px; padding:28px; max-width:720px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.2)}
     .overlay-card h2{font-family:'Great Vibes',cursive; font-size:48px; margin:0}
     .small{font-size:13px; opacity:0.85}
+
+    /* proposal letter style */
+    .letter-card{
+      background:#fffdf8;
+      border-radius:20px;
+      padding:26px 22px 22px;
+      max-width:780px;
+      box-shadow:0 18px 40px rgba(0,0,0,0.28);
+      border:1px solid #f5e1c3;
+      position:relative;
+    }
+    .letter-card:before{
+      content:"";
+      position:absolute;
+      inset:12px;
+      border-radius:14px;
+      border:1px dashed rgba(0,0,0,0.08);
+      pointer-events:none;
+    }
+    .ring-icon{
+      font-size:42px;
+      margin-bottom:8px;
+    }
+    .letter-title{
+      font-family:'Great Vibes',cursive;
+      font-size:40px;
+      margin:0 0 8px;
+    }
+    .letter-body{
+      text-align:left;
+      font-size:15px;
+      line-height:1.6;
+      margin-top:8px;
+    }
+    .letter-body strong{color:var(--accent)}
 
     /* cute footer hearts */
     .footer-hearts{display:flex; gap:6px; justify-content:center; margin-top:10px}
@@ -101,6 +136,8 @@
       h1{font-size:20px}
       .overlay-card{padding:20px}
       .overlay-card h2{font-size:34px}
+      .letter-card{padding:20px 16px}
+      .letter-title{font-size:32px}
 
       .main-grid{grid-template-columns:1fr}
       .right-col{order:2}
@@ -114,11 +151,9 @@
       .thumb{width:60px;height:60px}
       .message-box textarea{min-height:100px}
 
-      /* increase heart sizes on mobile to be more visible */
       .heart{font-size:26px}
     }
 
-    /* extra small phones */
     @media (max-width:360px){
       .logo{width:60px;height:60px;font-size:20px}
       h1{font-size:18px}
@@ -126,12 +161,10 @@
       .thumb{width:52px;height:52px}
     }
 
-    /* friendly hit targets for touch devices */
     @media (hover:none){
       .btn{padding:14px 16px; border-radius:12px}
       input[type=range]{height:44px}
     }
-
   </style>
 </head>
 <body>
@@ -170,7 +203,6 @@
             <div style="margin-top:12px">
               <label class="small">Fotos nossas (já carregadas):</label>
               <div class="gallery" id="gallery">
-                <!-- Preloaded thumbnails -->
                 <img class="thumb" src="images/ana_e_eu_zoo.jpg" alt="foto1" data-full="images/ana_e_eu_zoo.jpg">
                 <img class="thumb" src="images/us_beach.jpg" alt="foto2" data-full="images/us_beach.jpg">
                 <img class="thumb" src="images/us_zoo.jpg" alt="foto3" data-full="images/us_zoo.jpg">
@@ -190,6 +222,7 @@
             <div class="action-row">
               <button class="btn btn-sim" id="showMsg">Mostrar em grande</button>
               <button class="btn btn-nao" id="surprise">Surpresa (corações)</button>
+              <button class="btn btn-sim" id="proposalBtn">Clique aqui para descobrir 💌</button>
             </div>
           </div>
 
@@ -200,7 +233,7 @@
             <h3>Galeria & momento</h3>
             <p class="small">Toque em uma miniatura para ver maior.</p>
             <div style="margin-top:10px">
-              <img id="heroImg" src="images/wedding.jpg" alt="" style="width:100%; border-radius:12px; display:block; object-fit:cover; max-height:320px">
+              <img id="heroImg" src="images/wedding.jpg" alt="foto destaque" style="width:100%; border-radius:12px; display:block; object-fit:cover; max-height:320px">
             </div>
             <div style="margin-top:12px; text-align:left">
               <small class="small">Dica: se o slider ficar menor que 10, ele volta pra 10 automaticamente — porque você merece tudo.</small>
@@ -222,17 +255,39 @@
       </div>
 
       <footer>
-        Feito com ♥ por Pablo — EU TE AMO MUITO BOBONA, PARA DE PENSAR BESTEIRA. 
+        Feito com ♥ por Pablo — se quiser, personalize qualquer texto e salve. 
       </footer>
 
     </div>
   </div>
 
+  <!-- Overlay mensagem grande -->
   <div class="overlay" id="overlay">
     <div class="overlay-card">
       <h2 id="overlayTitle">Eu te amo, Ana Clara ❤</h2>
       <p id="overlayText" class="small">Uma mensagem especial do Pablo.</p>
       <div style="margin-top:14px"><button class="btn btn-sim" id="closeOverlay">Fechar</button></div>
+    </div>
+  </div>
+
+  <!-- Overlay da carta de pedido de casamento -->
+  <div class="overlay" id="proposalOverlay">
+    <div class="letter-card">
+      <div class="ring-icon">💍</div>
+      <h2 class="letter-title">Minha Ana Clara, quer casar comigo?</h2>
+      <div class="letter-body">
+        <p>Amor, a gente briga, discorda, se enrola na vida... mas em todas as versões da minha história, <strong>você</strong> está lá.</p>
+        <p>Mesmo nos dias difíceis, é com você que eu quero conversar, rir, dividir o café, o cansaço e os sonhos. Eu não me imagino em um futuro em que você não esteja do meu lado.</p>
+        <p>Eu te amo de um jeito que não cabe só em palavras, nem só num site cheio de corações caindo. Eu te amo no silêncio, nos detalhes, nas piadas internas e até nas nossas teimosias.</p>
+        <p>Por isso, com todo o amor e todo o medo e toda a coragem do mundo, eu quero te perguntar de verdade:</p>
+        <p style="text-align:center; font-size:18px; margin-top:8px;"><strong>Você aceita viver pra sempre comigo?</strong></p>
+        <p style="margin-top:10px;">Quero caminhar ao seu lado, construir uma casa que tenha a nossa cara, nossos cheiros, nossas manias e muitos gatinhos (ou peixinhos, quem sabe 🐟). Quero envelhecer rindo das nossas histórias e lembrando de quando tudo começou.</p>
+        <p>Eu te amo, Ana Clara. Hoje, amanhã e depois. Para sempre seu,</p>
+        <p><strong>Pablo 💖</strong></p>
+      </div>
+      <div style="margin-top:16px; text-align:center;">
+        <button class="btn btn-sim" id="closeProposal">Fechar essa carta (por enquanto)</button>
+      </div>
     </div>
   </div>
 
@@ -250,10 +305,8 @@
       el.style.animation = `fall ${dur}s linear forwards`;
       el.style.opacity = (Math.random()*0.4)+0.6;
       heartsLayer.appendChild(el);
-      // remove after animation
       setTimeout(()=> el.remove(), (dur+0.6)*1000);
     }
-    // initial rain
     function initialRain(count=22){
       for(let i=0;i<count;i++){
         setTimeout(()=>spawnHeart(), i*120);
@@ -264,17 +317,11 @@
     // Love slider logic
     const loveRange = document.getElementById('loveRange');
     const loveVal = document.getElementById('loveVal');
-
-    // Allow the user to lower the slider briefly; if it stays below 10 for 1s of inactivity, snap back to 10
     loveRange.addEventListener('input', function(){
       const v = Number(this.value);
       loveVal.innerText = v;
-
-      // clear any pending revert while user is still interacting
       if(window._loveRevertTimeout) clearTimeout(window._loveRevertTimeout);
-
       if(v < 10){
-        // schedule a revert after 1s of no changes
         window._loveRevertTimeout = setTimeout(()=>{
           loveRange.value = 10;
           loveVal.innerText = 10;
@@ -283,7 +330,6 @@
           window._loveRevertTimeout = null;
         }, 1000);
       } else {
-        // if set to 10, cancel any pending revert
         if(window._loveRevertTimeout){ clearTimeout(window._loveRevertTimeout); window._loveRevertTimeout = null; }
       }
     });
@@ -297,15 +343,13 @@
       popupHeartsBurst();
     }
     btnNao.onclick = ()=>{
-      // visual cheeky response: show a quick message then treat as SIM
       btnSim.innerText = 'SIM ❤';
       btnNao.innerText = 'NÃO ➜ agora é SIM';
       popupHeartsBurst();
-      // after a short delay, revert the button text back
       setTimeout(()=>{ btnNao.innerText = 'NÃO'; }, 900);
     }
 
-    // gallery: clicking a thumb sets hero image
+    // gallery & hero
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
     function setHeroFromSrc(src){ heroImg.src = src; heroImg.style.display = 'block'; }
@@ -317,7 +361,7 @@
       popupHeartsBurst();
     });
 
-    // file input preview (adds new thumbs and makes them clickable)
+    // file input extra images
     const fileInput = document.getElementById('fileInput');
     fileInput.addEventListener('change', function(){
       const files = Array.from(this.files).slice(0,12);
@@ -341,18 +385,25 @@
       overlayTitle.innerText = 'Ana Clara, eu te amo ❤';
       overlayText.innerText = document.getElementById('loveMsg').value;
       overlay.classList.add('show');
-      // raining hearts
       initialRain(40);
     }
     closeOverlay.onclick = ()=> overlay.classList.remove('show');
 
-    // surprise button
-    document.getElementById('surprise').onclick = ()=>{ initialRain(36); popupHeartsBurst(); }
+    // proposal overlay
+    const proposalBtn = document.getElementById('proposalBtn');
+    const proposalOverlay = document.getElementById('proposalOverlay');
+    const closeProposal = document.getElementById('closeProposal');
+    proposalBtn.onclick = ()=>{
+      proposalOverlay.classList.add('show');
+      initialRain(35);
+    }
+    closeProposal.onclick = ()=> proposalOverlay.classList.remove('show');
 
-    // popup love
+    // surprise + popup love
+    document.getElementById('surprise').onclick = ()=>{ initialRain(36); popupHeartsBurst(); }
     document.getElementById('popupLove').onclick = ()=>{ initialRain(30); popupHeartsBurst(); }
 
-    // small helper: quick burst of hearts around center
+    // hearts burst helper
     function popupHeartsBurst(){
       const burst = document.createElement('div');
       burst.className='burst';
@@ -370,7 +421,6 @@
       setTimeout(()=> burst.remove(), 1200);
     }
 
-    // tiny toast
     function showTinyNote(text){
       const t = document.createElement('div');
       t.style.position='fixed'; t.style.right='18px'; t.style.bottom='18px'; t.style.padding='10px 14px'; t.style.background='linear-gradient(90deg,#ff9fc9,#ff4da6)'; t.style.color='white'; t.style.borderRadius='12px'; t.style.boxShadow='0 6px 20px rgba(0,0,0,0.18)'; t.style.zIndex=999; t.innerText=text;
@@ -379,9 +429,7 @@
       setTimeout(()=> t.remove(), 2100);
     }
 
-    // Surprise: small hearts rain every 8 seconds (subtle)
     setInterval(()=>{ spawnHeart(Math.random()*100); }, 8000);
-
   </script>
 </body>
 </html>

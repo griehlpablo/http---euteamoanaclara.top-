@@ -3,109 +3,196 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Acesso bloqueado</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <title>Uma tentativa de manter a gente vivo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&family=Great+Vibes&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg1:#ffccff;
-      --bg2:#ffd6b6;
-      --accent:#ff4da6;
-      --accent-dark:#d41e7c;
+      --bg1:#0f172a;
+      --bg2:#1e293b;
+      --card:#0b1120dd;
+      --accent:#38bdf8;
+      --accent-soft:#7dd3fc;
+      --text:#e5e7eb;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
     body{
-      margin:0;
       font-family:Montserrat,system-ui,Arial;
       -webkit-font-smoothing:antialiased;
-      background:radial-gradient(circle at 10% 20%, #fff3f8 0%, transparent 18%),
-                 linear-gradient(135deg,var(--bg1),var(--bg2));
+      background:
+        radial-gradient(circle at 10% 0%, #1d3557 0%, transparent 45%),
+        radial-gradient(circle at 90% 100%, #020617 0%, transparent 55%),
+        linear-gradient(160deg,var(--bg1),var(--bg2));
+      color:var(--text);
       display:flex;
       align-items:center;
       justify-content:center;
       padding:24px;
-    }
-    .card{
-      max-width:520px;
-      width:100%;
-      background:rgba(255,255,255,0.96);
-      border-radius:20px;
-      padding:26px 22px 22px;
-      box-shadow:0 14px 40px rgba(0,0,0,0.18);
-      text-align:center;
-      border:1px solid rgba(255,255,255,0.8);
-      position:relative;
       overflow:hidden;
     }
-    .card::before{
+
+    .tears-layer{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+      z-index:0;
+    }
+    .tear{
+      position:absolute;
+      width:10px;
+      height:18px;
+      border-radius:50% 50% 60% 60%;
+      background:radial-gradient(circle at 30% 10%, #e0f2fe 0%, #7dd3fc 38%, #0ea5e9 100%);
+      opacity:0.7;
+      transform:translateY(-120%);
+      animation:fall 9s linear infinite;
+    }
+
+    @keyframes fall{
+      0%{transform:translateY(-120%); opacity:0.0;}
+      10%{opacity:0.8;}
+      100%{transform:translateY(120vh); opacity:0;}
+    }
+
+    .card{
+      position:relative;
+      z-index:1;
+      max-width:560px;
+      width:100%;
+      background:var(--card);
+      border-radius:22px;
+      padding:26px 22px 22px;
+      box-shadow:0 18px 45px rgba(15,23,42,0.9);
+      border:1px solid rgba(148,163,184,0.35);
+      backdrop-filter: blur(10px);
+    }
+    .card-inner{
+      position:relative;
+    }
+    .card-inner::before{
       content:"";
       position:absolute;
       inset:12px;
       border-radius:16px;
-      border:1px dashed rgba(0,0,0,0.06);
+      border:1px dashed rgba(148,163,184,0.35);
       pointer-events:none;
     }
+
     .icon{
-      font-size:40px;
+      font-size:34px;
       margin-bottom:8px;
-      position:relative;
-      z-index:1;
+      opacity:0.9;
     }
+
     h1{
-      margin:0;
       font-size:22px;
-      color:var(--accent-dark);
-      position:relative;
-      z-index:1;
+      font-weight:700;
+      margin-bottom:10px;
+      color:var(--accent-soft);
     }
-    p{
-      margin:12px 0 0;
-      font-size:15px;
-      line-height:1.6;
-      position:relative;
-      z-index:1;
-    }
-    strong{color:var(--accent-dark);}
-    .tiny{
-      margin-top:18px;
-      font-size:12px;
+
+    .subtitle{
+      font-size:13px;
       opacity:0.7;
+      margin-bottom:18px;
     }
-    .hearts{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      opacity:0.16;
-      font-size:48px;
+
+    .text{
+      font-size:15px;
+      line-height:1.7;
+      margin-bottom:10px;
     }
-    .hearts span{
-      position:absolute;
+
+    .text strong{
+      color:var(--accent-soft);
+      font-weight:600;
     }
-    .hearts span:nth-child(1){top:8%;left:8%}
-    .hearts span:nth-child(2){top:14%;right:10%}
-    .hearts span:nth-child(3){bottom:12%;left:16%}
-    .hearts span:nth-child(4){bottom:6%;right:14%}
+
+    .sig{
+      margin-top:16px;
+      font-size:13px;
+      opacity:0.85;
+      text-align:right;
+      font-style:italic;
+    }
+
+    .sig span{
+      font-family:'Great Vibes',cursive;
+      font-size:24px;
+      display:block;
+      color:var(--accent-soft);
+    }
+
     @media (max-width:480px){
-      .card{padding:22px 18px;}
+      .card{
+        padding:22px 16px 18px;
+        border-radius:18px;
+      }
+      .card-inner::before{
+        inset:10px;
+      }
       h1{font-size:19px;}
-      p{font-size:14px;}
+      .text{font-size:14px;}
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="hearts">
-      <span>❤</span><span>❤</span><span>❤</span><span>❤</span>
+  <div class="tears-layer" id="tearsLayer"></div>
+
+  <main class="card">
+    <div class="card-inner">
+      <div class="icon">💧</div>
+      <h1>Uma tentativa de manter nosso relacionamento vivo</h1>
+      <p class="subtitle">Esse site não foi só código. Foi uma forma de pedir pra você ficar.</p>
+
+      <p class="text">
+        O site foi elaborado como uma tentativa de <strong>manter nosso relacionamento vivo</strong>,
+        de mostrar em detalhes o quanto eu me importo, o quanto eu pensei em nós dois em cada detalhe,
+        em cada cor, em cada palavra.
+      </p>
+
+      <p class="text">
+        Mas, no fim, parece que <strong>apenas eu tentei</strong>. Eu fui tentando segurar tudo,
+        construir algo bonito em cima de dias difíceis, e mesmo assim <strong>não deu certo</strong>.
+      </p>
+
+      <p class="text">
+        Se em algum momento isso aqui te fizer lembrar que eu tentei de verdade, já valeu.  
+        <strong>Sinto muito.</strong>
+      </p>
+
+      <div class="sig">
+        com carinho e um coração meio quebrado,<br>
+        <span>Pablo</span>
+      </div>
     </div>
-    <div class="icon">🔒</div>
-    <h1>Acesso bloqueado</h1>
-    <p>
-      Destinado apenas para <strong>namoradas que amam seus namorados</strong><br>
-      e <strong>não falam coisas que humilham seus namorados</strong>. 💔😏
-    </p>
-    <p class="tiny">
-      Se você se identificou, talvez o sistema reconsidere liberar o acesso… 💖
-    </p>
-  </div>
+  </main>
+
+  <script>
+    const tearsLayer = document.getElementById('tearsLayer');
+
+    function spawnTear() {
+      const tear = document.createElement('div');
+      tear.className = 'tear';
+      const left = Math.random() * 100;       // 0–100 vw
+      const delay = Math.random() * 8;        // 0–8s
+      const scale = 0.7 + Math.random() * 0.7;
+      tear.style.left = left + 'vw';
+      tear.style.animationDelay = delay + 's';
+      tear.style.transform = 'scale(' + scale + ') translateY(-120%)';
+      tearsLayer.appendChild(tear);
+
+      // remove depois de um tempo pra não acumular
+      setTimeout(() => tear.remove(), 10000);
+    }
+
+    // chuvinha contínua de lágrimas
+    for (let i = 0; i < 25; i++) {
+      setTimeout(spawnTear, i * 250);
+    }
+    setInterval(spawnTear, 600);
+
+  </script>
 </body>
 </html>

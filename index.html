@@ -20,6 +20,7 @@
       margin:0; font-family:Montserrat,system-ui,Arial; -webkit-font-smoothing:antialiased;
       background: radial-gradient(circle at 10% 20%, #fff3f8 0%, transparent 15%), linear-gradient(135deg,var(--bg1),var(--bg2));
       overflow-x:hidden;
+      overflow-y:auto;
       color:#333;
       padding-bottom: env(safe-area-inset-bottom);
       padding-top: calc(16px + env(safe-area-inset-top));
@@ -69,27 +70,44 @@
 
     footer{margin-top:14px; text-align:center; opacity:0.8}
 
-    /* Falling hearts */
     .hearts-layer{pointer-events:none; position:absolute; inset:0; overflow:hidden}
     .heart{position:absolute; transform:translateY(-120%); will-change:transform,opacity; font-size:22px; opacity:0.9;}
 
-    /* burst */
     .burst{position:absolute; inset:0; pointer-events:none}
     .burst .bheart{position:absolute; font-size:20px}
 
-    /* overlay message */
-    .overlay{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60; padding:16px}
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:16px;
+      background:rgba(0,0,0,0.25);
+    }
     .overlay.show{display:flex}
-    .overlay-card{background:linear-gradient(180deg,#fff,#ffeef8); border-radius:18px; padding:28px; max-width:720px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.2)}
+
+    .overlay-card{
+      background:linear-gradient(180deg,#fff,#ffeef8);
+      border-radius:18px;
+      padding:28px;
+      max-width:720px;
+      width:100%;
+      text-align:center;
+      box-shadow:0 16px 40px rgba(0,0,0,0.2);
+    }
     .overlay-card h2{font-family:'Great Vibes',cursive; font-size:48px; margin:0}
     .small{font-size:13px; opacity:0.85}
 
-    /* proposal letter style */
     .letter-card{
       background:#fffdf8;
       border-radius:20px;
       padding:26px 22px 22px;
       max-width:780px;
+      width:100%;
+      max-height:90vh;
+      overflow-y:auto;
       box-shadow:0 18px 40px rgba(0,0,0,0.28);
       border:1px solid #f5e1c3;
       position:relative;
@@ -110,6 +128,7 @@
       font-family:'Great Vibes',cursive;
       font-size:40px;
       margin:0 0 8px;
+      text-align:center;
     }
     .letter-body{
       text-align:left;
@@ -119,16 +138,19 @@
     }
     .letter-body strong{color:var(--accent)}
 
-    /* cute footer hearts */
     .footer-hearts{display:flex; gap:6px; justify-content:center; margin-top:10px}
 
-    /* tiny animations */
     @keyframes fall{
       to{transform:translateY(120vh) rotate(360deg); opacity:0.05}
     }
-    @keyframes floaty{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
 
-    /* Responsive tweaks for mobile (iPhone 11 ~414px, iPhone 15 ~393px) */
+    @media (max-width:900px){
+      .stage{
+        align-items:flex-start;
+        padding:24px 12px 32px;
+      }
+    }
+
     @media (max-width:420px){
       .card{padding:18px; border-radius:16px}
       header{gap:12px}
@@ -164,6 +186,19 @@
     @media (hover:none){
       .btn{padding:14px 16px; border-radius:12px}
       input[type=range]{height:44px}
+    }
+
+    @media (max-width:700px){
+      .overlay{
+        align-items:flex-start;
+        justify-content:center;
+        overflow-y:auto;
+      }
+      .letter-card,
+      .overlay-card{
+        margin-top:40px;
+        margin-bottom:40px;
+      }
     }
   </style>
 </head>
@@ -261,7 +296,6 @@
     </div>
   </div>
 
-  <!-- Overlay mensagem grande -->
   <div class="overlay" id="overlay">
     <div class="overlay-card">
       <h2 id="overlayTitle">Eu te amo, Ana Clara ❤</h2>
@@ -270,7 +304,6 @@
     </div>
   </div>
 
-  <!-- Overlay da carta de pedido de casamento -->
   <div class="overlay" id="proposalOverlay">
     <div class="letter-card">
       <div class="ring-icon">💍</div>
@@ -292,7 +325,6 @@
   </div>
 
   <script>
-    // Utility: create falling hearts
     const heartsLayer = document.getElementById('heartsLayer');
     function spawnHeart(x){
       const el = document.createElement('span');
@@ -314,7 +346,6 @@
     }
     initialRain(26);
 
-    // Love slider logic
     const loveRange = document.getElementById('loveRange');
     const loveVal = document.getElementById('loveVal');
     loveRange.addEventListener('input', function(){
@@ -334,7 +365,6 @@
       }
     });
 
-    // forgive buttons
     const btnSim = document.getElementById('btnSim');
     const btnNao = document.getElementById('btnNao');
     btnSim.onclick = ()=>{
@@ -349,7 +379,6 @@
       setTimeout(()=>{ btnNao.innerText = 'NÃO'; }, 900);
     }
 
-    // gallery & hero
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
     function setHeroFromSrc(src){ heroImg.src = src; heroImg.style.display = 'block'; }
@@ -361,7 +390,6 @@
       popupHeartsBurst();
     });
 
-    // file input extra images
     const fileInput = document.getElementById('fileInput');
     fileInput.addEventListener('change', function(){
       const files = Array.from(this.files).slice(0,12);
@@ -375,7 +403,6 @@
       }
     });
 
-    // overlay big message
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlayTitle');
     const overlayText = document.getElementById('overlayText');
@@ -389,7 +416,6 @@
     }
     closeOverlay.onclick = ()=> overlay.classList.remove('show');
 
-    // proposal overlay
     const proposalBtn = document.getElementById('proposalBtn');
     const proposalOverlay = document.getElementById('proposalOverlay');
     const closeProposal = document.getElementById('closeProposal');
@@ -399,11 +425,9 @@
     }
     closeProposal.onclick = ()=> proposalOverlay.classList.remove('show');
 
-    // surprise + popup love
     document.getElementById('surprise').onclick = ()=>{ initialRain(36); popupHeartsBurst(); }
     document.getElementById('popupLove').onclick = ()=>{ initialRain(30); popupHeartsBurst(); }
 
-    // hearts burst helper
     function popupHeartsBurst(){
       const burst = document.createElement('div');
       burst.className='burst';

@@ -506,8 +506,15 @@
       measurementId: "G-7LN9PKSCW3"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    // Proteção: se der erro ao inicializar, não quebra o resto do site
+    let db = null;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      console.log("Firebase inicializado com sucesso");
+    } catch (e) {
+      console.warn("Firebase não inicializou, mas o site continua funcionando.", e);
+    }
     const coupleId = "pablo-ana";
 
     // Corações caindo
@@ -648,7 +655,7 @@
 
     setInterval(()=>{ spawnHeart(Math.random()*100); }, 8000);
 
-    // --------- LÓGICA DO PAINEL DE SATISFAÇÃO (Firebase) ---------
+    // --------- LÓGICA DO PAINEL DE SATISFAÇÃO (Firebase + localStorage) ---------
     const satButtons = document.querySelectorAll('.sat-user-btn');
     const satCurrentUserLabel = document.getElementById('satCurrentUser');
     const satRows = document.querySelectorAll('.sat-row');
@@ -685,15 +692,24 @@
           return;
         }
         const levelKey = row.dataset.level;
+        console.log('Clique no nível', levelKey, 'por', currentUser);
 
         // Atualiza visual imediatamente
         placeMarker(currentUser, levelKey);
 
-        // Tenta salvar no Firebase (se der erro, só loga)
-        db.ref('satisfaction/' + coupleId + '/' + currentUser).set(levelKey)
-          .catch(err => {
-            console.error('Erro ao salvar no Firebase:', err);
-          });
+        // Salva no localStorage (funciona mesmo sem Firebase)
+        localStorage.setItem('satLevel_' + currentUser, levelKey);
+
+        // Tenta salvar no Firebase (se estiver disponível)
+        if(db){
+          db.ref('satisfaction/' + coupleId + '/' + currentUser).set(levelKey)
+            .then(() => {
+              console.log('Salvo no Firebase com sucesso');
+            })
+            .catch(err => {
+              console.warn('Erro ao salvar no Firebase:', err);
+            });
+        }
       });
     });
 
@@ -708,12 +724,27 @@
       }
     }
 
-    // Atualiza a partir do Firebase (sincroniza entre dispositivos)
-    db.ref('satisfaction/' + coupleId).on('value', snapshot => {
-      const data = snapshot.val() || {};
-      if(data.pablo) placeMarker('pablo', data.pablo);
-      if(data.ana)   placeMarker('ana', data.ana);
-    });
+    // Carrega do localStorage (caso Firebase não esteja configurado)
+    const localPablo = localStorage.getItem('satLevel_pablo');
+    const localAna = localStorage.getItem('satLevel_ana');
+    if(localPablo) placeMarker('pablo', localPablo);
+    if(localAna) placeMarker('ana', localAna);
+
+    // Se o Firebase estiver ativo, sincroniza entre dispositivos
+    if(db){
+      db.ref('satisfaction/' + coupleId).on('value', snapshot => {
+        const data = snapshot.val() || {};
+        console.log('Dados recebidos do Firebase:', data);
+        if(data.pablo) {
+          localStorage.setItem('satLevel_pablo', data.pablo);
+          placeMarker('pablo', data.pablo);
+        }
+        if(data.ana)   {
+          localStorage.setItem('satLevel_ana', data.ana);
+          placeMarker('ana', data.ana);
+        }
+      });
+    }
   </script>
 </body>
 </html>

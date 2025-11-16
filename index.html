@@ -144,13 +144,120 @@
       to{transform:translateY(120vh) rotate(360deg); opacity:0.05}
     }
 
+    /* PAINEL DE SATISFAÇÃO */
+    .satisfaction-wrapper{
+      margin-top:24px;
+      display:flex;
+      justify-content:center;
+    }
+    .satisfaction-card{
+      max-width:520px;
+      width:100%;
+      background:rgba(255,255,255,0.96);
+      border-radius:18px;
+      padding:18px 16px 18px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.12);
+      border:1px solid rgba(255,255,255,0.8);
+      position:relative;
+    }
+    .satisfaction-card h2{
+      margin:0 0 4px;
+      font-size:20px;
+    }
+    .sat-sub{
+      margin:0 0 10px;
+      font-size:13px;
+      opacity:0.8;
+    }
+    .who-are-you{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      margin-bottom:6px;
+      flex-wrap:wrap;
+    }
+    .sat-user-btn{
+      border:0;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:13px;
+      cursor:pointer;
+      background:#ffe4f4;
+      color:#b10061;
+      font-weight:600;
+    }
+    .sat-user-btn.active{
+      background:linear-gradient(90deg,#ff9fc9,#ff4da6);
+      color:#fff;
+    }
+    .sat-current{
+      margin:0 0 8px;
+      font-size:12px;
+      opacity:0.8;
+    }
+    .sat-board{
+      border-radius:12px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.06);
+      overflow:hidden;
+    }
+    .sat-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:8px 10px;
+      font-size:15px;
+      cursor:pointer;
+    }
+    .sat-row:nth-child(odd){
+      background:#fff9fd;
+    }
+    .sat-row:nth-child(even){
+      background:#fff;
+    }
+    .sat-row:hover{
+      background:#ffe9f7;
+    }
+    .sat-label{
+      flex:1;
+    }
+    .sat-markers{
+      display:flex;
+      gap:6px;
+      min-width:60px;
+      justify-content:flex-end;
+    }
+    .sat-marker{
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      color:#fff;
+      font-weight:700;
+      box-shadow:0 4px 10px rgba(0,0,0,0.18);
+    }
+    .sat-marker-pablo{
+      background:linear-gradient(135deg,#4f46e5,#6366f1);
+    }
+    .sat-marker-ana{
+      background:linear-gradient(135deg,#ec4899,#f97316);
+    }
+    .sat-tip{
+      margin-top:10px;
+      font-size:11px;
+      opacity:0.75;
+    }
+
     @media (max-width:900px){
       .stage{
         align-items:flex-start;
         padding:24px 12px 32px;
       }
     }
-
     @media (max-width:420px){
       .card{padding:18px; border-radius:16px}
       header{gap:12px}
@@ -174,20 +281,27 @@
       .message-box textarea{min-height:100px}
 
       .heart{font-size:26px}
+      .satisfaction-card{
+        padding:14px 12px 16px;
+      }
+      .satisfaction-card h2{
+        font-size:17px;
+      }
+      .sat-row{
+        padding:8px 8px;
+        font-size:14px;
+      }
     }
-
     @media (max-width:360px){
       .logo{width:60px;height:60px;font-size:20px}
       h1{font-size:18px}
       .overlay-card h2{font-size:28px}
       .thumb{width:52px;height:52px}
     }
-
     @media (hover:none){
       .btn{padding:14px 16px; border-radius:12px}
       input[type=range]{height:44px}
     }
-
     @media (max-width:700px){
       .overlay{
         align-items:flex-start;
@@ -286,16 +400,66 @@
           </div>
 
         </aside>
-
       </div>
 
+      <!-- Painel de satisfação -->
+      <section class="satisfaction-wrapper">
+        <div class="satisfaction-card">
+          <h2>Nível de satisfação com o namorado 😏</h2>
+          <p class="sat-sub">
+            Escolha quem você é e clique em um nível. Cada um tem seu marcador.
+          </p>
+
+          <div class="who-are-you">
+            <span>Eu sou:</span>
+            <button class="sat-user-btn" data-user="pablo">Pablo</button>
+            <button class="sat-user-btn" data-user="ana">Ana Clara</button>
+          </div>
+          <p class="sat-current">
+            Você está logado como: <strong id="satCurrentUser">ninguém</strong>
+          </p>
+
+          <div class="sat-board">
+            <div class="sat-row" data-level="perfect">
+              <span class="sat-label">Perfect Boyfriend 💘</span>
+              <div class="sat-markers"></div>
+            </div>
+            <div class="sat-row" data-level="good">
+              <span class="sat-label">Good Boy ⭐</span>
+              <div class="sat-markers"></div>
+            </div>
+            <div class="sat-row" data-level="chill">
+              <span class="sat-label">Chill Guy 😎</span>
+              <div class="sat-markers"></div>
+            </div>
+            <div class="sat-row" data-level="ice">
+              <span class="sat-label">On Thin Ice 🧊</span>
+              <div class="sat-markers"></div>
+            </div>
+            <div class="sat-row" data-level="jail">
+              <span class="sat-label">Jail Time ⛓️</span>
+              <div class="sat-markers"></div>
+            </div>
+          </div>
+
+          <!-- Marcadores (JS move entre as linhas) -->
+          <div class="sat-marker sat-marker-pablo" data-user="pablo">P</div>
+          <div class="sat-marker sat-marker-ana" data-user="ana">A</div>
+
+          <p class="sat-tip">
+            Só vocês dois podem mexer aqui. Se estiver diferente, alguém tá de graça… 👀
+          </p>
+        </div>
+      </section>
+
       <footer>
-        Feito com ♥ por Pablo — EU TE AMO PRINCESINHA. 
+        Feito com ♥ por Pablo — se quiser, personalize qualquer texto e salve. 
       </footer>
 
     </div>
   </div>
 
+  <!-- Overlay mensagem grande -->
   <div class="overlay" id="overlay">
     <div class="overlay-card">
       <h2 id="overlayTitle">Eu te amo, Ana Clara ❤</h2>
@@ -304,6 +468,7 @@
     </div>
   </div>
 
+  <!-- Overlay da carta de pedido de casamento -->
   <div class="overlay" id="proposalOverlay">
     <div class="letter-card">
       <div class="ring-icon">💍</div>
@@ -324,7 +489,28 @@
     </div>
   </div>
 
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <script>
+    // Config do seu Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDS1YA0FRvCIryjreFVzRMZyaHhYtm-pUU",
+      authDomain: "euteamoanaclaraks.firebaseapp.com",
+      databaseURL: "https://euteamoanaclaraks-default-rtdb.firebaseio.com",
+      projectId: "euteamoanaclaraks",
+      storageBucket: "euteamoanaclaraks.firebasestorage.app",
+      messagingSenderId: "972847187116",
+      appId: "1:972847187116:web:016a7b8a3dd7a688320b09",
+      measurementId: "G-7LN9PKSCW3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const coupleId = "pablo-ana";
+
+    // Corações caindo
     const heartsLayer = document.getElementById('heartsLayer');
     function spawnHeart(x){
       const el = document.createElement('span');
@@ -346,6 +532,7 @@
     }
     initialRain(26);
 
+    // Slider de amor
     const loveRange = document.getElementById('loveRange');
     const loveVal = document.getElementById('loveVal');
     loveRange.addEventListener('input', function(){
@@ -365,20 +552,22 @@
       }
     });
 
+    // Botões de perdão
     const btnSim = document.getElementById('btnSim');
     const btnNao = document.getElementById('btnNao');
     btnSim.onclick = ()=>{
       btnSim.innerText = 'SIM ❤';
       btnNao.innerText = 'NÃO';
       popupHeartsBurst();
-    }
+    };
     btnNao.onclick = ()=>{
       btnSim.innerText = 'SIM ❤';
       btnNao.innerText = 'NÃO ➜ agora é SIM';
       popupHeartsBurst();
       setTimeout(()=>{ btnNao.innerText = 'NÃO'; }, 900);
-    }
+    };
 
+    // Galeria
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
     function setHeroFromSrc(src){ heroImg.src = src; heroImg.style.display = 'block'; }
@@ -403,6 +592,7 @@
       }
     });
 
+    // Overlay mensagem grande
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlayTitle');
     const overlayText = document.getElementById('overlayText');
@@ -413,21 +603,24 @@
       overlayText.innerText = document.getElementById('loveMsg').value;
       overlay.classList.add('show');
       initialRain(40);
-    }
+    };
     closeOverlay.onclick = ()=> overlay.classList.remove('show');
 
+    // Overlay da carta
     const proposalBtn = document.getElementById('proposalBtn');
     const proposalOverlay = document.getElementById('proposalOverlay');
     const closeProposal = document.getElementById('closeProposal');
     proposalBtn.onclick = ()=>{
       proposalOverlay.classList.add('show');
       initialRain(35);
-    }
+    };
     closeProposal.onclick = ()=> proposalOverlay.classList.remove('show');
 
-    document.getElementById('surprise').onclick = ()=>{ initialRain(36); popupHeartsBurst(); }
-    document.getElementById('popupLove').onclick = ()=>{ initialRain(30); popupHeartsBurst(); }
+    // Surpresa / popup love
+    document.getElementById('surprise').onclick = ()=>{ initialRain(36); popupHeartsBurst(); };
+    document.getElementById('popupLove').onclick = ()=>{ initialRain(30); popupHeartsBurst(); };
 
+    // Efeito de explosão de corações
     function popupHeartsBurst(){
       const burst = document.createElement('div');
       burst.className='burst';
@@ -454,6 +647,64 @@
     }
 
     setInterval(()=>{ spawnHeart(Math.random()*100); }, 8000);
+
+    // --------- LÓGICA DO PAINEL DE SATISFAÇÃO (Firebase) ---------
+    const satButtons = document.querySelectorAll('.sat-user-btn');
+    const satCurrentUserLabel = document.getElementById('satCurrentUser');
+    const satRows = document.querySelectorAll('.sat-row');
+    const markerPablo = document.querySelector('.sat-marker-pablo');
+    const markerAna   = document.querySelector('.sat-marker-ana');
+
+    let currentUser = localStorage.getItem('satCurrentUser') || null;
+
+    function updateCurrentUserUI(){
+      satButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.user === currentUser);
+      });
+      satCurrentUserLabel.textContent = currentUser ? 
+        (currentUser === 'pablo' ? 'Pablo' : 'Ana Clara') : 
+        'ninguém';
+    }
+
+    satButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentUser = btn.dataset.user;
+        localStorage.setItem('satCurrentUser', currentUser);
+        updateCurrentUserUI();
+      });
+    });
+
+    updateCurrentUserUI();
+
+    const levelMap = {};
+    satRows.forEach(row => {
+      levelMap[row.dataset.level] = row;
+      row.addEventListener('click', () => {
+        if(!currentUser){
+          alert('Escolhe se você é o Pablo ou a Ana primeiro 😉');
+          return;
+        }
+        const levelKey = row.dataset.level;
+        db.ref('satisfaction/' + coupleId + '/' + currentUser).set(levelKey);
+      });
+    });
+
+    function placeMarker(user, levelKey){
+      const row = levelMap[levelKey];
+      if(!row) return;
+      const container = row.querySelector('.sat-markers');
+      if(user === 'pablo'){
+        container.appendChild(markerPablo);
+      }else if(user === 'ana'){
+        container.appendChild(markerAna);
+      }
+    }
+
+    db.ref('satisfaction/' + coupleId).on('value', snapshot => {
+      const data = snapshot.val() || {};
+      if(data.pablo) placeMarker('pablo', data.pablo);
+      if(data.ana)   placeMarker('ana', data.ana);
+    });
   </script>
 </body>
 </html>

@@ -405,15 +405,15 @@
       <!-- Painel de satisfação -->
       <section class="satisfaction-wrapper">
         <div class="satisfaction-card">
-          <h2>Nível de satisfação com o namorado 😏</h2>
+          <h2>Nível de satisfação com o mozão 😏</h2>
           <p class="sat-sub">
             Escolha quem você é e clique em um nível. Cada um tem seu marcador.
           </p>
 
           <div class="who-are-you">
             <span>Eu sou:</span>
-            <button class="sat-user-btn" data-user="pablo">Pablo</button>
-            <button class="sat-user-btn" data-user="ana">Ana Clara</button>
+            <button class="sat-user-btn" data-user="pablo">Pablo (namorado)</button>
+            <button class="sat-user-btn" data-user="ana">Ana Clara (namorada)</button>
           </div>
           <p class="sat-current">
             Você está logado como: <strong id="satCurrentUser">ninguém</strong>
@@ -421,23 +421,23 @@
 
           <div class="sat-board">
             <div class="sat-row" data-level="perfect">
-              <span class="sat-label">Perfect Boyfriend 💘</span>
+              <span class="sat-label">Mozão perfeito(a) 💘</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="good">
-              <span class="sat-label">Good Boy ⭐</span>
+              <span class="sat-label">Muito bonzinho(a) ⭐</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="chill">
-              <span class="sat-label">Chill Guy 😎</span>
+              <span class="sat-label">De boa / Chill 😎</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="ice">
-              <span class="sat-label">On Thin Ice 🧊</span>
+              <span class="sat-label">Em gelo fino 🧊</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="jail">
-              <span class="sat-label">Jail Time ⛓️</span>
+              <span class="sat-label">Cadeia (ai, ai, ai) ⛓️</span>
               <div class="sat-markers"></div>
             </div>
           </div>
@@ -447,7 +447,7 @@
           <div class="sat-marker sat-marker-ana" data-user="ana">A</div>
 
           <p class="sat-tip">
-            Só vocês dois podem mexer aqui. Se estiver diferente, alguém tá de graça… 👀
+            O P é você, Pablo. O A é a Ana. O lugar de cada bolinha mostra o nível atual do mozão 😈
           </p>
         </div>
       </section>
@@ -662,7 +662,7 @@
         btn.classList.toggle('active', btn.dataset.user === currentUser);
       });
       satCurrentUserLabel.textContent = currentUser ? 
-        (currentUser === 'pablo' ? 'Pablo' : 'Ana Clara') : 
+        (currentUser === 'pablo' ? 'Pablo (namorado)' : 'Ana Clara (namorada)') : 
         'ninguém';
     }
 
@@ -685,7 +685,15 @@
           return;
         }
         const levelKey = row.dataset.level;
-        db.ref('satisfaction/' + coupleId + '/' + currentUser).set(levelKey);
+
+        // Atualiza visual imediatamente
+        placeMarker(currentUser, levelKey);
+
+        // Tenta salvar no Firebase (se der erro, só loga)
+        db.ref('satisfaction/' + coupleId + '/' + currentUser).set(levelKey)
+          .catch(err => {
+            console.error('Erro ao salvar no Firebase:', err);
+          });
       });
     });
 
@@ -700,6 +708,7 @@
       }
     }
 
+    // Atualiza a partir do Firebase (sincroniza entre dispositivos)
     db.ref('satisfaction/' + coupleId).on('value', snapshot => {
       const data = snapshot.val() || {};
       if(data.pablo) placeMarker('pablo', data.pablo);

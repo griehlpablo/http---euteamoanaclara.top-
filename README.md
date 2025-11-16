@@ -1,1 +1,1 @@
-Versão v7: painel de satisfação com Firebase.
+Versão v8: painel em português, marcador atualiza local e via Firebase.

@@ -381,41 +381,45 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js">
     // CONTAGEM REGRESSIVA PARA O ENCONTRO
     (function(){
-      const countdownTimeEl = document.getElementById('countdownTime');
-      const countdownMsgEl  = document.getElementById('countdownMsg');
+      var countdownTimeEl = document.getElementById('countdownTime');
+      var countdownMsgEl  = document.getElementById('countdownMsg');
 
-      if(!countdownTimeEl || !countdownMsgEl) return;
+      if(!countdownTimeEl || !countdownMsgEl){ return; }
 
       // Encontro: 19/11/2025 às 18h em Brasília (UTC-3)
       // Em UTC isso vira 19/11/2025 21:00:00
-      const targetUtcMs = Date.UTC(2025, 10, 19, 21, 0, 0); // mês 10 = novembro
+      var targetUtcMs = Date.UTC(2025, 10, 19, 21, 0, 0); // mês 10 = novembro
 
-      function format2(n){
-        return String(n).padStart(2,'0');
+      function pad2(n){
+        return (n < 10 ? '0' : '') + n;
       }
 
       function updateCountdown(){
-        const now = new Date();
-        const diff = targetUtcMs - now.getTime();
+        var now = new Date();
+        var diff = targetUtcMs - now.getTime();
 
         if(diff <= 0){
-          countdownTimeEl.textContent = '00d 00h 00m 00s';
+          countdownTimeEl.innerHTML = '<span>00d</span> <span>00h</span> <span>00m</span> <span>00s</span>';
           countdownMsgEl.textContent  = 'Já é o dia do encontro! Espero que vocês estejam juntinhos agora 💖';
           return;
         }
 
-        const totalSeconds = Math.floor(diff / 1000);
-        const days    = Math.floor(totalSeconds / 86400);
-        const hours   = Math.floor((totalSeconds % 86400) / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
+        var totalSeconds = Math.floor(diff / 1000);
+        var days    = Math.floor(totalSeconds / 86400);
+        var hours   = Math.floor((totalSeconds % 86400) / 3600);
+        var minutes = Math.floor((totalSeconds % 3600) / 60);
+        var seconds = totalSeconds % 60;
 
-        countdownTimeEl.textContent =
-          `${format2(days)}d ${format2(hours)}h ${format2(minutes)}m ${format2(seconds)}s`;
+        var htmlTime = '<span>' + pad2(days) + 'd</span> ' +
+                       '<span>' + pad2(hours) + 'h</span> ' +
+                       '<span>' + pad2(minutes) + 'm</span> ' +
+                       '<span>' + pad2(seconds) + 's</span>';
 
-        let msg = '';
+        countdownTimeEl.innerHTML = htmlTime;
+
+        var msg = '';
         if(days > 1){
-          msg = `Faltam ${days} dias pro próximo encontro. Aguenta coraçãozinho 💘`;
+          msg = 'Faltam ' + days + ' dias pro próximo encontro. Aguenta coraçãozinho 💘';
         }else if(days === 1){
           msg = 'Falta 1 dia pro encontro! Já pode começar a surtar de ansiedade 🥹';
         }else{

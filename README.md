@@ -1,1 +1,1 @@
-Versão v10 completa: avaliação cruzada, emojis por nível, animação da cadeia, plano para sair da cadeia, tudo integrado com Firebase.
+Versão v11: efeitos por nível (corações, estrelas, chill, gelo caindo/derretendo, cadeia com grades + notas), amorzinho perfeito.

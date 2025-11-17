@@ -454,7 +454,7 @@
       <!-- Painel de satisfação -->
       <section class="satisfaction-wrapper">
         <div class="satisfaction-card">
-          <h2>Nível de satisfação com o amorcito 😏</h2>
+          <h2>Nível de satisfação com o mozão 😏</h2>
           <p class="sat-sub">
             Escolha quem você é e clique em um nível. Cada voto mexe o marcador da outra pessoa.
           </p>
@@ -470,7 +470,7 @@
 
           <div class="sat-board">
             <div class="sat-row" data-level="perfect">
-              <span class="sat-label">amorzinho perfeito(a) 💘</span>
+              <span class="sat-label">Amorzinho perfeito(a) 💘</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="good">
@@ -508,7 +508,7 @@
       </section>
 
       <footer>
-        Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA. 
+        Feito com ♥ por Pablo — se quiser, personalize qualquer texto e salve. 
       </footer>
 
     </div>
@@ -716,6 +716,31 @@
       setTimeout(()=> burst.remove(), 1200);
     }
 
+    // Gelo caindo e "derretendo"
+    function iceRain(){
+      const container = document.createElement('div');
+      container.className = 'burst';
+      document.body.appendChild(container);
+      for(let i=0;i<18;i++){
+        const ice = document.createElement('div');
+        ice.className = 'bheart';
+        ice.innerText = '🧊';
+        const startX = Math.random()*100;
+        ice.style.left = startX + 'vw';
+        ice.style.top = '-10vh';
+        ice.style.opacity = 1;
+        ice.style.transform = 'scale(1)';
+        ice.style.transition = 'transform 1300ms ease-out, top 1300ms linear, opacity 1300ms ease-out';
+        container.appendChild(ice);
+        setTimeout(()=>{
+          ice.style.top = '100vh';
+          ice.style.transform = 'scale(0.4)';
+          ice.style.opacity = 0;
+        }, 30 + i*35);
+      }
+      setTimeout(()=> container.remove(), 1500);
+    }
+
     function showTinyNote(text){
       const t = document.createElement('div');
       t.style.position='fixed'; t.style.right='18px'; t.style.bottom='18px'; t.style.padding='10px 14px'; t.style.background='linear-gradient(90deg,#ff9fc9,#ff4da6)'; t.style.color='white'; t.style.borderRadius='12px'; t.style.boxShadow='0 6px 20px rgba(0,0,0,0.18)'; t.style.zIndex=999; t.innerText=text;
@@ -788,14 +813,26 @@
         // Salva no localStorage
         localStorage.setItem('satLevel_' + targetUser, levelKey);
 
-        // Efeitos especiais
+        // Efeitos especiais por nível
         if(levelKey === 'perfect'){
-          initialRain(30);
+          // Amorzinho perfeito: corações subindo e fogo
+          initialRain(24);
           popupHeartsBurst();
+          popupEmojiBurst('💘');
           popupEmojiBurst('🔥');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' virou amorzinho perfeito(a)!');
+          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' é amorzinho perfeito(a)!');
+        } else if(levelKey === 'good'){
+          popupEmojiBurst('⭐');
+          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está muito bonzinho(a) ⭐');
+        } else if(levelKey === 'chill'){
+          popupEmojiBurst('😎');
+          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está de boa / chill 😎');
+        } else if(levelKey === 'ice'){
+          iceRain();
+          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está em gelo fino 🧊');
         } else if(levelKey === 'jail'){
           showJailAnimation(targetUser);
+          popupEmojiBurst('⛓️');
           showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' foi pra cadeia 😬');
         }
 

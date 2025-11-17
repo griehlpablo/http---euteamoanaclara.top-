@@ -160,162 +160,12 @@
       to{transform:translateY(120vh) rotate(360deg); opacity:0.05}
     }
 
-    /* PAINEL DE SATISFAÇÃO */
-    .satisfaction-wrapper{
-      margin-top:24px;
-      display:flex;
-      justify-content:center;
+    /* Hero/carrossel */
+    #heroImg{
+      transition:opacity .6s ease;
     }
-    .satisfaction-card{
-      max-width:520px;
-      width:100%;
-      background:rgba(255,255,255,0.96);
-      border-radius:18px;
-      padding:18px 16px 18px;
-      box-shadow:0 10px 30px rgba(0,0,0,0.12);
-      border:1px solid rgba(255,255,255,0.8);
-      position:relative;
-      overflow:hidden;
-    }
-    .satisfaction-card h2{
-      margin:0 0 4px;
-      font-size:20px;
-    }
-    .sat-sub{
-      margin:0 0 10px;
-      font-size:13px;
-      opacity:0.8;
-    }
-    .who-are-you{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-size:13px;
-      margin-bottom:6px;
-      flex-wrap:wrap;
-    }
-    .sat-user-btn{
-      border:0;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:13px;
-      cursor:pointer;
-      background:#ffe4f4;
-      color:#b10061;
-      font-weight:600;
-    }
-    .sat-user-btn.active{
-      background:linear-gradient(90deg,#ff9fc9,#ff4da6);
-      color:#fff;
-    }
-    .sat-current{
-      margin:0 0 8px;
-      font-size:12px;
-      opacity:0.8;
-    }
-    .sat-board{
-      border-radius:12px;
-      background:#fff;
-      border:1px solid rgba(0,0,0,0.06);
-      overflow:hidden;
-    }
-    .sat-row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:8px 10px;
-      font-size:15px;
-      cursor:pointer;
-    }
-    .sat-row:nth-child(odd){
-      background:#fff9fd;
-    }
-    .sat-row:nth-child(even){
-      background:#fff;
-    }
-    .sat-row:hover{
-      background:#ffe9f7;
-    }
-    .sat-label{
-      flex:1;
-    }
-    .sat-markers{
-      display:flex;
-      gap:6px;
-      min-width:80px;
-      justify-content:flex-end;
-    }
-    .sat-marker{
-      min-width:40px;
-      height:32px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:15px;
-      color:#fff;
-      font-weight:700;
-      box-shadow:0 4px 10px rgba(0,0,0,0.18);
-      padding:0 8px;
-      background:linear-gradient(135deg,#4f46e5,#6366f1);
-    }
-    .sat-marker-ana{
-      background:linear-gradient(135deg,#ec4899,#f97316);
-    }
-    .sat-tip{
-      margin-top:10px;
-      font-size:11px;
-      opacity:0.75;
-    }
-
-    /* Caixa extra da cadeia */
-    .jail-extra textarea{
-      width:100%;
-      border-radius:10px;
-      border:1px solid rgba(0,0,0,0.12);
-      padding:8px;
-      font-size:13px;
-      resize:vertical;
-    }
-
-    /* Animação de cadeia */
-    .jail-anim{
-      position:absolute;
-      inset:0;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      pointer-events:none;
-      z-index:40;
-    }
-    .jail-bars{
-      width:82%;
-      height:70%;
-      border-radius:16px;
-      border:4px solid rgba(0,0,0,0.85);
-      display:flex;
-      justify-content:space-around;
-      align-items:stretch;
-      background:rgba(0,0,0,0.08);
-      overflow:hidden;
-      animation:jailClose 700ms ease-out forwards;
-    }
-    .jail-bars span{
-      flex:1;
-      margin:0 4px;
-      background:rgba(0,0,0,0.82);
-      border-radius:999px;
-      transform:translateY(-120%);
-      animation:barDrop 700ms ease-out forwards;
-    }
-    @keyframes jailClose{
-      from{opacity:0; transform:scale(1.1);}
-      to{opacity:1; transform:scale(1);}
-    }
-    @keyframes barDrop{
-      from{transform:translateY(-120%);}
-      to{transform:translateY(0);}
-    }
+    #heroImg.fade-out{opacity:0;}
+    #heroImg.fade-in{opacity:1;}
 
     @media (max-width:900px){
       .stage{
@@ -346,16 +196,6 @@
       .message-box textarea{min-height:100px}
 
       .heart{font-size:26px}
-      .satisfaction-card{
-        padding:14px 12px 16px;
-      }
-      .satisfaction-card h2{
-        font-size:17px;
-      }
-      .sat-row{
-        padding:8px 8px;
-        font-size:14px;
-      }
     }
     @media (max-width:360px){
       .logo{width:60px;height:60px;font-size:20px}
@@ -416,9 +256,7 @@
 
             <div style="margin-top:12px">
               <label class="small">Fotos nossas:</label>
-              <div class="gallery" id="gallery">
-                <!-- Fotos fixas -->
-              </div>
+              <div class="gallery" id="gallery"></div>
               <small class="small" style="display:block; margin-top:4px;">Você e a Ana podem adicionar fotos direto do celular aqui embaixo. Elas ficam salvas pra aparecer em todos os dispositivos 💖</small>
               <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
                 <input id="fileInput" type="file" accept="image/*" multiple style="flex:1 1 180px;">
@@ -446,7 +284,7 @@
         <aside class="right-col">
           <div class="panel" style="text-align:center">
             <h3>Galeria & momento</h3>
-            <p class="small">Toque em uma miniatura para ver maior.</p>
+            <p class="small">As fotos vão passando sozinhas, mas você pode tocar em qualquer miniatura pra escolher 💕</p>
             <div style="margin-top:10px">
               <img id="heroImg" src="images/wedding.jpg" alt="foto destaque" style="width:100%; border-radius:12px; display:block; object-fit:cover; max-height:320px">
             </div>
@@ -467,62 +305,6 @@
 
         </aside>
       </div>
-
-      <!-- Painel de satisfação -->
-      <section class="satisfaction-wrapper">
-        <div class="satisfaction-card">
-          <h2>Nível de satisfação com o Amorcito 😏</h2>
-          <p class="sat-sub">
-            Escolha quem você é e clique em um nível. Cada voto mexe o marcador da outra pessoa.
-          </p>
-
-          <div class="who-are-you">
-            <span>Eu sou:</span>
-            <button class="sat-user-btn" data-user="pablo">Pablo (namorado)</button>
-            <button class="sat-user-btn" data-user="ana">Ana Clara (namorada)</button>
-          </div>
-          <p class="sat-current">
-            Você está logado como: <strong id="satCurrentUser">ninguém</strong>
-          </p>
-
-          <div class="sat-board">
-            <div class="sat-row" data-level="perfect">
-              <span class="sat-label">Amorzinho perfeito(a) 💘</span>
-              <div class="sat-markers"></div>
-            </div>
-            <div class="sat-row" data-level="good">
-              <span class="sat-label">Muito bonzinho(a) ⭐</span>
-              <div class="sat-markers"></div>
-            </div>
-            <div class="sat-row" data-level="chill">
-              <span class="sat-label">De boa / Chill 😎</span>
-              <div class="sat-markers"></div>
-            </div>
-            <div class="sat-row" data-level="ice">
-              <span class="sat-label">Em gelo fino 🧊</span>
-              <div class="sat-markers"></div>
-            </div>
-            <div class="sat-row" data-level="jail">
-              <span class="sat-label">Cadeia (ai, ai, ai) ⛓️</span>
-              <div class="sat-markers"></div>
-            </div>
-          </div>
-
-          <!-- Marcadores (JS move entre as linhas) -->
-          <div class="sat-marker sat-marker-pablo" data-user="pablo">P 💘</div>
-          <div class="sat-marker sat-marker-ana" data-user="ana">A 💘</div>
-
-          <p class="sat-tip">
-            Quando você entra como Ana, mexe o P (avaliando o Pablo). Quando entra como Pablo, mexe o A (avaliando a Ana).
-          </p>
-
-          <div class="jail-extra" id="jailExtra" style="display:none; margin-top:10px;">
-            <p id="jailLabel" class="sat-sub" style="margin-bottom:6px;"></p>
-            <textarea id="jailText" rows="3" placeholder="Escreva aqui o que a pessoa precisa fazer pra sair da cadeia..."></textarea>
-            <button class="btn btn-nao" id="jailSaveBtn" style="margin-top:6px; width:100%;">Salvar plano para sair da cadeia</button>
-          </div>
-        </div>
-      </section>
 
       <footer>
         Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA.
@@ -561,12 +343,11 @@
     </div>
   </div>
 
-  <!-- Firebase compat (apenas Realtime Database, sem Storage pra evitar CORS) -->
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
-    // Config do seu Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDS1YA0FRvCIryjreFVzRMZyaHhYtm-pUU",
       authDomain: "euteamoanaclaraks.firebaseapp.com",
@@ -579,16 +360,15 @@
     };
 
     let db = null;
-    try {
+    try{
       firebase.initializeApp(firebaseConfig);
       db = firebase.database();
       console.log("Firebase inicializado (Realtime DB).");
-    } catch (e) {
+    }catch(e){
       console.warn("Firebase não inicializou, mas o site continua funcionando.", e);
     }
     const coupleId = "pablo-ana";
 
-    // Corações caindo
     const heartsLayer = document.getElementById('heartsLayer');
     function spawnHeart(x){
       const el = document.createElement('span');
@@ -610,7 +390,6 @@
     }
     initialRain(26);
 
-    // Slider de amor
     const loveRange = document.getElementById('loveRange');
     const loveVal = document.getElementById('loveVal');
     loveRange.addEventListener('input', function(){
@@ -630,7 +409,6 @@
       }
     });
 
-    // Botões de perdão
     const btnSim = document.getElementById('btnSim');
     const btnNao = document.getElementById('btnNao');
     btnSim.onclick = ()=>{
@@ -645,23 +423,56 @@
       setTimeout(()=>{ btnNao.innerText = 'NÃO'; }, 900);
     };
 
-    // Galeria
+    // Galeria + carrossel
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
-    function setHeroFromSrc(src){ heroImg.src = src; heroImg.style.display = 'block'; }
+    let heroSources = [];
+    let currentHeroIndex = 0;
+    let heroTimer = null;
+
+    function registerHeroSrc(src){
+      if(!src) return;
+      if(!heroSources.includes(src)){
+        heroSources.push(src);
+        console.log('[hero] registrado', src, ' -> total:', heroSources.length);
+      }
+    }
+    function setHeroFromSrc(src, fromCarousel=false){
+      if(!src) return;
+      registerHeroSrc(src);
+      const img = heroImg;
+      img.classList.remove('fade-in');
+      img.classList.add('fade-out');
+      setTimeout(()=>{
+        img.src = src;
+        img.classList.remove('fade-out');
+        img.classList.add('fade-in');
+      }, 220);
+      if(!fromCarousel){
+        const idx = heroSources.indexOf(src);
+        if(idx >= 0) currentHeroIndex = idx;
+      }
+    }
+    function startHeroCarousel(){
+      if(heroTimer) clearInterval(heroTimer);
+      heroTimer = setInterval(()=>{
+        if(heroSources.length <= 1) return;
+        currentHeroIndex = (currentHeroIndex + 1) % heroSources.length;
+        const nextSrc = heroSources[currentHeroIndex];
+        setHeroFromSrc(nextSrc, true);
+      }, 6000);
+    }
+
     function createThumb(src, isDynamic=false, photoId=null){
+      registerHeroSrc(src);
       const wrap = document.createElement('div');
       wrap.className = 'thumb-wrapper';
-      if(isDynamic && photoId){
-        wrap.dataset.photoId = photoId;
-      }
+      if(isDynamic && photoId){ wrap.dataset.photoId = photoId; }
       const img = document.createElement('img');
       img.src = src;
       img.className = 'thumb' + (isDynamic ? ' dynamic-photo' : '');
-      img.setAttribute('data-full', src);
       img.addEventListener('click', ()=> setHeroFromSrc(src));
       wrap.appendChild(img);
-
       if(isDynamic && photoId){
         const btn = document.createElement('button');
         btn.className = 'thumb-remove';
@@ -672,10 +483,11 @@
           if(!confirm('Tem certeza que quer remover esta foto da galeria?')) return;
           if(db){
             firebase.database().ref('gallery/' + coupleId + '/' + photoId).remove()
-              .then(()=> showTinyNote('Foto removida 🗑️'))
+              .then(()=> { showTinyNote('Foto removida 🗑️'); heroSources = heroSources.filter(u => u !== src);})
               .catch(err => { console.warn('Erro ao remover foto:', err); showTinyNote('Não consegui remover 😢'); });
           } else {
             wrap.remove();
+            heroSources = heroSources.filter(u => u !== src);
           }
         });
         wrap.appendChild(btn);
@@ -683,13 +495,14 @@
       gallery.appendChild(wrap);
     }
 
-    // Fotos fixas iniciais
+    // Fotos fixas
     createThumb('images/ana_e_eu_zoo.jpg');
     createThumb('images/us_beach.jpg');
     createThumb('images/us_zoo.jpg');
     createThumb('images/wedding.jpg');
+    setHeroFromSrc('images/wedding.jpg');
+    startHeroCarousel();
 
-    // Upload de fotos para Realtime DB (base64)
     const fileInput = document.getElementById('fileInput');
     const savePhotosBtn = document.getElementById('savePhotosBtn');
 
@@ -703,12 +516,12 @@
         showTinyNote('Firebase não disponível, não consegui salvar 😢');
         return;
       }
-
       files.forEach(file => {
         if(!file.type.startsWith('image/')) return;
         const reader = new FileReader();
         reader.onload = function(ev){
           const dataUrl = ev.target.result;
+          console.log('[upload] salvando foto no DB...', file.name);
           firebase.database().ref('gallery/' + coupleId).push({
             dataUrl,
             name: file.name || null,
@@ -722,24 +535,20 @@
         };
         reader.readAsDataURL(file);
       });
-
       fileInput.value = '';
     });
 
-    // Carregar fotos salvas do Firebase para a galeria
     if(db){
       firebase.database().ref('gallery/' + coupleId).on('value', snapshot => {
         const data = snapshot.val() || {};
-        // Remove as dinâmicas antigas
+        console.log('[gallery] snapshot recebido', data);
         const oldDyn = gallery.querySelectorAll('.dynamic-photo');
         oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
-
         const entries = Object.entries(data).sort((a,b) => {
           const va = a[1]?.createdAt || 0;
           const vb = b[1]?.createdAt || 0;
           return va - vb;
         });
-
         entries.forEach(([id, item]) => {
           if(!item.dataUrl) return;
           createThumb(item.dataUrl, true, id);
@@ -747,7 +556,6 @@
       });
     }
 
-    // Overlay mensagem grande
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlayTitle');
     const overlayText = document.getElementById('overlayText');
@@ -761,7 +569,6 @@
     };
     closeOverlay.onclick = ()=> overlay.classList.remove('show');
 
-    // Overlay da carta
     const proposalBtn = document.getElementById('proposalBtn');
     const proposalOverlay = document.getElementById('proposalOverlay');
     const closeProposal = document.getElementById('closeProposal');
@@ -771,11 +578,9 @@
     };
     closeProposal.onclick = ()=> proposalOverlay.classList.remove('show');
 
-    // Surpresa / popup love
     document.getElementById('surprise').onclick = ()=>{ initialRain(36); popupHeartsBurst(); };
     document.getElementById('popupLove').onclick = ()=>{ initialRain(30); popupHeartsBurst(); };
 
-    // Efeito de explosão de corações
     function popupHeartsBurst(){
       const burst = document.createElement('div');
       burst.className='burst';
@@ -793,48 +598,6 @@
       setTimeout(()=> burst.remove(), 1200);
     }
 
-    function popupEmojiBurst(emoji){
-      const burst = document.createElement('div');
-      burst.className='burst';
-      document.body.appendChild(burst);
-      for(let i=0;i<14;i++){
-        const b = document.createElement('div'); b.className='bheart'; b.innerText=emoji;
-        const angle = Math.random()*Math.PI*2; const radius = Math.random()*140+20;
-        b.style.left = (50 + Math.cos(angle)*radius) + 'vw';
-        b.style.top = (45 + Math.sin(angle)*radius) + 'vh';
-        b.style.opacity = 1; b.style.transform = 'scale(0.9)';
-        b.style.transition = 'transform 900ms cubic-bezier(.2,1,.3,1), opacity 900ms';
-        burst.appendChild(b);
-        setTimeout(()=>{ b.style.transform='translateY(-40vh) scale(1.2)'; b.style.opacity=0; }, 40+i*20);
-      }
-      setTimeout(()=> burst.remove(), 1200);
-    }
-
-    // Gelo caindo e "derretendo"
-    function iceRain(){
-      const container = document.createElement('div');
-      container.className = 'burst';
-      document.body.appendChild(container);
-      for(let i=0;i<18;i++){
-        const ice = document.createElement('div');
-        ice.className = 'bheart';
-        ice.innerText = '🧊';
-        const startX = Math.random()*100;
-        ice.style.left = startX + 'vw';
-        ice.style.top = '-10vh';
-        ice.style.opacity = 1;
-        ice.style.transform = 'scale(1)';
-        ice.style.transition = 'transform 1300ms ease-out, top 1300ms linear, opacity 1300ms ease-out';
-        container.appendChild(ice);
-        setTimeout(()=>{
-          ice.style.top = '100vh';
-          ice.style.transform = 'scale(0.4)';
-          ice.style.opacity = 0;
-        }, 30 + i*35);
-      }
-      setTimeout(()=> container.remove(), 1500);
-    }
-
     function showTinyNote(text){
       const t = document.createElement('div');
       t.style.position='fixed'; t.style.right='18px'; t.style.bottom='18px'; t.style.padding='10px 14px'; t.style.background='linear-gradient(90deg,#ff9fc9,#ff4da6)'; t.style.color='white'; t.style.borderRadius='12px'; t.style.boxShadow='0 6px 20px rgba(0,0,0,0.18)'; t.style.zIndex=999; t.innerText=text;
@@ -844,195 +607,6 @@
     }
 
     setInterval(()=>{ spawnHeart(Math.random()*100); }, 8000);
-
-    // --------- LÓGICA DO PAINEL DE SATISFAÇÃO (Firebase + localStorage) ---------
-    const satButtons = document.querySelectorAll('.sat-user-btn');
-    const satCurrentUserLabel = document.getElementById('satCurrentUser');
-    const satRows = document.querySelectorAll('.sat-row');
-    const markerPablo = document.querySelector('.sat-marker-pablo');
-    const markerAna   = document.querySelector('.sat-marker-ana');
-    const satCard = document.querySelector('.satisfaction-card');
-
-    const levelEmoji = {
-      perfect: '💘',
-      good: '⭐',
-      chill: '😎',
-      ice: '🧊',
-      jail: '⛓️'
-    };
-
-    let currentUser = localStorage.getItem('satCurrentUser') || null;
-    const jailExtra = document.getElementById('jailExtra');
-    const jailLabel = document.getElementById('jailLabel');
-    const jailText = document.getElementById('jailText');
-    const jailSaveBtn = document.getElementById('jailSaveBtn');
-    let jailStatus = {pablo:false, ana:false};
-    let jailFor = null; // quem está na cadeia agora (pablo/ana ou null)
-
-    function updateCurrentUserUI(){
-      satButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.user === currentUser);
-      });
-      satCurrentUserLabel.textContent = currentUser ? 
-        (currentUser === 'pablo' ? 'Pablo (namorado)' : 'Ana Clara (namorada)') : 
-        'ninguém';
-    }
-
-    satButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        currentUser = btn.dataset.user;
-        localStorage.setItem('satCurrentUser', currentUser);
-        updateCurrentUserUI();
-      });
-    });
-
-    updateCurrentUserUI();
-
-    const levelMap = {};
-    satRows.forEach(row => {
-      levelMap[row.dataset.level] = row;
-      row.addEventListener('click', () => {
-        if(!currentUser){
-          alert('Escolhe se você é o Pablo ou a Ana primeiro 😉');
-          return;
-        }
-        const levelKey = row.dataset.level;
-        // Alvo é SEMPRE a outra pessoa
-        const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
-        console.log('Clique no nível', levelKey, 'por', currentUser, 'avaliando', targetUser);
-
-        // Atualiza visual imediatamente no alvo
-        placeMarker(targetUser, levelKey);
-
-        // Salva no localStorage
-        localStorage.setItem('satLevel_' + targetUser, levelKey);
-
-        // Efeitos especiais por nível
-        if(levelKey === 'perfect'){
-          initialRain(24);
-          popupHeartsBurst();
-          popupEmojiBurst('💘');
-          popupEmojiBurst('🔥');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' é amorzinho perfeito(a)!');
-        } else if(levelKey === 'good'){
-          popupEmojiBurst('⭐');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está muito bonzinho(a) ⭐');
-        } else if(levelKey === 'chill'){
-          popupEmojiBurst('😎');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está de boa / chill 😎');
-        } else if(levelKey === 'ice'){
-          iceRain();
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está em gelo fino 🧊');
-        } else if(levelKey === 'jail'){
-          showJailAnimation(targetUser);
-          popupEmojiBurst('⛓️');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' foi pra cadeia 😬');
-        }
-
-        // Firebase
-        if(db){
-          firebase.database().ref('satisfaction/' + coupleId + '/' + targetUser).set(levelKey)
-            .then(() => {
-              console.log('Salvo no Firebase com sucesso');
-            })
-            .catch(err => {
-              console.warn('Erro ao salvar no Firebase:', err);
-            });
-        }
-      });
-    });
-
-    function placeMarker(user, levelKey){
-      const row = levelMap[levelKey];
-      if(!row) return;
-      const container = row.querySelector('.sat-markers');
-      const emoji = levelEmoji[levelKey] || '❤';
-      const marker = (user === 'pablo') ? markerPablo : markerAna;
-      const letra = (user === 'pablo') ? 'P ' : 'A ';
-      marker.textContent = letra + emoji;
-      container.appendChild(marker);
-
-      // Atualiza status de cadeia
-      jailStatus[user] = (levelKey === 'jail');
-      updateJailUIFromStatus();
-    }
-
-    function updateJailUIFromStatus(){
-      const someone = jailStatus.pablo ? 'pablo' : (jailStatus.ana ? 'ana' : null);
-      jailFor = someone;
-      if(!jailFor){
-        jailExtra.style.display = 'none';
-        return;
-      }
-      jailExtra.style.display = 'block';
-      const alvoNome = jailFor === 'pablo' ? 'Pablo' : 'Ana';
-      jailLabel.textContent = `O que o ${alvoNome} pode fazer para sair da cadeia?`;
-
-      const noteKey = 'jailNote_' + jailFor;
-      const note = localStorage.getItem(noteKey) || '';
-      jailText.value = note;
-    }
-
-    function showJailAnimation(forUser){
-      if(!satCard) return;
-      const wrap = document.createElement('div');
-      wrap.className = 'jail-anim';
-      const bars = document.createElement('div');
-      bars.className = 'jail-bars';
-      for(let i=0;i<5;i++){
-        const s = document.createElement('span');
-        bars.appendChild(s);
-      }
-      wrap.appendChild(bars);
-      satCard.appendChild(wrap);
-      setTimeout(()=>{ wrap.style.opacity='0'; }, 900);
-      setTimeout(()=> wrap.remove(), 1300);
-    }
-
-    jailSaveBtn.addEventListener('click', () => {
-      if(!jailFor){
-        alert('Ninguém está na cadeia agora 😂');
-        return;
-      }
-      const text = jailText.value.trim();
-      const key = 'jailNote_' + jailFor;
-      localStorage.setItem(key, text);
-      if(db){
-        firebase.database().ref('satisfaction/' + coupleId + '/note_' + jailFor).set(text)
-          .catch(err => console.warn('Erro ao salvar nota da cadeia:', err));
-      }
-      showTinyNote('Plano para sair da cadeia salvo 📝');
-    });
-
-    // Carrega do localStorage
-    const localPablo = localStorage.getItem('satLevel_pablo');
-    const localAna = localStorage.getItem('satLevel_ana');
-    if(localPablo) placeMarker('pablo', localPablo);
-    if(localAna) placeMarker('ana', localAna);
-
-    // Firebase sync
-    if(db){
-      firebase.database().ref('satisfaction/' + coupleId).on('value', snapshot => {
-        const data = snapshot.val() || {};
-        console.log('Dados recebidos do Firebase:', data);
-        if(data.pablo) {
-          localStorage.setItem('satLevel_pablo', data.pablo);
-          placeMarker('pablo', data.pablo);
-        }
-        if(data.ana)   {
-          localStorage.setItem('satLevel_ana', data.ana);
-          placeMarker('ana', data.ana);
-        }
-        if(data.note_pablo){
-          localStorage.setItem('jailNote_pablo', data.note_pablo);
-          if(jailFor === 'pablo') jailText.value = data.note_pablo;
-        }
-        if(data.note_ana){
-          localStorage.setItem('jailNote_ana', data.note_ana);
-          if(jailFor === 'ana') jailText.value = data.note_ana;
-        }
-      });
-    }
   </script>
 </body>
 </html>

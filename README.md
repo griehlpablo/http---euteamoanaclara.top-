@@ -1,1 +1,1 @@
-Versão v12: upload de fotos com Firebase Storage + galeria sincronizada entre dispositivos.
+Versão v13: galeria usando apenas Realtime DB (base64), botão SALVAR FOTOS, botão de remover foto e footer atualizado.

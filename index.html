@@ -60,7 +60,23 @@
     .btn-nao{background:linear-gradient(90deg,#ffd6d6,#ffc9ff); color:#333}
 
     .gallery{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    .thumb-wrapper{position:relative; display:inline-block;}
     .thumb{width:72px;height:72px; border-radius:8px; object-fit:cover; border:3px solid white; box-shadow:0 6px 18px rgba(0,0,0,0.08); cursor:pointer}
+    .thumb-remove{
+      position:absolute;
+      top:2px; right:2px;
+      width:20px; height:20px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.7);
+      color:#fff;
+      border:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      cursor:pointer;
+    }
+    .thumb-remove:hover{background:rgba(0,0,0,0.9);}
 
     .message-box{margin-top:12px; border-radius:12px; padding:12px; background:var(--glass)}
     .message-box textarea{width:100%; min-height:120px; border-radius:8px; padding:12px; border:0; resize:vertical; font-size:15px}
@@ -402,14 +418,12 @@
               <label class="small">Fotos nossas:</label>
               <div class="gallery" id="gallery">
                 <!-- Fotos fixas -->
-                <img class="thumb" src="images/ana_e_eu_zoo.jpg" alt="foto1" data-full="images/ana_e_eu_zoo.jpg">
-                <img class="thumb" src="images/us_beach.jpg" alt="foto2" data-full="images/us_beach.jpg">
-                <img class="thumb" src="images/us_zoo.jpg" alt="foto3" data-full="images/us_zoo.jpg">
-                <img class="thumb" src="images/wedding.jpg" alt="casando" data-full="images/wedding.jpg">
-                <!-- As fotos dinâmicas serão adicionadas via JS com classe .dynamic-photo -->
               </div>
               <small class="small" style="display:block; margin-top:4px;">Você e a Ana podem adicionar fotos direto do celular aqui embaixo. Elas ficam salvas pra aparecer em todos os dispositivos 💖</small>
-              <input id="fileInput" type="file" accept="image/*" multiple style="display:block; margin-top:8px">
+              <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <input id="fileInput" type="file" accept="image/*" multiple style="flex:1 1 180px;">
+                <button class="btn btn-sim" id="savePhotosBtn" style="flex:0 0 auto;">Salvar fotos</button>
+              </div>
             </div>
 
           </div>
@@ -511,7 +525,7 @@
       </section>
 
       <footer>
-        Feito com ♥ por Pablo — se quiser, personalize qualquer texto e salve. 
+        Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA.
       </footer>
 
     </div>
@@ -547,10 +561,9 @@
     </div>
   </div>
 
-  <!-- Firebase compat -->
+  <!-- Firebase compat (apenas Realtime Database, sem Storage pra evitar CORS) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
   <script>
     // Config do seu Firebase
@@ -566,12 +579,10 @@
     };
 
     let db = null;
-    let storage = null;
     try {
       firebase.initializeApp(firebaseConfig);
       db = firebase.database();
-      storage = firebase.storage();
-      console.log("Firebase inicializado com sucesso");
+      console.log("Firebase inicializado (Realtime DB).");
     } catch (e) {
       console.warn("Firebase não inicializou, mas o site continua funcionando.", e);
     }
@@ -638,75 +649,100 @@
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
     function setHeroFromSrc(src){ heroImg.src = src; heroImg.style.display = 'block'; }
-    gallery.addEventListener('click', (e)=>{
-      const t = e.target.closest('.thumb');
-      if(!t) return;
-      const full = t.getAttribute('data-full') || t.src;
-      setHeroFromSrc(full);
-      popupHeartsBurst();
-    });
+    function createThumb(src, isDynamic=false, photoId=null){
+      const wrap = document.createElement('div');
+      wrap.className = 'thumb-wrapper';
+      if(isDynamic && photoId){
+        wrap.dataset.photoId = photoId;
+      }
+      const img = document.createElement('img');
+      img.src = src;
+      img.className = 'thumb' + (isDynamic ? ' dynamic-photo' : '');
+      img.setAttribute('data-full', src);
+      img.addEventListener('click', ()=> setHeroFromSrc(src));
+      wrap.appendChild(img);
 
-    // Upload de fotos para Firebase Storage + salvar URLs no Realtime Database
-    const fileInput = document.getElementById('fileInput');
-    fileInput.addEventListener('change', function(){
-      const files = Array.from(this.files);
-      if(!files.length) return;
-
-      if(!storage || !db){
-        // fallback: só mostrar localmente, como antes
-        files.slice(0,12).forEach(f => {
-          if(!f.type.startsWith('image/')) return;
-          const url = URL.createObjectURL(f);
-          const img = document.createElement('img');
-          img.src = url;
-          img.className = 'thumb dynamic-photo';
-          img.setAttribute('data-full', url);
-          img.onclick = ()=> setHeroFromSrc(url);
-          gallery.appendChild(img);
+      if(isDynamic && photoId){
+        const btn = document.createElement('button');
+        btn.className = 'thumb-remove';
+        btn.innerText = '×';
+        btn.title = 'Remover esta foto';
+        btn.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          if(!confirm('Tem certeza que quer remover esta foto da galeria?')) return;
+          if(db){
+            firebase.database().ref('gallery/' + coupleId + '/' + photoId).remove()
+              .then(()=> showTinyNote('Foto removida 🗑️'))
+              .catch(err => { console.warn('Erro ao remover foto:', err); showTinyNote('Não consegui remover 😢'); });
+          } else {
+            wrap.remove();
+          }
         });
-        showTinyNote('Firebase não disponível, fotos só ficam salvas até recarregar a página.');
+        wrap.appendChild(btn);
+      }
+      gallery.appendChild(wrap);
+    }
+
+    // Fotos fixas iniciais
+    createThumb('images/ana_e_eu_zoo.jpg');
+    createThumb('images/us_beach.jpg');
+    createThumb('images/us_zoo.jpg');
+    createThumb('images/wedding.jpg');
+
+    // Upload de fotos para Realtime DB (base64)
+    const fileInput = document.getElementById('fileInput');
+    const savePhotosBtn = document.getElementById('savePhotosBtn');
+
+    savePhotosBtn.addEventListener('click', () => {
+      const files = Array.from(fileInput.files || []);
+      if(!files.length){
+        alert('Escolha pelo menos uma foto primeiro 🙂');
+        return;
+      }
+      if(!db){
+        showTinyNote('Firebase não disponível, não consegui salvar 😢');
         return;
       }
 
-      files.forEach(f => {
-        if(!f.type.startsWith('image/')) return;
-        const path = 'gallery/' + coupleId + '/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '_' + (f.name || 'foto.jpg');
-        const ref = storage.ref().child(path);
-        ref.put(f).then(snapshot => snapshot.ref.getDownloadURL())
-          .then(url => {
-            return db.ref('gallery/' + coupleId).push({
-              url,
-              name: f.name || null,
-              createdAt: Date.now()
-            });
-          })
-          .then(() => {
-            showTinyNote('Foto enviada e salva 💖');
-          })
-          .catch(err => {
-            console.warn('Erro ao fazer upload da foto:', err);
-            showTinyNote('Não consegui subir a foto 😢 (veja as regras do Firebase).');
+      files.forEach(file => {
+        if(!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = function(ev){
+          const dataUrl = ev.target.result;
+          firebase.database().ref('gallery/' + coupleId).push({
+            dataUrl,
+            name: file.name || null,
+            createdAt: Date.now()
+          }).then(()=>{
+            showTinyNote('Foto salva na galeria 💖');
+          }).catch(err => {
+            console.warn('Erro ao salvar foto:', err);
+            showTinyNote('Não consegui salvar uma das fotos 😢');
           });
+        };
+        reader.readAsDataURL(file);
       });
+
+      fileInput.value = '';
     });
 
     // Carregar fotos salvas do Firebase para a galeria
     if(db){
-      db.ref('gallery/' + coupleId).on('value', snapshot => {
+      firebase.database().ref('gallery/' + coupleId).on('value', snapshot => {
         const data = snapshot.val() || {};
         // Remove as dinâmicas antigas
         const oldDyn = gallery.querySelectorAll('.dynamic-photo');
-        oldDyn.forEach(el => el.remove());
+        oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
 
-        const entries = Object.values(data).sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0));
-        entries.forEach(item => {
-          if(!item.url) return;
-          const img = document.createElement('img');
-          img.src = item.url;
-          img.className = 'thumb dynamic-photo';
-          img.setAttribute('data-full', item.url);
-          img.addEventListener('click', () => setHeroFromSrc(item.url));
-          gallery.appendChild(img);
+        const entries = Object.entries(data).sort((a,b) => {
+          const va = a[1]?.createdAt || 0;
+          const vb = b[1]?.createdAt || 0;
+          return va - vb;
+        });
+
+        entries.forEach(([id, item]) => {
+          if(!item.dataUrl) return;
+          createThumb(item.dataUrl, true, id);
         });
       });
     }
@@ -873,7 +909,6 @@
 
         // Efeitos especiais por nível
         if(levelKey === 'perfect'){
-          // Amorzinho perfeito: corações subindo e fogo
           initialRain(24);
           popupHeartsBurst();
           popupEmojiBurst('💘');
@@ -896,7 +931,7 @@
 
         // Firebase
         if(db){
-          db.ref('satisfaction/' + coupleId + '/' + targetUser).set(levelKey)
+          firebase.database().ref('satisfaction/' + coupleId + '/' + targetUser).set(levelKey)
             .then(() => {
               console.log('Salvo no Firebase com sucesso');
             })
@@ -963,7 +998,7 @@
       const key = 'jailNote_' + jailFor;
       localStorage.setItem(key, text);
       if(db){
-        db.ref('satisfaction/' + coupleId + '/note_' + jailFor).set(text)
+        firebase.database().ref('satisfaction/' + coupleId + '/note_' + jailFor).set(text)
           .catch(err => console.warn('Erro ao salvar nota da cadeia:', err));
       }
       showTinyNote('Plano para sair da cadeia salvo 📝');
@@ -977,7 +1012,7 @@
 
     // Firebase sync
     if(db){
-      db.ref('satisfaction/' + coupleId).on('value', snapshot => {
+      firebase.database().ref('satisfaction/' + coupleId).on('value', snapshot => {
         const data = snapshot.val() || {};
         console.log('Dados recebidos do Firebase:', data);
         if(data.pablo) {

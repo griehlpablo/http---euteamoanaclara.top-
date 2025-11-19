@@ -879,22 +879,40 @@
       fileInput.value = '';
     });
 
-    if(db){
-      firebase.database().ref('gallery/' + coupleId).on('value', snapshot => {
-        const data = snapshot.val() || {};
-        const oldDyn = gallery.querySelectorAll('.dynamic-photo');
-        oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
-        const entries = Object.entries(data).sort((a,b) => {
-          const va = a[1]?.createdAt || 0;
-          const vb = b[1]?.createdAt || 0;
-          return va - vb;
+        if(db){
+      firebase.database()
+        .ref('gallery/' + coupleId)
+        .orderByChild('createdAt')
+        .limitToLast(30) // carrega só as 30 últimas fotos
+        .on('value', snapshot => {
+          const data = snapshot.val();
+          
+          // Remove as fotos dinâmicas antigas do HTML
+          const oldDyn = gallery.querySelectorAll('.dynamic-photo');
+          oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
+
+          if(!data){
+            console.log('Nenhuma foto dinâmica no Firebase.');
+            return;
+          }
+
+          // Ordena por createdAt (do mais antigo pro mais novo)
+          const entries = Object.entries(data).sort((a,b) => {
+            const va = (a[1] && a[1].createdAt) || 0;
+            const vb = (b[1] && b[1].createdAt) || 0;
+            return va - vb;
+          });
+
+          // Cria os thumbs
+          entries.forEach(([id, item]) => {
+            if(!item || !item.dataUrl) return;
+            createThumb(item.dataUrl, true, id);
+          });
+        }, err => {
+          console.warn('Erro ao ler galeria do Firebase:', err);
         });
-        entries.forEach(([id, item]) => {
-          if(!item.dataUrl) return;
-          createThumb(item.dataUrl, true, id);
-        });
-      });
     }
+
 
     // Overlays
     const overlay = document.getElementById('overlay');

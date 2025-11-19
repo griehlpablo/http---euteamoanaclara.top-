@@ -92,13 +92,6 @@
       background:rgba(255,255,255,0.8);
       cursor:pointer;
     }
-    .thumb-more-label{
-      font-size:12px;
-      color:#777;
-      margin-top:4px;
-      text-align:center;
-      width:100%;
-    }
 
 
     .message-box{margin-top:12px; border-radius:12px; padding:12px; background:var(--glass)}
@@ -385,6 +378,15 @@
       box-shadow:0 0 0 2px rgba(255,77,166,0.6);
       transform:translateY(-1px);
     }
+    .menu-textarea{
+      width:100%;
+      min-height:70px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.12);
+      padding:8px;
+      font-size:14px;
+      resize:vertical;
+    }
     .mural-list{
       margin-top:10px;
       display:flex;
@@ -406,8 +408,6 @@
       font-size:11px;
       opacity:0.75;
     }
-
-    .menu-texta
     .mural-note.done{
       opacity:0.7;
       background:#f4f4f4;
@@ -433,7 +433,8 @@
       background:#ffe5e5;
       color:#991b1b;
     }
-rea{
+
+    .menu-textarea{
       width:100%;
       min-height:70px;
       border-radius:10px;
@@ -673,16 +674,14 @@ rea{
             <p class="small" id="menuStatus" style="margin-top:6px;">Sem sugestão ainda. Escrevam algo gostoso pra hoje 😋</p>
           </div>
 
-          <div class="poll-block" id="muralBlock">
+          <div class="poll-block" id="pollMural">
             <div class="poll-title">Mural de recadinhos 💌</div>
-            <p class="small" style="margin-bottom:6px;">
-              Deixem bilhetes, lembretes e mensagens rápidas um para o outro. Eles ficam salvos para os dois.
-            </p>
-            <textarea id="muralInput" class="menu-textarea" placeholder="Escreva um recadinho fofo, um lembrete ou um 'te amo' rápido..."></textarea>
+            <textarea id="muralInput" class="menu-textarea" placeholder="Escreve um recadinho, um lembrete fofo ou uma missão para o mozão..."></textarea>
             <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn btn-sim" id="muralAddBtn">Adicionar recado</button>
             </div>
-            <div id="muralList" class="mural-list"></div>
+            <p class="small" style="margin-top:6px;">Dica: entra como Pablo ou Ana no painel de satisfação para o recado ficar com seu nome.</p>
+            <div class="mural-list" id="muralList"></div>
           </div>
         </div>
       </section>
@@ -904,7 +903,7 @@ rea{
     setHeroFromSrc('images/wedding.jpg');
     startHeroCarousel();
 
-    // Upload fotos -> Realtime DB
+    
     // Helper: redimensiona e comprime a imagem antes de enviar para o Firebase
     function resizeImageToDataURL(file, maxSize, callback){
       const reader = new FileReader();
@@ -914,7 +913,6 @@ rea{
           let w = img.width;
           let h = img.height;
 
-          // Mantém proporção e limita o maior lado a maxSize
           if(w > h){
             if(w > maxSize){
               h = Math.round(h * (maxSize / w));
@@ -933,7 +931,6 @@ rea{
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, w, h);
 
-          // JPEG com compressão (qualidade 0.7)
           const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
           callback(dataUrl);
         };
@@ -945,40 +942,6 @@ rea{
     const fileInput = document.getElementById('fileInput');
     const savePhotosBtn = document.getElementById('savePhotosBtn');
 
-    // Salvar fotos na galeria (com compressão)
-    savePhotosBtn.addEventListener('click', () => {
-      const files = Array.from(fileInput.files || []);
-      if(!files.length){
-        alert('Escolha pelo menos uma foto primeiro 🙂');
-        return;
-      }
-      if(!db){
-        showTinyNote('Firebase não disponível, não consegui salvar 😢');
-        return;
-      }
-
-      files.forEach(file => {
-        if(!file.type.startsWith('image/')) return;
-
-        // Redimensiona e comprime antes de enviar
-        resizeImageToDataURL(file, 1280, function(dataUrl){
-          firebase.database().ref('gallery/' + coupleId).push({
-            dataUrl,
-            name: file.name || null,
-            createdAt: Date.now()
-          }).then(()=>{
-            showTinyNote('Foto salva na galeria 💖');
-          }).catch(err => {
-            console.warn('Erro ao salvar foto:', err);
-            showTinyNote('Não consegui salvar uma das fotos 😢');
-          });
-        });
-      });
-
-      fileInput.value = '';
-    });
-
-    // Visualização e galeria completa
     const galleryOverlay = document.getElementById('galleryOverlay');
     const fullGallery = document.getElementById('fullGallery');
     const closeGalleryOverlay = document.getElementById('closeGalleryOverlay');
@@ -1034,15 +997,19 @@ rea{
     }
 
     function renderDynamicPreview(){
-      // Remove fotos dinâmicas já exibidas
       const oldDyn = gallery.querySelectorAll('.dynamic-photo');
       oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
 
-      // Remove blocos "+N"
       const moreTiles = gallery.querySelectorAll('.thumb-more-wrapper');
       moreTiles.forEach(el => el.remove());
 
       if(!dynamicPhotosList.length) return;
+
+      // Garante que TODAS as fotos dinâmicas entram no carrossel,
+      // mesmo as que ficam escondidas atrás do "+N"
+      dynamicPhotosList.forEach(p => {
+        if(p.dataUrl) registerHeroSrc(p.dataUrl);
+      });
 
       const total = dynamicPhotosList.length;
       const previewCount = Math.min(MAX_PREVIEW_DYNAMIC, total);
@@ -1065,12 +1032,42 @@ rea{
       }
     }
 
+    // Salvar fotos na galeria (com compressão)
+    savePhotosBtn.addEventListener('click', () => {
+      const files = Array.from(fileInput.files || []);
+      if(!files.length){
+        alert('Escolha pelo menos uma foto primeiro 🙂');
+        return;
+      }
+      if(!db){
+        showTinyNote('Firebase não disponível, não consegui salvar 😢');
+        return;
+      }
+      files.forEach(file => {
+        if(!file.type.startsWith('image/')) return;
+
+        resizeImageToDataURL(file, 1280, function(dataUrl){
+          firebase.database().ref('gallery/' + coupleId).push({
+            dataUrl,
+            name: file.name || null,
+            createdAt: Date.now()
+          }).then(()=>{
+            showTinyNote('Foto salva na galeria 💖');
+          }).catch(err => {
+            console.warn('Erro ao salvar foto:', err);
+            showTinyNote('Não consegui salvar uma das fotos 😢');
+          });
+        });
+      });
+      fileInput.value = '';
+    });
+
     // Upload fotos -> Realtime DB
     if(db){
       firebase.database()
         .ref('gallery/' + coupleId)
         .orderByChild('createdAt')
-        .limitToLast(60) // carrega só as 60 últimas fotos
+        .limitToLast(60)
         .on('value', snapshot => {
           const data = snapshot.val() || {};
 
@@ -1086,7 +1083,6 @@ rea{
             });
           });
 
-          // Ordena do mais antigo pro mais novo
           dynamicPhotosList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 
           renderDynamicPreview();
@@ -1095,7 +1091,7 @@ rea{
         });
     }
 
-// Overlays
+    // Overlays
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlayTitle');
     const overlayText = document.getElementById('overlayText');
@@ -1403,7 +1399,7 @@ rea{
     }
 
     
-    // CARDÁPIO DO DIA
+// CARDÁPIO DO DIA
     const menuInput  = document.getElementById('menuInput');
     const menuSaveBtn = document.getElementById('menuSaveBtn');
     const menuStatus = document.getElementById('menuStatus');
@@ -1443,7 +1439,6 @@ rea{
     const muralAddBtn = document.getElementById('muralAddBtn');
     const muralList   = document.getElementById('muralList');
 
-    
     function renderMuralList(data){
       if(!muralList) return;
       muralList.innerHTML = '';
@@ -1488,7 +1483,6 @@ rea{
         meta.textContent = '– ' + who + (dateLabel ? ' • ' + dateLabel : '');
         noteEl.appendChild(meta);
 
-        // Ações (concluir / apagar)
         const actions = document.createElement('div');
         actions.className = 'mural-actions';
 
@@ -1527,7 +1521,6 @@ rea{
     }
 
     if(muralAddBtn){
-
       muralAddBtn.addEventListener('click', () => {
         const text = (muralInput.value || '').trim();
         if(!text){
@@ -1538,11 +1531,12 @@ rea{
           showTinyNote('Firebase não disponível, não consegui salvar o recado 😢');
           return;
         }
-        const author = currentUser || null; // usa quem está logado no painel de satisfação
+        const author = currentUser || null;
         firebase.database().ref('mural/' + coupleId).push({
           text,
           author,
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          done: false
         }).then(() => {
           muralInput.value = '';
           showTinyNote('Recadinho salvo no mural 💌');

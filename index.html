@@ -77,6 +77,29 @@
       cursor:pointer;
     }
     .thumb-remove:hover{background:rgba(0,0,0,0.9);}
+    .thumb-more{
+      width:72px;
+      height:72px;
+      border-radius:8px;
+      border:3px solid white;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      font-size:18px;
+      color:var(--accent);
+      background:rgba(255,255,255,0.8);
+      cursor:pointer;
+    }
+    .thumb-more-label{
+      font-size:12px;
+      color:#777;
+      margin-top:4px;
+      text-align:center;
+      width:100%;
+    }
+
 
     .message-box{margin-top:12px; border-radius:12px; padding:12px; background:var(--glass)}
     .message-box textarea{width:100%; min-height:120px; border-radius:8px; padding:12px; border:0; resize:vertical; font-size:15px}
@@ -362,6 +385,28 @@
       box-shadow:0 0 0 2px rgba(255,77,166,0.6);
       transform:translateY(-1px);
     }
+    .mural-list{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:220px;
+      overflow-y:auto;
+    }
+    .mural-note{
+      padding:8px 10px;
+      border-radius:10px;
+      background:#fff9fd;
+      border:1px solid rgba(0,0,0,0.06);
+      font-size:13px;
+    }
+    .mural-note small{
+      display:block;
+      margin-top:4px;
+      font-size:11px;
+      opacity:0.75;
+    }
+
     .menu-textarea{
       width:100%;
       min-height:70px;
@@ -592,6 +637,7 @@
             <p class="small" id="pollSexoStatus" style="margin-top:6px;">Ainda sem resposta hoje.</p>
           </div>
 
+          
           <div class="poll-block" id="pollMenu">
             <div class="poll-title">Cardápio do dia 🍽️</div>
             <textarea id="menuInput" class="menu-textarea" placeholder="Ex.: noite do macarrão, pedir sushi, ver filme com pipoca..."></textarea>
@@ -600,8 +646,21 @@
             </div>
             <p class="small" id="menuStatus" style="margin-top:6px;">Sem sugestão ainda. Escrevam algo gostoso pra hoje 😋</p>
           </div>
+
+          <div class="poll-block" id="muralBlock">
+            <div class="poll-title">Mural de recadinhos 💌</div>
+            <p class="small" style="margin-bottom:6px;">
+              Deixem bilhetes, lembretes e mensagens rápidas um para o outro. Eles ficam salvos para os dois.
+            </p>
+            <textarea id="muralInput" class="menu-textarea" placeholder="Escreva um recadinho fofo, um lembrete ou um 'te amo' rápido..."></textarea>
+            <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-sim" id="muralAddBtn">Adicionar recado</button>
+            </div>
+            <div id="muralList" class="mural-list"></div>
+          </div>
         </div>
       </section>
+
 
       <footer>
         Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA.
@@ -610,7 +669,22 @@
     </div>
   </div>
 
-  <!-- Overlay mensagem grande -->
+  
+  <!-- Overlay galeria completa -->
+  <div class="overlay" id="galleryOverlay">
+    <div class="letter-card">
+      <h2 class="letter-title">Nossa galeria completa 💞</h2>
+      <p class="small" style="text-align:center;">
+        Todas as fotos que vocês salvaram aparecem aqui. Podem tocar para ver no destaque ou remover se quiserem.
+      </p>
+      <div class="gallery" id="fullGallery" style="margin-top:10px;"></div>
+      <div style="margin-top:16px; text-align:center;">
+        <button class="btn btn-sim" id="closeGalleryOverlay">Fechar galeria</button>
+      </div>
+    </div>
+  </div>
+
+<!-- Overlay mensagem grande -->
   <div class="overlay" id="overlay">
     <div class="overlay-card">
       <h2 id="overlayTitle">Eu te amo, Ana Clara ❤</h2>
@@ -845,6 +919,7 @@
     const fileInput = document.getElementById('fileInput');
     const savePhotosBtn = document.getElementById('savePhotosBtn');
 
+    // Salvar fotos na galeria (com compressão)
     savePhotosBtn.addEventListener('click', () => {
       const files = Array.from(fileInput.files || []);
       if(!files.length){
@@ -877,6 +952,94 @@
       fileInput.value = '';
     });
 
+    // Visualização e galeria completa
+    const galleryOverlay = document.getElementById('galleryOverlay');
+    const fullGallery = document.getElementById('fullGallery');
+    const closeGalleryOverlay = document.getElementById('closeGalleryOverlay');
+    const MAX_PREVIEW_DYNAMIC = 8;
+    let dynamicPhotosList = [];
+
+    function openFullGalleryOverlay(){
+      if(!galleryOverlay || !fullGallery) return;
+      fullGallery.innerHTML = '';
+
+      dynamicPhotosList.forEach(p => {
+        if(!p.dataUrl) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-wrapper';
+
+        const img = document.createElement('img');
+        img.src = p.dataUrl;
+        img.className = 'thumb';
+        img.addEventListener('click', () => setHeroFromSrc(p.dataUrl));
+        wrap.appendChild(img);
+
+        const btn = document.createElement('button');
+        btn.className = 'thumb-remove';
+        btn.innerText = '×';
+        btn.title = 'Remover esta foto';
+        btn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if(!confirm('Tem certeza que quer remover esta foto da galeria?')) return;
+          if(db){
+            firebase.database().ref('gallery/' + coupleId + '/' + p.id).remove()
+              .then(() => {
+                showTinyNote('Foto removida 🗑️');
+                heroSources = heroSources.filter(u => u !== p.dataUrl);
+              })
+              .catch(err => {
+                console.warn('Erro ao remover foto:', err);
+                showTinyNote('Não consegui remover 😢');
+              });
+          }
+        });
+
+        wrap.appendChild(btn);
+        fullGallery.appendChild(wrap);
+      });
+
+      galleryOverlay.classList.add('show');
+    }
+
+    if(closeGalleryOverlay){
+      closeGalleryOverlay.addEventListener('click', () => {
+        galleryOverlay.classList.remove('show');
+      });
+    }
+
+    function renderDynamicPreview(){
+      // Remove fotos dinâmicas já exibidas
+      const oldDyn = gallery.querySelectorAll('.dynamic-photo');
+      oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
+
+      // Remove blocos "+N"
+      const moreTiles = gallery.querySelectorAll('.thumb-more-wrapper');
+      moreTiles.forEach(el => el.remove());
+
+      if(!dynamicPhotosList.length) return;
+
+      const total = dynamicPhotosList.length;
+      const previewCount = Math.min(MAX_PREVIEW_DYNAMIC, total);
+
+      for(let i = 0; i < previewCount; i++){
+        const p = dynamicPhotosList[i];
+        createThumb(p.dataUrl, true, p.id);
+      }
+
+      const remaining = total - previewCount;
+      if(remaining > 0){
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-wrapper thumb-more-wrapper';
+        const more = document.createElement('div');
+        more.className = 'thumb-more';
+        more.textContent = '+' + remaining;
+        wrap.appendChild(more);
+        more.addEventListener('click', openFullGalleryOverlay);
+        gallery.appendChild(wrap);
+      }
+    }
+
+    // Upload fotos -> Realtime DB
     if(db){
       firebase.database()
         .ref('gallery/' + coupleId)
@@ -885,25 +1048,26 @@
         .on('value', snapshot => {
           const data = snapshot.val() || {};
 
-          // Remove fotos dinâmicas antigas do DOM
-          const oldDyn = gallery.querySelectorAll('.dynamic-photo');
-          oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
+          dynamicPhotosList = [];
 
-          const entries = Object.entries(data).sort((a,b) => {
-            const va = a[1]?.createdAt || 0;
-            const vb = b[1]?.createdAt || 0;
-            return va - vb;
-          });
-
+          const entries = Object.entries(data);
           entries.forEach(([id, item]) => {
-            if(!item.dataUrl) return;
-            createThumb(item.dataUrl, true, id);
+            if(!item || !item.dataUrl) return;
+            dynamicPhotosList.push({
+              id,
+              dataUrl: item.dataUrl,
+              createdAt: item.createdAt || 0
+            });
           });
+
+          // Ordena do mais antigo pro mais novo
+          dynamicPhotosList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+          renderDynamicPreview();
         }, err => {
           console.warn('Erro ao ler galeria do Firebase:', err);
         });
     }
-
 
 // Overlays
     const overlay = document.getElementById('overlay');
@@ -1212,6 +1376,7 @@
       });
     }
 
+    
     // CARDÁPIO DO DIA
     const menuInput  = document.getElementById('menuInput');
     const menuSaveBtn = document.getElementById('menuSaveBtn');
@@ -1246,6 +1411,89 @@
         menuStatus.textContent = 'Sugestão atual: ' + data.text;
       });
     }
+
+    // MURAL DE RECADINHOS
+    const muralInput  = document.getElementById('muralInput');
+    const muralAddBtn = document.getElementById('muralAddBtn');
+    const muralList   = document.getElementById('muralList');
+
+    function renderMuralList(data){
+      if(!muralList) return;
+      muralList.innerHTML = '';
+
+      const entries = Object.entries(data || {}).sort((a,b) => {
+        const va = (a[1] && a[1].createdAt) || 0;
+        const vb = (b[1] && b[1].createdAt) || 0;
+        return va - vb;
+      });
+
+      entries.forEach(([id, item]) => {
+        if(!item || !item.text) return;
+        const noteEl = document.createElement('div');
+        noteEl.className = 'mural-note';
+
+        const who =
+          item.author === 'pablo' ? 'Pablo' :
+          item.author === 'ana'   ? 'Ana Clara' :
+          'Alguém';
+
+        let dateLabel = '';
+        if(item.createdAt){
+          try{
+            const d = new Date(item.createdAt);
+            dateLabel = d.toLocaleString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }catch(e){}
+        }
+
+        noteEl.innerHTML =
+          '<div>' + item.text + '</div>' +
+          '<small>– ' + who + (dateLabel ? ' • ' + dateLabel : '') + '</small>';
+
+        muralList.appendChild(noteEl);
+      });
+    }
+
+    if(muralAddBtn){
+      muralAddBtn.addEventListener('click', () => {
+        const text = (muralInput.value || '').trim();
+        if(!text){
+          alert('Escreve um recadinho primeiro 🥹');
+          return;
+        }
+        if(!db){
+          showTinyNote('Firebase não disponível, não consegui salvar o recado 😢');
+          return;
+        }
+        const author = currentUser || null; // usa quem está logado no painel de satisfação
+        firebase.database().ref('mural/' + coupleId).push({
+          text,
+          author,
+          createdAt: Date.now()
+        }).then(() => {
+          muralInput.value = '';
+          showTinyNote('Recadinho salvo no mural 💌');
+        }).catch(err => {
+          console.warn('Erro ao salvar recado no mural:', err);
+        });
+      });
+    }
+
+    if(db){
+      firebase.database()
+        .ref('mural/' + coupleId)
+        .orderByChild('createdAt')
+        .limitToLast(30)
+        .on('value', snap => {
+          const data = snap.val() || {};
+          renderMuralList(data);
+        });
+    }
   </script>
+
 </body>
 </html>

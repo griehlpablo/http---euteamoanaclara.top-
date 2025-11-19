@@ -4,12 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Eu te amo Ana Clara ❤</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Ana Clara ❤">
-
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&family=Great+Vibes&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -326,24 +320,6 @@
       to{transform:translateY(0);}
     }
 
-
-    /* Contagem regressiva */
-    .countdown-panel .countdown-time{
-      font-size:26px;
-      font-weight:800;
-      color:var(--accent);
-      letter-spacing:1px;
-      margin:10px 0 4px;
-    }
-    .countdown-panel .countdown-time span{
-      display:inline-block;
-      min-width:52px;
-    }
-    .countdown-panel .countdown-msg{
-      font-size:13px;
-      opacity:0.85;
-    }
-
     /* Enquetes */
     .polls-wrapper{
       margin-top:20px;
@@ -530,22 +506,6 @@
             <div style="margin-top:12px; text-align:left">
               <small class="small">Dica: se o slider ficar menor que 10, ele volta pra 10 automaticamente — porque você merece tudo.</small>
             </div>
-          </div>
-
-          <div style="height:14px"></div>
-
-          <!-- Contagem regressiva para o encontro -->
-          <div class="panel countdown-panel" style="text-align:center">
-            <h3>Contagem para nosso próximo encontro ⏳</h3>
-            <p class="small">
-              Encontro em <strong>19/11/2025 às 18h</strong> (horário de Brasília).
-            </p>
-            <div class="countdown-time" id="countdownTime">
-              --d --h --m --s
-            </div>
-            <p class="small countdown-msg" id="countdownMsg">
-              Carregando contagem...
-            </p>
           </div>
 
           <div style="height:14px"></div>
@@ -845,6 +805,43 @@
     startHeroCarousel();
 
     // Upload fotos -> Realtime DB
+    // Helper: redimensiona e comprime a imagem antes de enviar para o Firebase
+    function resizeImageToDataURL(file, maxSize, callback){
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        const img = new Image();
+        img.onload = function(){
+          let w = img.width;
+          let h = img.height;
+
+          // Mantém proporção e limita o maior lado a maxSize
+          if(w > h){
+            if(w > maxSize){
+              h = Math.round(h * (maxSize / w));
+              w = maxSize;
+            }
+          } else {
+            if(h > maxSize){
+              w = Math.round(w * (maxSize / h));
+              h = maxSize;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          // JPEG com compressão (qualidade 0.7)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          callback(dataUrl);
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
     const fileInput = document.getElementById('fileInput');
     const savePhotosBtn = document.getElementById('savePhotosBtn');
 
@@ -858,11 +855,12 @@
         showTinyNote('Firebase não disponível, não consegui salvar 😢');
         return;
       }
+
       files.forEach(file => {
         if(!file.type.startsWith('image/')) return;
-        const reader = new FileReader();
-        reader.onload = function(ev){
-          const dataUrl = ev.target.result;
+
+        // Redimensiona e comprime antes de enviar
+        resizeImageToDataURL(file, 1280, function(dataUrl){
           firebase.database().ref('gallery/' + coupleId).push({
             dataUrl,
             name: file.name || null,
@@ -873,39 +871,32 @@
             console.warn('Erro ao salvar foto:', err);
             showTinyNote('Não consegui salvar uma das fotos 😢');
           });
-        };
-        reader.readAsDataURL(file);
+        });
       });
+
       fileInput.value = '';
     });
 
-        if(db){
+    if(db){
       firebase.database()
         .ref('gallery/' + coupleId)
         .orderByChild('createdAt')
         .limitToLast(60) // carrega só as 60 últimas fotos
         .on('value', snapshot => {
-          const data = snapshot.val();
-          
-          // Remove as fotos dinâmicas antigas do HTML
+          const data = snapshot.val() || {};
+
+          // Remove fotos dinâmicas antigas do DOM
           const oldDyn = gallery.querySelectorAll('.dynamic-photo');
           oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
 
-          if(!data){
-            console.log('Nenhuma foto dinâmica no Firebase.');
-            return;
-          }
-
-          // Ordena por createdAt (do mais antigo pro mais novo)
           const entries = Object.entries(data).sort((a,b) => {
-            const va = (a[1] && a[1].createdAt) || 0;
-            const vb = (b[1] && b[1].createdAt) || 0;
+            const va = a[1]?.createdAt || 0;
+            const vb = b[1]?.createdAt || 0;
             return va - vb;
           });
 
-          // Cria os thumbs
           entries.forEach(([id, item]) => {
-            if(!item || !item.dataUrl) return;
+            if(!item.dataUrl) return;
             createThumb(item.dataUrl, true, id);
           });
         }, err => {
@@ -914,7 +905,7 @@
     }
 
 
-    // Overlays
+// Overlays
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlayTitle');
     const overlayText = document.getElementById('overlayText');
@@ -1255,64 +1246,6 @@
         menuStatus.textContent = 'Sugestão atual: ' + data.text;
       });
     }
-  </script>
-
-  <script>
-    // CONTAGEM REGRESSIVA PARA O ENCONTRO
-    (function(){
-      var countdownTimeEl = document.getElementById('countdownTime');
-      var countdownMsgEl  = document.getElementById('countdownMsg');
-
-      if(!countdownTimeEl || !countdownMsgEl) return;
-
-      // Encontro: 19/11/2025 às 18h (horário local - Brasil)
-      // meses: 0 = jan, 10 = nov
-      var targetDate = new Date(2025, 10, 19, 18, 0, 0);
-
-      function pad2(n){
-        return (n < 10 ? '0' : '') + n;
-      }
-
-      function updateCountdown(){
-        var now  = new Date();
-        var diff = targetDate.getTime() - now.getTime();
-
-        if(diff <= 0){
-          countdownTimeEl.innerHTML =
-            '<span>00d</span> <span>00h</span> <span>00m</span> <span>00s</span>';
-          countdownMsgEl.textContent =
-            'Já é o dia do encontro! Espero que vocês estejam juntinhos agora 💖';
-          return;
-        }
-
-        var totalSeconds = Math.floor(diff / 1000);
-        var days    = Math.floor(totalSeconds / 86400);
-        var hours   = Math.floor((totalSeconds % 86400) / 3600);
-        var minutes = Math.floor((totalSeconds % 3600) / 60);
-        var seconds = totalSeconds % 60;
-
-        var htmlTime =
-          '<span>' + pad2(days)    + 'd</span> ' +
-          '<span>' + pad2(hours)   + 'h</span> ' +
-          '<span>' + pad2(minutes) + 'm</span> ' +
-          '<span>' + pad2(seconds) + 's</span>';
-
-        countdownTimeEl.innerHTML = htmlTime;
-
-        var msg;
-        if(days > 1){
-          msg = 'Faltam ' + days + ' dias pro próximo encontro. Aguenta coraçãozinho 💘';
-        }else if(days === 1){
-          msg = 'Falta 1 dia pro encontro! Já pode começar a surtar de ansiedade 🥹';
-        }else{
-          msg = 'É hoje! Daqui a pouquinho vocês vão se abraçar 💞';
-        }
-        countdownMsgEl.textContent = msg;
-      }
-
-      updateCountdown();
-      setInterval(updateCountdown, 1000);
-    })();
   </script>
 </body>
 </html>

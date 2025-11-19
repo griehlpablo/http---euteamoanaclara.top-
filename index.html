@@ -883,7 +883,7 @@
       firebase.database()
         .ref('gallery/' + coupleId)
         .orderByChild('createdAt')
-        .limitToLast(30) // carrega só as 30 últimas fotos
+        .limitToLast(60) // carrega só as 60 últimas fotos
         .on('value', snapshot => {
           const data = snapshot.val();
           

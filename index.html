@@ -407,7 +407,33 @@
       opacity:0.75;
     }
 
-    .menu-textarea{
+    .menu-texta
+    .mural-note.done{
+      opacity:0.7;
+      background:#f4f4f4;
+    }
+    .mural-actions{
+      margin-top:6px;
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      font-size:11px;
+    }
+    .mural-action-btn{
+      border:0;
+      border-radius:999px;
+      padding:4px 8px;
+      cursor:pointer;
+      font-size:11px;
+      font-weight:600;
+      background:#ffe4f4;
+      color:#b10061;
+    }
+    .mural-action-btn.delete{
+      background:#ffe5e5;
+      color:#991b1b;
+    }
+rea{
       width:100%;
       min-height:70px;
       border-radius:10px;
@@ -1417,6 +1443,7 @@
     const muralAddBtn = document.getElementById('muralAddBtn');
     const muralList   = document.getElementById('muralList');
 
+    
     function renderMuralList(data){
       if(!muralList) return;
       muralList.innerHTML = '';
@@ -1431,6 +1458,13 @@
         if(!item || !item.text) return;
         const noteEl = document.createElement('div');
         noteEl.className = 'mural-note';
+        if(item.done){
+          noteEl.classList.add('done');
+        }
+
+        const textDiv = document.createElement('div');
+        textDiv.textContent = item.text;
+        noteEl.appendChild(textDiv);
 
         const who =
           item.author === 'pablo' ? 'Pablo' :
@@ -1450,15 +1484,50 @@
           }catch(e){}
         }
 
-        noteEl.innerHTML =
-          '<div>' + item.text + '</div>' +
-          '<small>– ' + who + (dateLabel ? ' • ' + dateLabel : '') + '</small>';
+        const meta = document.createElement('small');
+        meta.textContent = '– ' + who + (dateLabel ? ' • ' + dateLabel : '');
+        noteEl.appendChild(meta);
+
+        // Ações (concluir / apagar)
+        const actions = document.createElement('div');
+        actions.className = 'mural-actions';
+
+        const doneBtn = document.createElement('button');
+        doneBtn.className = 'mural-action-btn';
+        doneBtn.textContent = item.done ? 'Marcar como pendente' : 'Marcar como feito';
+        doneBtn.addEventListener('click', () => {
+          if(!db) return;
+          const newVal = !item.done;
+          firebase.database().ref('mural/' + coupleId + '/' + id + '/done').set(newVal)
+            .then(() => {
+              showTinyNote(newVal ? 'Missão marcada como feita ✅' : 'Missão voltou para pendente ⏳');
+            })
+            .catch(err => console.warn('Erro ao atualizar recado:', err));
+        });
+        actions.appendChild(doneBtn);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'mural-action-btn delete';
+        delBtn.textContent = 'Apagar';
+        delBtn.addEventListener('click', () => {
+          if(!db) return;
+          if(!confirm('Tem certeza que quer apagar este recadinho?')) return;
+          firebase.database().ref('mural/' + coupleId + '/' + id).remove()
+            .then(() => {
+              showTinyNote('Recadinho apagado 🗑️');
+            })
+            .catch(err => console.warn('Erro ao apagar recado:', err));
+        });
+        actions.appendChild(delBtn);
+
+        noteEl.appendChild(actions);
 
         muralList.appendChild(noteEl);
       });
     }
 
     if(muralAddBtn){
+
       muralAddBtn.addEventListener('click', () => {
         const text = (muralInput.value || '').trim();
         if(!text){

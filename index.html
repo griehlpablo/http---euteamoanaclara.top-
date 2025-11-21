@@ -99,26 +99,24 @@
       background:linear-gradient(135deg,#ff9fc9,#ff4da6);
       color:#fff;
       border-radius:999px;
-      padding:10px 12px;
+      padding:10px 14px;
       display:flex;
       align-items:center;
-      justify-content:center;
+      gap:4px;
       box-shadow:0 8px 20px rgba(0,0,0,0.18);
       cursor:pointer;
-      font-size:16px;
-    }
-    .music-toggle span{
-      display:inline-block;
-      margin-left:4px;
-      font-weight:700;
-      font-size:13px;
+      font-size:15px;
     }
     .music-toggle.playing{
       background:linear-gradient(135deg,#22c55e,#16a34a);
     }
     .music-toggle-icon{
       font-size:18px;
-      margin-right:2px;
+      line-height:1;
+    }
+    .music-toggle-text{
+      font-weight:700;
+      font-size:13px;
     }
     @media (max-width:420px){
       .music-toggle{
@@ -126,7 +124,7 @@
         bottom:12px;
         padding:8px 10px;
       }
-      .music-toggle span{
+      .music-toggle-text{
         display:none;
       }
     }
@@ -558,6 +556,26 @@
             </div>
           </div>
 
+        
+          <div class="panel" style="text-align:center; margin-top:14px">
+            <h3>Nossa trilha sonora 🎧</h3>
+            <p class="small">
+              Você pode ouvir a música do site (botão rosa no cantinho) ou nossa playlist no Spotify:
+            </p>
+            <div style="margin-top:8px">
+              <!-- Troque SEU_PLAYLIST_ID_AQUI pelo ID da sua playlist no Spotify -->
+              <iframe style="border-radius:12px"
+                src="https://open.spotify.com/embed/playlist/1QfjqHdjtqlLAoxCUSRsNM?utm_source=generator"
+                width="100%" height="152" frameborder="0"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy">
+              </iframe>
+            </div>
+            <p class="small" style="margin-top:6px;">
+              Pra tocar a playlist, é só apertar play aí em cima. Pra ouvir a música do site, usa o botão de música no cantinho da tela.
+            </p>
+          </div>
+
         </aside>
       </div>
 
@@ -654,7 +672,7 @@
   <audio id="bgMusic" src="music/nossa-musica.mp3" loop></audio>
   <div class="music-toggle" id="musicToggle" title="Tocar ou pausar música">
     <span class="music-toggle-icon" id="musicIcon">▶️</span>
-    <span>música</span>
+    <span class="music-toggle-text">música</span>
   </div>
 
 <!-- Overlay mensagem grande -->
@@ -1185,7 +1203,7 @@
             showTinyNote('Música ligada 🎶');
           }).catch(err => {
             console.warn('Erro ao tocar música:', err);
-            alert('O navegador bloqueou o áudio automático. Confere se o som do site está permitido na barra de endereço 🙂');
+            alert('O navegador pode ter bloqueado o áudio. Confere se o som do site está permitido na barra de endereço 🙂');
           });
         }else{
           bgMusic.pause();

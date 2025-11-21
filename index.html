@@ -397,7 +397,107 @@
     }
 
     /* Enquetes */
-    .polls-wrapper{
+    
+    /* Contagem regressiva */
+    .countdown-panel .countdown-time{
+      font-size:26px;
+      font-weight:800;
+      color:var(--accent);
+      letter-spacing:1px;
+      margin:10px 0 4px;
+    }
+    .countdown-panel .countdown-time span{
+      display:inline-block;
+      min-width:52px;
+    }
+    .countdown-panel .countdown-msg{
+      font-size:13px;
+      opacity:0.85;
+    }
+
+    /* Mural de recados */
+    #muralList{
+      margin-top:6px;
+    }
+    .mural-list-empty{
+      opacity:0.7;
+    }
+    .mural-card{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.06);
+      box-shadow:0 2px 6px rgba(0,0,0,0.03);
+      font-size:13px;
+    }
+    .mural-card + .mural-card{
+      margin-top:6px;
+    }
+    .mural-main{
+      flex:1;
+    }
+    .mural-text{
+      margin:0 0 4px;
+      white-space:pre-wrap;
+      word-wrap:break-word;
+    }
+    .mural-meta{
+      font-size:11px;
+      opacity:0.8;
+    }
+    .mural-tag{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:11px;
+      margin-right:6px;
+      background:#ffe4f4;
+      color:#b10061;
+      font-weight:600;
+    }
+    .mural-tag.missao{
+      background:#dcfce7;
+      color:#166534;
+    }
+    .mural-tag.importante{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+    .mural-status{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      font-size:11px;
+    }
+    .mural-status.done{
+      color:#166534;
+    }
+    .mural-actions{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .mural-action-btn{
+      border:0;
+      border-radius:999px;
+      padding:4px 8px;
+      font-size:11px;
+      cursor:pointer;
+      background:#f3f4f6;
+    }
+    .mural-action-btn.done{
+      background:#22c55e;
+      color:#fff;
+    }
+    .mural-action-btn.delete{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+.polls-wrapper{
       margin-top:20px;
       display:flex;
       justify-content:center;
@@ -584,7 +684,25 @@
             </div>
           </div>
 
+          
           <div style="height:14px"></div>
+
+          <!-- Contagem regressiva para o encontro -->
+          <div class="panel countdown-panel" style="text-align:center">
+            <h3>Contagem para nosso próximo encontro ⏳</h3>
+            <p class="small">
+              Encontro em <strong>19/11/2025 às 18h</strong> (horário de Brasília).
+            </p>
+            <div class="countdown-time" id="countdownTime">
+              --d --h --m --s
+            </div>
+            <p class="small countdown-msg" id="countdownMsg">
+              Carregando contagem...
+            </p>
+          </div>
+
+          <div style="height:14px"></div>
+
 
           <div class="panel" style="text-align:center">
             <h3>Brilhos & Corações</h3>
@@ -603,7 +721,7 @@
             <div style="margin-top:8px">
               <!-- Troque SEU_PLAYLIST_ID_AQUI pelo ID da sua playlist no Spotify -->
               <iframe style="border-radius:12px"
-                src="https://open.spotify.com/embed/playlist/1QfjqHdjtqlLAoxCUSRsNM?utm_source=generator"
+                src="https://open.spotify.com/embed/playlist/3RitDlOniO6hRIQxmLWrMw?utm_source=generator"
                 width="100%" height="152" frameborder="0"
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                 loading="lazy">
@@ -698,6 +816,34 @@
           </div>
         </div>
       </section>
+      <!-- MURAL DE RECADINHOS -->
+      <section class="polls-wrapper">
+        <div class="panel poll-card">
+          <h2>Mural de recadinhos 💌</h2>
+          <p class="poll-sub">
+            Escrevam recados, missões ou lembretes um pro outro. Eles ficam salvos pra vocês dois, em qualquer dispositivo.
+          </p>
+
+          <div class="poll-block">
+            <div class="poll-title">Novo recado</div>
+            <textarea id="muralInput" class="menu-textarea" placeholder="Ex.: Hoje é dia de filme com coberta e pipoca 🍿💤"></textarea>
+            <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
+              <select id="muralTipo" class="menu-textarea" style="min-height:0; height:38px; flex:1 1 130px; padding:6px 8px;">
+                <option value="fofo">Recadinho fofo 💖</option>
+                <option value="missao">Missão / lembrete ✅</option>
+                <option value="importante">Coisa importante ❗</option>
+              </select>
+              <button class="btn btn-sim" id="muralAddBtn" style="flex:0 0 auto;">Adicionar recado</button>
+            </div>
+          </div>
+
+          <div class="poll-block" id="muralListWrapper">
+            <div class="poll-title">Recados salvos</div>
+            <div id="muralList" class="mural-list-empty small">Nenhum recadinho ainda. Comecem escrevendo o primeiro 💕</div>
+          </div>
+        </div>
+      </section>
+
 
       <footer>
         Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA.
@@ -1492,6 +1638,219 @@
         menuStatus.textContent = 'Sugestão atual: ' + data.text;
       });
     }
+
+    // MURAL DE RECADOS
+    const muralInput   = document.getElementById('muralInput');
+    const muralTipo    = document.getElementById('muralTipo');
+    const muralAddBtn  = document.getElementById('muralAddBtn');
+    const muralListEl  = document.getElementById('muralList');
+
+    let muralItems = [];
+
+    function renderMuralList(){
+      if(!muralListEl) return;
+      muralListEl.innerHTML = '';
+
+      if(!muralItems.length){
+        muralListEl.textContent = 'Nenhum recadinho ainda. Comecem escrevendo o primeiro 💕';
+        muralListEl.classList.add('mural-list-empty');
+        return;
+      }
+      muralListEl.classList.remove('mural-list-empty');
+
+      muralItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'mural-card';
+
+        const main = document.createElement('div');
+        main.className = 'mural-main';
+
+        const pText = document.createElement('p');
+        pText.className = 'mural-text';
+        pText.textContent = item.text || '';
+        main.appendChild(pText);
+
+        const meta = document.createElement('div');
+        meta.className = 'mural-meta';
+
+        const tag = document.createElement('span');
+        tag.className = 'mural-tag ' + (item.tipo || 'fofo');
+        if(item.tipo === 'missao'){
+          tag.textContent = 'Missão / lembrete ✅';
+        }else if(item.tipo === 'importante'){
+          tag.textContent = 'Importante ❗';
+        }else{
+          tag.textContent = 'Recadinho fofo 💖';
+        }
+        meta.appendChild(tag);
+
+        const status = document.createElement('span');
+        status.className = 'mural-status' + (item.done ? ' done' : '');
+        status.textContent = item.done ? 'Concluído ✔' : 'Pendente';
+        meta.appendChild(status);
+
+        if(item.createdAt){
+          const dt = new Date(item.createdAt);
+          const dataStr = dt.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+          const horaStr = dt.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+          const spanData = document.createElement('span');
+          spanData.textContent = ' • ' + dataStr + ' às ' + horaStr;
+          meta.appendChild(spanData);
+        }
+
+        main.appendChild(meta);
+        card.appendChild(main);
+
+        const actions = document.createElement('div');
+        actions.className = 'mural-actions';
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'mural-action-btn' + (item.done ? ' done' : '');
+        toggleBtn.textContent = item.done ? 'Marcar como pendente' : 'Marcar como feito';
+        toggleBtn.addEventListener('click', () => {
+          const newDone = !item.done;
+          if(db){
+            firebase.database().ref('mural/' + coupleId + '/' + item.id).update({ done: newDone })
+              .catch(err => console.warn('Erro ao atualizar mural:', err));
+          }else{
+            item.done = newDone;
+            renderMuralList();
+          }
+        });
+        actions.appendChild(toggleBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'mural-action-btn delete';
+        deleteBtn.textContent = 'Apagar';
+        deleteBtn.addEventListener('click', () => {
+          if(!confirm('Tem certeza que quer apagar esse recado?')) return;
+          if(db){
+            firebase.database().ref('mural/' + coupleId + '/' + item.id).remove()
+              .catch(err => console.warn('Erro ao remover recado:', err));
+          }else{
+            muralItems = muralItems.filter(m => m.id !== item.id);
+            renderMuralList();
+          }
+        });
+        actions.appendChild(deleteBtn);
+
+        card.appendChild(actions);
+        muralListEl.appendChild(card);
+      });
+    }
+
+    if(muralAddBtn){
+      muralAddBtn.addEventListener('click', () => {
+        const text = (muralInput.value || '').trim();
+        const tipo = muralTipo ? muralTipo.value : 'fofo';
+        if(!text){
+          alert('Escreve alguma coisa no recadinho primeiro 💌');
+          return;
+        }
+        const payload = {
+          text,
+          tipo,
+          done: false,
+          createdAt: Date.now()
+        };
+        if(db){
+          firebase.database().ref('mural/' + coupleId).push(payload)
+            .then(() => {
+              muralInput.value = '';
+              showTinyNote('Recadinho adicionado no mural 💌');
+            })
+            .catch(err => console.warn('Erro ao salvar recado:', err));
+        }else{
+          // fallback local
+          const id = 'local-' + Date.now();
+          muralItems.push({ id, ...payload });
+          muralInput.value = '';
+          renderMuralList();
+        }
+      });
+    }
+
+    if(db){
+      firebase.database().ref('mural/' + coupleId)
+        .orderByChild('createdAt')
+        .on('value', snap => {
+          const data = snap.val() || {};
+          const entries = Object.entries(data).sort((a,b) => {
+            const va = (a[1] && a[1].createdAt) || 0;
+            const vb = (b[1] && b[1].createdAt) || 0;
+            return va - vb;
+          });
+          muralItems = entries.map(([id, item]) => ({
+            id,
+            text: item.text || '',
+            tipo: item.tipo || 'fofo',
+            done: !!item.done,
+            createdAt: item.createdAt || 0
+          }));
+          renderMuralList();
+        }, err => console.warn('Erro ao ler mural:', err));
+    }else{
+      renderMuralList();
+    }
+
+  </script>
+
+  <script>
+    // CONTAGEM REGRESSIVA PARA O ENCONTRO
+    (function(){
+      var countdownTimeEl = document.getElementById('countdownTime');
+      var countdownMsgEl  = document.getElementById('countdownMsg');
+
+      if(!countdownTimeEl || !countdownMsgEl) return;
+
+      // Encontro: 19/11/2025 às 18h (horário local - Brasil)
+      // meses: 0 = jan, 10 = nov
+      var targetDate = new Date(2025, 10, 19, 18, 0, 0);
+
+      function pad2(n){
+        return (n < 10 ? '0' : '') + n;
+      }
+
+      function updateCountdown(){
+        var now  = new Date();
+        var diff = targetDate.getTime() - now.getTime();
+
+        if(diff <= 0){
+          countdownTimeEl.innerHTML =
+            '<span>00d</span> <span>00h</span> <span>00m</span> <span>00s</span>';
+          countdownMsgEl.textContent =
+            'Já é o dia do encontro! Espero que vocês estejam juntinhos agora 💖';
+          return;
+        }
+
+        var totalSeconds = Math.floor(diff / 1000);
+        var days    = Math.floor(totalSeconds / 86400);
+        var hours   = Math.floor((totalSeconds % 86400) / 3600);
+        var minutes = Math.floor((totalSeconds % 3600) / 60);
+        var seconds = totalSeconds % 60;
+
+        var htmlTime =
+          '<span>' + pad2(days)    + 'd</span> ' +
+          '<span>' + pad2(hours)   + 'h</span> ' +
+          '<span>' + pad2(minutes) + 'm</span> ' +
+          '<span>' + pad2(seconds) + 's</span>';
+
+        countdownTimeEl.innerHTML = htmlTime;
+
+        var msg;
+        if(days > 1){
+          msg = 'Faltam ' + days + ' dias pro próximo encontro. Aguenta coraçãozinho 💘';
+        }else if(days === 1){
+          msg = 'Falta 1 dia pro encontro! Já pode começar a surtar de ansiedade 🥹';
+        }else{
+          msg = 'É hoje! Daqui a pouquinho vocês vão se abraçar 💞';
+        }
+        countdownMsgEl.textContent = msg;
+      }
+
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+    })();
   </script>
 </body>
 </html>

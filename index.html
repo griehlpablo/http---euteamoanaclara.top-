@@ -8,6 +8,9 @@
   <!-- Ícones para iOS/Android -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
+  <!-- Versão raiz para iOS (garante ícone na tela inicial) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <!-- Versão em /images como fallback -->
   <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Ana Clara ❤">
@@ -966,7 +969,7 @@
             </iframe>
           </div>
 
-          <div class="music-section">
+          <div class="music-section" id="spotifyPremiumBlock">
             <h4>Ouvir a playlist inteira (Spotify Premium)</h4>
             <p class="small">
               Se você ou a Ana entrarem com uma conta Premium, a playlist toca inteira aqui no site. 💚
@@ -1835,6 +1838,9 @@
     const SPOTIFY_REDIRECT_URI = window.location.origin + window.location.pathname;
     const SPOTIFY_PLAYLIST_URI = 'spotify:playlist:3RitDlOniO6hRIQxmLWrMw';
 
+    // Detecção simples de mobile (pra limitar o player Premium ao desktop)
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent || '');
+
     const spotifyLoginBtn = document.getElementById('spotifyLoginBtn');
     const spotifyPlayBtn  = document.getElementById('spotifyPlayBtn');
     const spotifyStatusEl = document.getElementById('spotifyStatus');
@@ -1996,24 +2002,35 @@
       });
     }
 
-    spotifyLoginBtn && spotifyLoginBtn.addEventListener('click', ()=>{
-      startSpotifyLogin();
-    });
+    if(!isMobile){
+      spotifyLoginBtn && spotifyLoginBtn.addEventListener('click', ()=>{
+        startSpotifyLogin();
+      });
 
-    spotifyPlayBtn && spotifyPlayBtn.addEventListener('click', async ()=>{
-      const token = ensureSpotifyToken();
-      if(!token){
-        alert('Antes clique em "Entrar com Spotify" pra fazer login. 💚');
-        return;
+      spotifyPlayBtn && spotifyPlayBtn.addEventListener('click', async ()=>{
+        const token = ensureSpotifyToken();
+        if(!token){
+          alert('Antes clique em "Entrar com Spotify" pra fazer login. 💚');
+          return;
+        }
+        if(!spotifyPlayer || !spotifySDKReady){
+          logSpotify('Criando player Spotify...');
+          createSpotifyPlayer(token);
+          setTimeout(()=> playSpotifyPlaylist(token), 1800);
+        }else{
+          playSpotifyPlaylist(token);
+        }
+      });
+    }else{
+      // No celular, esconder os botões do player Premium e mostrar uma mensagem amigável
+      if(spotifyLoginBtn) spotifyLoginBtn.style.display = 'none';
+      if(spotifyPlayBtn) spotifyPlayBtn.style.display  = 'none';
+      const logDetails = document.querySelector('.music-log-details');
+      if(logDetails) logDetails.style.display = 'none';
+      if(spotifyStatusEl){
+        spotifyStatusEl.textContent = 'No celular, use a música do site ou o player de prévia/Spotify app 💚. No computador, dá pra entrar com Spotify Premium e ouvir tudo aqui.';
       }
-      if(!spotifyPlayer || !spotifySDKReady){
-        logSpotify('Criando player Spotify...');
-        createSpotifyPlayer(token);
-        setTimeout(()=> playSpotifyPlaylist(token), 1800);
-      }else{
-        playSpotifyPlaylist(token);
-      }
-    });
+    }
 
     async function playSpotifyPlaylist(token){
       if(!spotifyDeviceId){
@@ -2046,8 +2063,16 @@
       }
     }
 
-    // Ao carregar a página, se já tiver token no localStorage/hash, prepara o status
+    // Ao carregar a página:
+    // - no desktop: tenta recuperar token do Spotify pra já mostrar conectado
+    // - no celular: só mantém a mensagem de uso via app/preview
     document.addEventListener('DOMContentLoaded', ()=>{
+      if(isMobile){
+        if(spotifyStatusEl && !spotifyStatusEl.textContent){
+          spotifyStatusEl.textContent = 'No celular, use a música do site ou o player de prévia/Spotify app 💚.';
+        }
+        return;
+      }
       const token = ensureSpotifyToken();
       if(token){
         updateSpotifyStatus('Conectado ao Spotify ✅ (cliquem em "Tocar playlist aqui")');

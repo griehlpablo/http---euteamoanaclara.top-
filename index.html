@@ -1,1856 +1,428 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Eu te amo Ana Clara ❤</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&family=Great+Vibes&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <title>Eu te amo Ana Clara ❤ – Spotify</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    :root{
-      --bg1:#ffccff;
-      --bg2:#ffd6b6;
-      --accent:#ff4da6;
-      --accent-2:#ff8fb2;
-      --card:#ffffffdd;
-      --glass: rgba(255,255,255,0.15);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
     body{
-      margin:0; font-family:Montserrat,system-ui,Arial; -webkit-font-smoothing:antialiased;
-      background: radial-gradient(circle at 10% 20%, #fff3f8 0%, transparent 15%), linear-gradient(135deg,var(--bg1),var(--bg2));
-      overflow-x:hidden;
-      overflow-y:auto;
-      color:#333;
-      padding-bottom: env(safe-area-inset-bottom);
-      padding-top: calc(16px + env(safe-area-inset-top));
-    }
-    .stage{
-      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:48px 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      margin:0;
+      padding:20px;
+      background:#0f172a;
+      color:#e5e7eb;
     }
     .card{
-      width:100%; max-width:980px; background:var(--card); border-radius:20px; padding:28px; box-shadow:0 10px 30px rgba(0,0,0,0.12);
-      position:relative; overflow:hidden;
-      border:1px solid rgba(255,255,255,0.6);
-      backdrop-filter: blur(6px);
-    }
-    header{display:flex; gap:16px; align-items:center}
-    .logo{
-      width:84px; height:84px; border-radius:20px; background:linear-gradient(180deg,var(--accent),var(--accent-2)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:28px; font-family: 'Great Vibes', cursive; box-shadow:0 6px 20px rgba(255,77,166,0.18);
-      flex-shrink:0;
-    }
-    h1{margin:0; font-size:26px}
-    p.lead{margin:4px 0 0 0; opacity:0.9}
-
-    .main-grid{display:grid; grid-template-columns: 1fr 360px; gap:20px; margin-top:18px}
-    @media (max-width:900px){ .main-grid{grid-template-columns:1fr} .right-col{order:-1} }
-
-    .left-col{padding:12px}
-    .right-col{padding:12px}
-
-    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9)); border-radius:12px; padding:14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);}
-
-    .range-wrap{display:flex; flex-direction:column; gap:8px}
-    .range-value{font-weight:700; font-size:18px; color:var(--accent)}
-    input[type=range]{width:100%; accent-color:var(--accent); height:36px}
-
-    .forgive{display:flex; gap:10px}
-    .btn{padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:700; touch-action:manipulation}
-    .btn-sim{background:linear-gradient(90deg,#ff9fc9,#ff4da6); color:white}
-    .btn-nao{background:linear-gradient(90deg,#ffd6d6,#ffc9ff); color:#333}
-
-    
-    .thumb-more-wrapper{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:72px;
-      height:72px;
-      border-radius:12px;
-      background:rgba(255,255,255,0.9);
-      box-shadow:0 6px 18px rgba(0,0,0,0.08);
-      cursor:pointer;
-      border:3px solid white;
-    }
-    .thumb-more-inner{
-      text-align:center;
-      font-size:13px;
-      font-weight:700;
-      color:var(--accent);
-      line-height:1.2;
-    }
-    .thumb-more-count{
-      font-size:16px;
-      display:block;
-    }
-    .thumb-more-label{
-      font-size:11px;
-      opacity:0.8;
-    }
-    .gallery-full{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-top:10px;
-    }
-    .gallery-full .thumb{
-      width:80px;
-      height:80px;
-    }
-.gallery{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
-    .thumb-wrapper{position:relative; display:inline-block;}
-    .thumb{width:72px;height:72px; border-radius:8px; object-fit:cover; border:3px solid white; box-shadow:0 6px 18px rgba(0,0,0,0.08); cursor:pointer}
-    .thumb-remove{
-      position:absolute;
-      top:2px; right:2px;
-      width:20px; height:20px;
-      border-radius:999px;
-      background:rgba(0,0,0,0.7);
-      color:#fff;
-      border:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:14px;
-      cursor:pointer;
-    }
-    .thumb-remove:hover{background:rgba(0,0,0,0.9);}
-
-    .message-box{margin-top:12px; border-radius:12px; padding:12px; background:var(--glass)}
-    .message-box textarea{width:100%; min-height:120px; border-radius:8px; padding:12px; border:0; resize:vertical; font-size:15px}
-    .big-love{display:flex; gap:8px; align-items:center; justify-content:space-between}
-
-    .action-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
-
-    footer{margin-top:18px; text-align:center; opacity:0.8}
-
-    .hearts-layer{pointer-events:none; position:absolute; inset:0; overflow:hidden}
-    .heart{position:absolute; transform:translateY(-120%); will-change:transform,opacity; font-size:22px; opacity:0.9;}
-
-    .burst{position:absolute; inset:0; pointer-events:none}
-    .burst .bheart{position:absolute; font-size:20px}
-    .music-toggle{
-      position:fixed;
-      right:18px;
-      bottom:18px;
-      z-index:120;
-      background:linear-gradient(135deg,#ff9fc9,#ff4da6);
-      color:#fff;
-      border-radius:999px;
-      padding:10px 14px;
-      display:flex;
-      align-items:center;
-      gap:4px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.18);
-      cursor:pointer;
-      font-size:15px;
-    }
-    .music-toggle.playing{
-      background:linear-gradient(135deg,#22c55e,#16a34a);
-    }
-    .music-toggle-icon{
-      font-size:18px;
-      line-height:1;
-    }
-    .music-toggle-text{
-      font-weight:700;
-      font-size:13px;
-    }
-    @media (max-width:420px){
-      .music-toggle{
-        right:12px;
-        bottom:12px;
-        padding:8px 10px;
-      }
-      .music-toggle-text{
-        display:none;
-      }
-    }
-
-
-    .overlay{
-      position:fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:60;
-      padding:16px;
-      background:rgba(0,0,0,0.25);
-    }
-    .overlay.show{display:flex}
-
-    .overlay-card{
-      background:linear-gradient(180deg,#fff,#ffeef8);
-      border-radius:18px;
-      padding:28px;
-      max-width:720px;
-      width:100%;
-      text-align:center;
-      box-shadow:0 16px 40px rgba(0,0,0,0.2);
-    }
-    .overlay-card h2{font-family:'Great Vibes',cursive; font-size:48px; margin:0}
-    .small{font-size:13px; opacity:0.85}
-
-    .letter-card{
-      background:#fffdf8;
-      border-radius:20px;
-      padding:26px 22px 22px;
-      max-width:780px;
-      width:100%;
-      max-height:90vh;
-      overflow-y:auto;
-      box-shadow:0 18px 40px rgba(0,0,0,0.28);
-      border:1px solid #f5e1c3;
-      position:relative;
-    }
-    .letter-card:before{
-      content:"";
-      position:absolute;
-      inset:12px;
-      border-radius:14px;
-      border:1px dashed rgba(0,0,0,0.08);
-      pointer-events:none;
-    }
-    .ring-icon{
-      font-size:42px;
-      margin-bottom:8px;
-    }
-    .letter-title{
-      font-family:'Great Vibes',cursive;
-      font-size:40px;
-      margin:0 0 8px;
-      text-align:center;
-    }
-    .letter-body{
-      text-align:left;
-      font-size:15px;
-      line-height:1.6;
-      margin-top:8px;
-    }
-    .letter-body strong{color:var(--accent)}
-
-    .footer-hearts{display:flex; gap:6px; justify-content:center; margin-top:10px}
-
-    @keyframes fall{
-      to{transform:translateY(120vh) rotate(360deg); opacity:0.05}
-    }
-
-    /* Hero/carrossel */
-    #heroImg{
-      transition:opacity .6s ease;
-    }
-    #heroImg.fade-out{opacity:0;}
-    #heroImg.fade-in{opacity:1;}
-
-    /* Painel de satisfação */
-    .satisfaction-wrapper{
-      margin-top:24px;
-      display:flex;
-      justify-content:center;
-    }
-    .satisfaction-card{
-      max-width:520px;
-      width:100%;
-      background:rgba(255,255,255,0.96);
-      border-radius:18px;
-      padding:18px 16px 18px;
-      box-shadow:0 10px 30px rgba(0,0,0,0.12);
-      border:1px solid rgba(255,255,255,0.8);
-      position:relative;
-      overflow:hidden;
-    }
-    .satisfaction-card h2{
-      margin:0 0 4px;
-      font-size:20px;
-    }
-    .sat-sub{
-      margin:0 0 10px;
-      font-size:13px;
-      opacity:0.8;
-    }
-    .who-are-you{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-size:13px;
-      margin-bottom:6px;
-      flex-wrap:wrap;
-    }
-    .sat-user-btn{
-      border:0;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:13px;
-      cursor:pointer;
-      background:#ffe4f4;
-      color:#b10061;
-      font-weight:600;
-    }
-    .sat-user-btn.active{
-      background:linear-gradient(90deg,#ff9fc9,#ff4da6);
-      color:#fff;
-    }
-    .sat-current{
-      margin:0 0 8px;
-      font-size:12px;
-      opacity:0.8;
-    }
-    .sat-board{
-      border-radius:12px;
-      background:#fff;
-      border:1px solid rgba(0,0,0,0.06);
-      overflow:hidden;
-    }
-    .sat-row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:8px 10px;
-      font-size:15px;
-      cursor:pointer;
-    }
-    .sat-row:nth-child(odd){
-      background:#fff9fd;
-    }
-    .sat-row:nth-child(even){
-      background:#fff;
-    }
-    .sat-row:hover{
-      background:#ffe9f7;
-    }
-    .sat-label{
-      flex:1;
-    }
-    .sat-markers{
-      display:flex;
-      gap:6px;
-      min-width:80px;
-      justify-content:flex-end;
-    }
-    .sat-marker{
-      min-width:40px;
-      height:32px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:15px;
-      color:#fff;
-      font-weight:700;
-      box-shadow:0 4px 10px rgba(0,0,0,0.18);
-      padding:0 8px;
-      background:linear-gradient(135deg,#4f46e5,#6366f1);
-    }
-    .sat-marker-ana{
-      background:linear-gradient(135deg,#ec4899,#f97316);
-    }
-    .sat-tip{
-      margin-top:10px;
-      font-size:11px;
-      opacity:0.75;
-    }
-    .jail-extra textarea{
-      width:100%;
-      border-radius:10px;
-      border:1px solid rgba(0,0,0,0.12);
-      padding:8px;
-      font-size:13px;
-      resize:vertical;
-    }
-    .jail-anim{
-      position:absolute;
-      inset:0;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      pointer-events:none;
-      z-index:40;
-    }
-    .jail-bars{
-      width:82%;
-      height:70%;
+      max-width:600px;
+      margin:0 auto;
+      background:#020617;
       border-radius:16px;
-      border:4px solid rgba(0,0,0,0.85);
-      display:flex;
-      justify-content:space-around;
-      align-items:stretch;
-      background:rgba(0,0,0,0.08);
-      overflow:hidden;
-      animation:jailClose 700ms ease-out forwards;
+      padding:18px 16px 20px;
+      box-shadow:0 20px 40px rgba(0,0,0,0.6);
+      border:1px solid rgba(148,163,184,0.35);
     }
-    .jail-bars span{
-      flex:1;
-      margin:0 4px;
-      background:rgba(0,0,0,0.82);
-      border-radius:999px;
-      transform:translateY(-120%);
-      animation:barDrop 700ms ease-out forwards;
-    }
-    @keyframes jailClose{
-      from{opacity:0; transform:scale(1.1);}
-      to{opacity:1; transform:scale(1);}
-    }
-    @keyframes barDrop{
-      from{transform:translateY(-120%);}
-      to{transform:translateY(0);}
-    }
-
-    /* Enquetes */
-    
-    /* Contagem regressiva */
-    .countdown-panel .countdown-time{
-      font-size:26px;
-      font-weight:800;
-      color:var(--accent);
-      letter-spacing:1px;
-      margin:10px 0 4px;
-    }
-    .countdown-panel .countdown-time span{
-      display:inline-block;
-      min-width:52px;
-    }
-    .countdown-panel .countdown-msg{
-      font-size:13px;
-      opacity:0.85;
-    }
-
-    /* Mural de recados */
-    #muralList{
-      margin-top:6px;
-    }
-    .mural-list-empty{
-      opacity:0.7;
-    }
-    .mural-card{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:10px;
-      background:#fff;
-      border:1px solid rgba(0,0,0,0.06);
-      box-shadow:0 2px 6px rgba(0,0,0,0.03);
-      font-size:13px;
-    }
-    .mural-card + .mural-card{
-      margin-top:6px;
-    }
-    .mural-main{
-      flex:1;
-    }
-    .mural-text{
+    h1{
       margin:0 0 4px;
-      white-space:pre-wrap;
-      word-wrap:break-word;
+      font-size:22px;
     }
-    .mural-meta{
+    .sub{
+      margin:0 0 14px;
+      font-size:13px;
+      color:#9ca3af;
+    }
+    .row{
+      margin-top:10px;
+    }
+    button{
+      border:0;
+      border-radius:999px;
+      padding:8px 14px;
+      font-weight:600;
+      cursor:pointer;
+      font-size:14px;
+    }
+    .btn-login{
+      background:#22c55e;
+      color:#022c22;
+    }
+    .btn-play{
+      background:#0ea5e9;
+      color:#0b1120;
+    }
+    .status{
+      font-size:13px;
+      margin-top:10px;
+      color:#a5b4fc;
+    }
+    .log{
+      margin-top:14px;
       font-size:11px;
-      opacity:0.8;
+      background:#020617;
+      border-radius:10px;
+      border:1px solid rgba(75,85,99,0.7);
+      padding:8px 10px;
+      max-height:180px;
+      overflow:auto;
+      white-space:pre-wrap;
     }
-    .mural-tag{
+    .badge{
       display:inline-block;
       padding:2px 8px;
       border-radius:999px;
+      background:#22c55e33;
+      color:#4ade80;
       font-size:11px;
-      margin-right:6px;
-      background:#ffe4f4;
-      color:#b10061;
-      font-weight:600;
-    }
-    .mural-tag.missao{
-      background:#dcfce7;
-      color:#166534;
-    }
-    .mural-tag.importante{
-      background:#fee2e2;
-      color:#b91c1c;
-    }
-    .mural-status{
-      display:inline-flex;
-      align-items:center;
-      gap:4px;
-      font-size:11px;
-    }
-    .mural-status.done{
-      color:#166534;
-    }
-    .mural-actions{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .mural-action-btn{
-      border:0;
-      border-radius:999px;
-      padding:4px 8px;
-      font-size:11px;
-      cursor:pointer;
-      background:#f3f4f6;
-    }
-    .mural-action-btn.done{
-      background:#22c55e;
-      color:#fff;
-    }
-    .mural-action-btn.delete{
-      background:#fee2e2;
-      color:#b91c1c;
-    }
-.polls-wrapper{
-      margin-top:20px;
-      display:flex;
-      justify-content:center;
-    }
-    .poll-card{
-      max-width:520px;
-      width:100%;
-    }
-    .poll-card h2{
-      margin:0 0 6px;
-      font-size:20px;
-    }
-    .poll-sub{
-      margin:0 0 10px;
-      font-size:12px;
-      opacity:0.8;
-    }
-    .poll-block{
-      margin-top:10px;
-      padding-top:8px;
-      border-top:1px dashed rgba(0,0,0,0.08);
-    }
-    .poll-title{
-      font-weight:600;
       margin-bottom:4px;
-      font-size:15px;
     }
-    .poll-options{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:4px;
-    }
-    .poll-btn{
-      flex:1 1 100px;
-    }
-    .poll-btn.selected{
-      box-shadow:0 0 0 2px rgba(255,77,166,0.6);
-      transform:translateY(-1px);
-    }
-    .menu-textarea{
-      width:100%;
-      min-height:70px;
-      border-radius:10px;
-      border:1px solid rgba(0,0,0,0.12);
-      padding:8px;
-      font-size:14px;
-      resize:vertical;
-    }
-
-    @media (max-width:900px){
-      .stage{
-        align-items:flex-start;
-        padding:24px 12px 32px;
-      }
-    }
-    @media (max-width:420px){
-      .card{padding:18px; border-radius:16px}
-      header{gap:12px}
-      .logo{width:70px;height:70px;font-size:24px}
-      h1{font-size:20px}
-      .overlay-card{padding:20px}
-      .overlay-card h2{font-size:34px}
-      .letter-card{padding:20px 16px}
-      .letter-title{font-size:32px}
-
-      .main-grid{grid-template-columns:1fr}
-      .right-col{order:2}
-      .left-col{order:1}
-
-      .forgive{flex-direction:column}
-      .forgive .btn{width:100%; padding:12px; font-size:16px}
-      .action-row{flex-direction:column}
-      .action-row .btn{width:100%}
-
-      .thumb{width:60px;height:60px}
-      .message-box textarea{min-height:100px}
-
-      .heart{font-size:26px}
-      .satisfaction-card{
-        padding:14px 12px 16px;
-      }
-      .satisfaction-card h2{
-        font-size:17px;
-      }
-      .sat-row{
-        padding:8px 8px;
-        font-size:14px;
-      }
-    }
-    @media (max-width:360px){
-      .logo{width:60px;height:60px;font-size:20px}
-      h1{font-size:18px}
-      .overlay-card h2{font-size:28px}
-      .thumb{width:52px;height:52px}
-    }
-    @media (hover:none){
-      .btn{padding:14px 16px; border-radius:12px}
-      input[type=range]{height:44px}
-    }
-    @media (max-width:700px){
-      .overlay{
-        align-items:flex-start;
-        justify-content:center;
-        overflow-y:auto;
-      }
-      .letter-card,
-      .overlay-card{
-        margin-top:40px;
-        margin-bottom:40px;
-      }
+    a{
+      color:#38bdf8;
     }
   </style>
 </head>
 <body>
-  <div class="stage">
-    <div class="card" id="card">
-      <div class="hearts-layer" id="heartsLayer"></div>
-      <header>
-        <div class="logo">❤</div>
-        <div>
-          <h1>Eu te amo, Ana Clara</h1>
-          <p class="lead">Um site só pra você — com muito amor, carinho e corações 💖</p>
-        </div>
-      </header>
+  <div class="card">
+    <h1>Spotify Web Playback – Pablo & Ana 💕</h1>
+    <p class="sub">
+      Aqui vocês testam o login com Spotify Premium e tocar a playlist inteira direto no navegador.
+      <br><strong>Importante:</strong> o redirect precisa estar cadastrado exatamente assim no painel do Spotify Developer:
+      <br><code>https://euteamoanaclara.top/</code> <em>ou</em> <code>https://euteamoanaclara.top/index.html</code>, de acordo com o endereço que vocês usarem.
+    </p>
 
-      <div class="main-grid">
-        <div class="left-col">
-          <div class="panel">
-            <h3>Quanto você ama o Pablo?</h3>
-            <div class="range-wrap">
-              <div style="display:flex; align-items:center; justify-content:space-between">
-                <div class="range-value">Nível: <span id="loveVal">10</span>/10</div>
-                <div class="small">Deslize para escolher</div>
-              </div>
-              <input id="loveRange" type="range" min="0" max="10" step="1" value="10">
-              <small class="small">Dica: ele merece 10 sempre 😉</small>
-            </div>
+    <div class="row">
+      <button id="spotifyLoginBtn" class="btn-login">Entrar com Spotify</button>
+      <button id="spotifyPlayBtn" class="btn-play">Tocar playlist aqui</button>
+    </div>
 
-            <hr style="margin:12px 0">
+    <div class="status" id="spotifyStatus">Ainda não conectado ao Spotify.</div>
 
-            <h3>Perdoa o Pablo?</h3>
-            <div class="forgive">
-              <button class="btn btn-sim" id="btnSim">SIM</button>
-              <button class="btn btn-nao" id="btnNao">NÃO</button>
-            </div>
-
-            <div style="margin-top:12px">
-              <label class="small">Fotos nossas:</label>
-              <div class="gallery" id="gallery"></div>
-              <small class="small" style="display:block; margin-top:4px;">Vocês podem adicionar fotos direto do celular. Elas ficam salvas e aparecem em todos os dispositivos 💖</small>
-              <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
-                <input id="fileInput" type="file" accept="image/*" multiple style="flex:1 1 180px;">
-                <button class="btn btn-sim" id="savePhotosBtn" style="flex:0 0 auto;">Salvar fotos</button>
-              </div>
-            </div>
-
-          </div>
-
-          <div class="panel message-box">
-            <div class="big-love">
-              <strong>Mensagem do Pablo pra você</strong>
-              <div class="footer-hearts">❤ ❤ ❤</div>
-            </div>
-            <textarea id="loveMsg">Ana Clara, cada batida do meu coração lembra seu nome. Você é minha companheirinha, meu sorriso e meu porto seguro. Eu te amo mais do que palavras conseguem dizer. Sempre seu, Pablo.</textarea>
-            <div class="action-row">
-              <button class="btn btn-sim" id="showMsg">Mostrar em grande</button>
-              <button class="btn btn-nao" id="surprise">Surpresa (corações)</button>
-              <button class="btn btn-sim" id="proposalBtn">Clique aqui para descobrir 💌</button>
-            </div>
-          </div>
-
-        </div>
-
-        <aside class="right-col">
-          <div class="panel" style="text-align:center">
-            <h3>Galeria & momento</h3>
-            <p class="small">As fotos vão passando sozinhas, mas você pode tocar em qualquer miniatura pra escolher 💕</p>
-            <div style="margin-top:10px">
-              <img id="heroImg" src="images/wedding.jpg" alt="foto destaque" style="width:100%; border-radius:12px; display:block; object-fit:cover; max-height:320px">
-            </div>
-            <div style="margin-top:12px; text-align:left">
-              <small class="small">Dica: se o slider ficar menor que 10, ele volta pra 10 automaticamente — porque você merece tudo.</small>
-            </div>
-          </div>
-
-          
-          <div style="height:14px"></div>
-
-          <!-- Contagem regressiva para o encontro -->
-          <div class="panel countdown-panel" style="text-align:center">
-            <h3>Contagem para nosso próximo encontro ⏳</h3>
-            <p class="small">
-              Encontro em <strong>19/11/2025 às 18h</strong> (horário de Brasília).
-            </p>
-            <div class="countdown-time" id="countdownTime">
-              --d --h --m --s
-            </div>
-            <p class="small countdown-msg" id="countdownMsg">
-              Carregando contagem...
-            </p>
-          </div>
-
-          <div style="height:14px"></div>
-
-
-          <div class="panel" style="text-align:center">
-            <h3>Brilhos & Corações</h3>
-            <p class="small">Corações caem na página quando você visita ou quando algo especial acontece.</p>
-            <div style="margin-top:8px">
-              <button class="btn btn-sim" id="popupLove">Mostrar Amor</button>
-            </div>
-          </div>
-
-        
-          <div class="panel" style="text-align:center; margin-top:14px">
-            <h3>Nossa trilha sonora 🎧</h3>
-            <p class="small">
-              Você pode ouvir a música do site (botão rosa no cantinho) ou nossa playlist no Spotify:
-            </p>
-            <div style="margin-top:8px">
-              <!-- Troque SEU_PLAYLIST_ID_AQUI pelo ID da sua playlist no Spotify -->
-              <iframe style="border-radius:12px"
-                src="https://open.spotify.com/embed/playlist/3RitDlOniO6hRIQxmLWrMw?utm_source=generator"
-                width="100%" height="152" frameborder="0"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy">
-              </iframe>
-            </div>
-            <p class="small" style="margin-top:6px;">
-              Pra tocar a playlist, é só apertar play aí em cima. Pra ouvir a música do site, usa o botão de música no cantinho da tela.
-            </p>
-          </div>
-
-        </aside>
-      </div>
-
-      <!-- Painel de satisfação -->
-      <section class="satisfaction-wrapper">
-        <div class="satisfaction-card">
-          <h2>Nível de satisfação com o mozão 😏</h2>
-          <p class="sat-sub">
-            Escolha quem você é e clique em um nível. Cada voto mexe o marcador da outra pessoa.
-          </p>
-
-          <div class="who-are-you">
-            <span>Eu sou:</span>
-            <button class="sat-user-btn" data-user="pablo">Pablo (namorado)</button>
-            <button class="sat-user-btn" data-user="ana">Ana Clara (namorada)</button>
-          </div>
-          <p class="sat-current">
-            Você está logado como: <strong id="satCurrentUser">ninguém</strong>
-          </p>
-
-          <div class="sat-board">
-            <div class="sat-row" data-level="perfect">
-              <span class="sat-label">Amorzinho perfeito(a) 💘</span>
-              <div class="sat-markers"></div>
-            </div>
-            <div class="sat-row" data-level="good">
-              <span class="sat-label">Muito bonzinho(a) ⭐</span>
-              <div class="sat-markers"></div>
-            </div>
-            <div class="sat-row" data-level="chill">
-              <span class="sat-label">De boa / Chill 😎</span>
-              <div class="sat-markers"></div>
-            </div>
-            <div class="sat-row" data-level="ice">
-              <span class="sat-label">Em gelo fino 🧊</span>
-              <div class="sat-markers"></div>
-            </div>
-            <div class="sat-row" data-level="jail">
-              <span class="sat-label">Cadeia (ai, ai, ai) ⛓️</span>
-              <div class="sat-markers"></div>
-            </div>
-          </div>
-
-          <!-- Marcadores -->
-          <div class="sat-marker sat-marker-pablo" data-user="pablo">P 💘</div>
-          <div class="sat-marker sat-marker-ana" data-user="ana">A 💘</div>
-
-          <p class="sat-tip">
-            Quando você entra como Ana, mexe o P (avaliando o Pablo). Quando entra como Pablo, mexe o A (avaliando a Ana).
-          </p>
-
-          <div class="jail-extra" id="jailExtra" style="display:none; margin-top:10px;">
-            <p id="jailLabel" class="sat-sub" style="margin-bottom:6px;"></p>
-            <textarea id="jailText" rows="3" placeholder="Escreva aqui o que a pessoa precisa fazer para sair da cadeia..."></textarea>
-            <button class="btn btn-nao" id="jailSaveBtn" style="margin-top:6px; width:100%;">Salvar plano para sair da cadeia</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ENQUETES -->
-      <section class="polls-wrapper">
-        <div class="panel poll-card">
-          <h2>Enquetes do dia 💭</h2>
-          <p class="poll-sub">As respostas ficam salvas pra vocês dois verem, em qualquer dispositivo.</p>
-
-          <div class="poll-block" id="pollSexo">
-            <div class="poll-title">Sexo hoje: sim ou não? 😏</div>
-            <div class="poll-options">
-              <button class="btn btn-sim poll-btn" data-poll="sexo" data-value="sim">Sim 😈</button>
-              <button class="btn btn-nao poll-btn" data-poll="sexo" data-value="nao">Não 🙅‍♀️</button>
-            </div>
-            <p class="small" id="pollSexoStatus" style="margin-top:6px;">Ainda sem resposta hoje.</p>
-          </div>
-
-          <div class="poll-block" id="pollMenu">
-            <div class="poll-title">Cardápio do dia 🍽️</div>
-            <textarea id="menuInput" class="menu-textarea" placeholder="Ex.: noite do macarrão, pedir sushi, ver filme com pipoca..."></textarea>
-            <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn btn-sim" id="menuSaveBtn">Salvar cardápio</button>
-            </div>
-            <p class="small" id="menuStatus" style="margin-top:6px;">Sem sugestão ainda. Escrevam algo gostoso pra hoje 😋</p>
-          </div>
-        </div>
-      </section>
-      <!-- MURAL DE RECADINHOS -->
-      <section class="polls-wrapper">
-        <div class="panel poll-card">
-          <h2>Mural de recadinhos 💌</h2>
-          <p class="poll-sub">
-            Escrevam recados, missões ou lembretes um pro outro. Eles ficam salvos pra vocês dois, em qualquer dispositivo.
-          </p>
-
-          <div class="poll-block">
-            <div class="poll-title">Novo recado</div>
-            <textarea id="muralInput" class="menu-textarea" placeholder="Ex.: Hoje é dia de filme com coberta e pipoca 🍿💤"></textarea>
-            <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
-              <select id="muralTipo" class="menu-textarea" style="min-height:0; height:38px; flex:1 1 130px; padding:6px 8px;">
-                <option value="fofo">Recadinho fofo 💖</option>
-                <option value="missao">Missão / lembrete ✅</option>
-                <option value="importante">Coisa importante ❗</option>
-              </select>
-              <button class="btn btn-sim" id="muralAddBtn" style="flex:0 0 auto;">Adicionar recado</button>
-            </div>
-          </div>
-
-          <div class="poll-block" id="muralListWrapper">
-            <div class="poll-title">Recados salvos</div>
-            <div id="muralList" class="mural-list-empty small">Nenhum recadinho ainda. Comecem escrevendo o primeiro 💕</div>
-          </div>
-        </div>
-      </section>
-
-
-      <footer>
-        Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA.
-      </footer>
-
+    <div class="log" id="spotifyLog">
+      <span class="badge">LOG</span> Aqui vão aparecer mensagens técnicas pra vocês verem se deu certo.
     </div>
   </div>
 
-  
-  <audio id="bgMusic" src="music/nossa-musica.mp3" loop></audio>
-  <div class="music-toggle" id="musicToggle" title="Tocar ou pausar música">
-    <span class="music-toggle-icon" id="musicIcon">▶️</span>
-    <span class="music-toggle-text">música</span>
-  </div>
-
-
-  <!-- Overlay galeria completa -->
-  <div class="overlay" id="galleryOverlay">
-    <div class="overlay-card" style="max-width:900px; text-align:left;">
-      <h2>Galeria completa 💞</h2>
-      <p class="small">Aqui aparecem todas as fotos que vocês salvaram no site. Dá pra apagar alguma se quiser também.</p>
-      <div id="fullGallery" class="gallery-full"></div>
-      <div style="margin-top:14px; text-align:center;">
-        <button class="btn btn-sim" id="closeGalleryOverlay">Fechar</button>
-      </div>
-    </div>
-  </div>
-
-<!-- Overlay mensagem grande -->
-  <div class="overlay" id="overlay">
-    <div class="overlay-card">
-      <h2 id="overlayTitle">Eu te amo, Ana Clara ❤</h2>
-      <p id="overlayText" class="small">Uma mensagem especial do Pablo.</p>
-      <div style="margin-top:14px"><button class="btn btn-sim" id="closeOverlay">Fechar</button></div>
-    </div>
-  </div>
-
-  <!-- Overlay da carta de pedido de casamento -->
-  <div class="overlay" id="proposalOverlay">
-    <div class="letter-card">
-      <div class="ring-icon">💍</div>
-      <h2 class="letter-title">Minha Ana Clara, quer casar comigo?</h2>
-      <div class="letter-body">
-        <p>Amor, a gente briga, discorda, se enrola na vida... mas em todas as versões da minha história, <strong>você</strong> está lá.</p>
-        <p>Mesmo nos dias difíceis, é com você que eu quero conversar, rir, dividir o café, o cansaço e os sonhos. Eu não me imagino em um futuro em que você não esteja do meu lado.</p>
-        <p>Eu te amo de um jeito que não cabe só em palavras, nem só num site cheio de corações caindo. Eu te amo no silêncio, nos detalhes, nas piadas internas e até nas nossas teimosias.</p>
-        <p>Por isso, com todo o amor e todo o medo e toda a coragem do mundo, eu quero te perguntar de verdade:</p>
-        <p style="text-align:center; font-size:18px; margin-top:8px;"><strong>Você aceita viver pra sempre comigo?</strong></p>
-        <p style="margin-top:10px;">Quero caminhar ao seu lado, construir uma casa que tenha a nossa cara, nossos cheiros, nossas manias e muitos gatinhos (ou peixinhos, quem sabe 🐟). Quero envelhecer rindo das nossas histórias e lembrando de quando tudo começou.</p>
-        <p>Eu te amo, Ana Clara. Hoje, amanhã e depois. Para sempre seu,</p>
-        <p><strong>Pablo 💖</strong></p>
-      </div>
-      <div style="margin-top:16px; text-align:center;">
-        <button class="btn btn-sim" id="closeProposal">Fechar essa carta (por enquanto)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase compat -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <!-- SDK oficial do Spotify -->
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDS1YA0FRvCIryjreFVzRMZyaHhYtm-pUU",
-      authDomain: "euteamoanaclaraks.firebaseapp.com",
-      databaseURL: "https://euteamoanaclaraks-default-rtdb.firebaseio.com",
-      projectId: "euteamoanaclaraks",
-      storageBucket: "euteamoanaclaraks.firebasestorage.app",
-      messagingSenderId: "972847187116",
-      appId: "1:972847187116:web:016a7b8a3dd7a688320b09",
-      measurementId: "G-7LN9PKSCW3"
-    };
+    // ==============================
+    // CONFIGURAÇÕES BÁSICAS
+    // ==============================
+    const spotifyClientId   = "d87db58ea9434615bb2c2603e7ff4326";
+    const spotifyRedirectUri = window.location.origin + window.location.pathname; 
+    // Ex.: https://euteamoanaclara.top/  ou  https://euteamoanaclara.top/index.html
+    // Lembra de cadastar EXATAMENTE isso no painel do Spotify Developer
 
-    let db = null;
-    try{
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-      console.log("Firebase inicializado (Realtime DB).");
-    }catch(e){
-      console.warn("Firebase não inicializou, mas o site continua funcionando.", e);
-    }
-    const coupleId = "pablo-ana";
+    const spotifyPlaylistUri = "spotify:playlist:3RitDlOniO6hRIQxmLWrMw";
 
-    const heartsLayer = document.getElementById('heartsLayer');
-    function spawnHeart(x){
-      const el = document.createElement('span');
-      el.className = 'heart';
-      el.innerText = '❤';
-      const size = Math.random()*18 + 14;
-      el.style.left = (x != null ? x : Math.random()*100) + 'vw';
-      el.style.fontSize = size + 'px';
-      const dur = Math.random()*5 + 5;
-      el.style.animation = `fall ${dur}s linear forwards`;
-      el.style.opacity = (Math.random()*0.4)+0.6;
-      heartsLayer.appendChild(el);
-      setTimeout(()=> el.remove(), (dur+0.6)*1000);
-    }
-    function initialRain(count=22){
-      for(let i=0;i<count;i++){
-        setTimeout(()=>spawnHeart(), i*120);
-      }
-    }
-    initialRain(26);
-    setInterval(()=>{ spawnHeart(Math.random()*100); }, 8000);
+    let spotifyAccessToken = null;
+    let spotifyTokenExpiresAt = null;
+    let spotifyPlayer = null;
+    let spotifyDeviceId = null;
 
-    // Slider amor
-    const loveRange = document.getElementById('loveRange');
-    const loveVal = document.getElementById('loveVal');
-    loveRange.addEventListener('input', function(){
-      const v = Number(this.value);
-      loveVal.innerText = v;
-      if(window._loveRevertTimeout) clearTimeout(window._loveRevertTimeout);
-      if(v < 10){
-        window._loveRevertTimeout = setTimeout(()=>{
-          loveRange.value = 10;
-          loveVal.innerText = 10;
-          popupHeartsBurst();
-          showTinyNote('Pra sempre 10/10 ✨');
-          window._loveRevertTimeout = null;
-        }, 1000);
-      } else {
-        if(window._loveRevertTimeout){
-          clearTimeout(window._loveRevertTimeout);
-          window._loveRevertTimeout = null;
+    const logBox = document.getElementById("spotifyLog");
+    const statusEl = document.getElementById("spotifyStatus");
+    function log(msg){
+      console.log("[Spotify]", msg);
+      if(!logBox) return;
+      const now = new Date();
+      const prefix = "[" + now.toLocaleTimeString("pt-BR") + "] ";
+      logBox.textContent += "\n" + prefix + msg;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+    function setStatus(msg){
+      if(statusEl) statusEl.textContent = msg;
+    }
+
+    // ==============================
+    // ARMAZENAMENTO DO TOKEN
+    // ==============================
+    function loadStoredSpotifyToken(){
+      try{
+        const raw = localStorage.getItem("spotifyAuth");
+        if(!raw) return null;
+        const data = JSON.parse(raw);
+        if(!data.access_token) return null;
+        if(data.expires_at && Date.now() > data.expires_at){
+          log("Token Spotify expirado.");
+          return null;
         }
-      }
-    });
-
-    // Perdoa Pablo
-    const btnSim = document.getElementById('btnSim');
-    const btnNao = document.getElementById('btnNao');
-    btnSim.onclick = ()=>{
-      btnSim.innerText = 'SIM ❤';
-      btnNao.innerText = 'NÃO';
-      popupHeartsBurst();
-    };
-    btnNao.onclick = ()=>{
-      btnSim.innerText = 'SIM ❤';
-      btnNao.innerText = 'NÃO ➜ agora é SIM';
-      popupHeartsBurst();
-      setTimeout(()=>{ btnNao.innerText = 'NÃO'; }, 900);
-    };
-
-    // Galeria + carrossel
-    const gallery = document.getElementById('gallery');
-    const heroImg = document.getElementById('heroImg');
-    let heroSources = [];
-    let currentHeroIndex = 0;
-    let heroTimer = null;
-
-    function registerHeroSrc(src){
-      if(!src) return;
-      if(!heroSources.includes(src)){
-        heroSources.push(src);
+        return data;
+      }catch(e){
+        log("Erro ao ler token armazenado: " + e);
+        return null;
       }
     }
-    function setHeroFromSrc(src, fromCarousel=false){
-      if(!src) return;
-      registerHeroSrc(src);
-      const img = heroImg;
-      img.classList.remove('fade-in');
-      img.classList.add('fade-out');
-      setTimeout(()=>{
-        img.src = src;
-        img.classList.remove('fade-out');
-        img.classList.add('fade-in');
-      }, 220);
-      if(!fromCarousel){
-        const idx = heroSources.indexOf(src);
-        if(idx >= 0) currentHeroIndex = idx;
+
+    function saveSpotifyToken(data){
+      if(!data) return;
+      const expiresAt = Date.now() + (data.expires_in ? (data.expires_in * 1000) : 3600*1000);
+      const payload = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token || null,
+        expires_at: expiresAt
+      };
+      localStorage.setItem("spotifyAuth", JSON.stringify(payload));
+      spotifyAccessToken = payload.access_token;
+      spotifyTokenExpiresAt = payload.expires_at;
+      setStatus("Conectado ao Spotify 💚");
+      log("Token Spotify salvo com sucesso.");
+    }
+
+    function getSpotifyAccessToken(){
+      if(spotifyAccessToken && spotifyTokenExpiresAt && Date.now() < spotifyTokenExpiresAt){
+        return spotifyAccessToken;
       }
+      const stored = loadStoredSpotifyToken();
+      if(stored){
+        spotifyAccessToken = stored.access_token;
+        spotifyTokenExpiresAt = stored.expires_at;
+        setStatus("Conectado ao Spotify 💚");
+        return spotifyAccessToken;
+      }
+      return null;
     }
-    function startHeroCarousel(){
-      if(heroTimer) clearInterval(heroTimer);
-      heroTimer = setInterval(()=>{
-        if(heroSources.length <= 1) return;
-        currentHeroIndex = (currentHeroIndex + 1) % heroSources.length;
-        const nextSrc = heroSources[currentHeroIndex];
-        setHeroFromSrc(nextSrc, true);
-      }, 6000);
+
+    // ==============================
+    // PKCE (código + desafio)
+    // ==============================
+    async function generateCodeVerifier(){
+      const array = new Uint8Array(64);
+      crypto.getRandomValues(array);
+      let str = "";
+      for(const v of array){
+        str += String.fromCharCode(v % 26 + 97); // só letras a-z
+      }
+      return str;
     }
-    function createThumb(src, isDynamic=false, photoId=null){
-      registerHeroSrc(src);
-      const wrap = document.createElement('div');
-      wrap.className = 'thumb-wrapper';
-      if(isDynamic && photoId){ wrap.dataset.photoId = photoId; }
-      const img = document.createElement('img');
-      img.src = src;
-      img.className = 'thumb' + (isDynamic ? ' dynamic-photo' : '');
-      img.addEventListener('click', ()=> setHeroFromSrc(src));
-      wrap.appendChild(img);
-      if(isDynamic && photoId){
-        const btn = document.createElement('button');
-        btn.className = 'thumb-remove';
-        btn.innerText = '×';
-        btn.title = 'Remover esta foto';
-        btn.addEventListener('click', (ev)=>{
-          ev.stopPropagation();
-          if(!confirm('Tem certeza que quer remover esta foto da galeria?')) return;
-          if(db){
-            firebase.database().ref('gallery/' + coupleId + '/' + photoId).remove()
-              .then(()=> { showTinyNote('Foto removida 🗑️'); heroSources = heroSources.filter(u => u !== src);})
-              .catch(err => { console.warn('Erro ao remover foto:', err); showTinyNote('Não consegui remover 😢'); });
-          } else {
-            wrap.remove();
-            heroSources = heroSources.filter(u => u !== src);
-          }
+
+    async function sha256(text){
+      const encoder = new TextEncoder();
+      const data = encoder.encode(text);
+      const digest = await crypto.subtle.digest("SHA-256", data);
+      return new Uint8Array(digest);
+    }
+
+    function base64UrlEncode(bytes){
+      let str = "";
+      for(const b of bytes){
+        str += String.fromCharCode(b);
+      }
+      return btoa(str).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+    }
+
+    async function startSpotifyLogin(){
+      try{
+        const verifier = await generateCodeVerifier();
+        const challengeBytes = await sha256(verifier);
+        const challenge = base64UrlEncode(challengeBytes);
+        const state = Math.random().toString(36).substring(2);
+        localStorage.setItem("spotify_code_verifier", verifier);
+        localStorage.setItem("spotify_auth_state", state);
+
+        const params = new URLSearchParams({
+          client_id: spotifyClientId,
+          response_type: "code",
+          redirect_uri: spotifyRedirectUri,
+          code_challenge_method: "S256",
+          code_challenge: challenge,
+          state: state,
+          scope: "user-modify-playback-state user-read-playback-state streaming user-read-email user-read-private"
         });
-        wrap.appendChild(btn);
+
+        const url = "https://accounts.spotify.com/authorize?" + params.toString();
+        log("Redirecionando para login do Spotify...");
+        window.location.href = url;
+      }catch(e){
+        console.error(e);
+        alert("Não consegui iniciar o login com o Spotify 😢");
+        log("Erro ao iniciar login Spotify: " + e);
       }
-      gallery.appendChild(wrap);
     }
 
-    // Fotos fixas
-    createThumb('images/ana_e_eu_zoo.jpg');
-    createThumb('images/us_beach.jpg');
-    createThumb('images/us_zoo.jpg');
-    createThumb('images/wedding.jpg');
-    setHeroFromSrc('images/wedding.jpg');
-    startHeroCarousel();
+    async function handleSpotifyCallbackIfNeeded(){
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const state = url.searchParams.get("state");
+      const error = url.searchParams.get("error");
+      if(error){
+        log("Spotify retornou erro: " + error);
+        setStatus("Erro vindo do Spotify: " + error);
+      }
+      if(!code){
+        const stored = loadStoredSpotifyToken();
+        if(stored){
+          spotifyAccessToken = stored.access_token;
+          spotifyTokenExpiresAt = stored.expires_at;
+          setStatus("Conectado ao Spotify 💚");
+        }else{
+          setStatus("Ainda não conectado ao Spotify.");
+        }
+        return;
+      }
+      try{
+        const savedState = localStorage.getItem("spotify_auth_state");
+        const verifier = localStorage.getItem("spotify_code_verifier");
+        localStorage.removeItem("spotify_auth_state");
+        localStorage.removeItem("spotify_code_verifier");
+        if(!verifier || (savedState && state && savedState !== state)){
+          log("State/verifier inválidos. Abortando.");
+          setStatus("Problema ao conectar ao Spotify 😢");
+          return;
+        }
 
-    
-    // Upload fotos -> Realtime DB (com compressão + prévia limitada + galeria completa)
-    const fileInput = document.getElementById('fileInput');
-    const savePhotosBtn = document.getElementById('savePhotosBtn');
+        const body = new URLSearchParams({
+          client_id: spotifyClientId,
+          grant_type: "authorization_code",
+          code: code,
+          redirect_uri: spotifyRedirectUri,
+          code_verifier: verifier
+        });
 
-    const MAX_DYNAMIC_PHOTOS = 60;
-    const MAX_PREVIEW_DYNAMIC = 12;
-
-    let dynamicPhotosList = [];
-
-    // Compressão básica da imagem antes de salvar
-    function resizeImageToDataURL(file, maxSize = 900, quality = 0.7){
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = new Image();
-          img.onload = () => {
-            let w = img.width;
-            let h = img.height;
-            if(w > h && w > maxSize){
-              h = Math.round(h * maxSize / w);
-              w = maxSize;
-            }else if(h >= w && h > maxSize){
-              w = Math.round(w * maxSize / h);
-              h = maxSize;
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            const dataUrl = canvas.toDataURL('image/jpeg', quality);
-            resolve(dataUrl);
-          };
-          img.onerror = err => reject(err);
-          img.src = e.target.result;
-        };
-        reader.onerror = err => reject(err);
-        reader.readAsDataURL(file);
-      });
+        log("Trocando código por token...");
+        const resp = await fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: {"Content-Type": "application/x-www-form-urlencoded"},
+          body
+        });
+        if(!resp.ok){
+          const txt = await resp.text();
+          log("Falha ao buscar token: " + txt);
+          setStatus("Não consegui finalizar o login do Spotify 😢");
+          return;
+        }
+        const data = await resp.json();
+        log("Token recebido com sucesso.");
+        saveSpotifyToken(data);
+      }catch(e){
+        console.error(e);
+        log("Erro no callback Spotify: " + e);
+        setStatus("Erro ao conectar ao Spotify 😢");
+      }finally{
+        // limpa os parâmetros da URL pra ficar bonitinho
+        url.searchParams.delete("code");
+        url.searchParams.delete("state");
+        url.searchParams.delete("error");
+        window.history.replaceState({}, document.title, url.toString());
+      }
     }
 
-    savePhotosBtn.addEventListener('click', () => {
-      const files = Array.from(fileInput.files || []);
-      if(!files.length){
-        alert('Escolha pelo menos uma foto primeiro 🙂');
+    // ==============================
+    // PLAYER WEB
+    // ==============================
+    function initSpotifyPlayer(){
+      const token = getSpotifyAccessToken();
+      if(!token){
+        log("Não há token válido pra iniciar o player.");
         return;
       }
-      if(!db){
-        showTinyNote('Firebase não disponível, não consegui salvar 😢');
+      if(!window.Spotify){
+        log("SDK do Spotify ainda não carregou.");
+        return;
+      }
+      if(spotifyPlayer){
+        log("Player Spotify já inicializado.");
         return;
       }
 
-      files.forEach(file => {
-        if(!file.type.startsWith('image/')) return;
-        resizeImageToDataURL(file, 900, 0.7)
-          .then(dataUrl => {
-            return firebase.database().ref('gallery/' + coupleId).push({
-              dataUrl,
-              name: file.name || null,
-              createdAt: Date.now()
-            });
-          })
-          .then(() => {
-            showTinyNote('Foto salva na galeria 💖');
-          })
-          .catch(err => {
-            console.warn('Erro ao salvar foto:', err);
-            showTinyNote('Não consegui salvar uma das fotos 😢');
-          });
+      spotifyPlayer = new Spotify.Player({
+        name: "Player Pablo & Ana 💕",
+        getOAuthToken: cb => { cb(token); },
+        volume: 0.6
       });
 
-      fileInput.value = '';
-    });
+      spotifyPlayer.addListener("ready", ({ device_id }) => {
+        spotifyDeviceId = device_id;
+        log("Player pronto com device_id = " + device_id);
+        setStatus("Player pronto! Agora é só apertar Tocar playlist 💚");
+      });
 
-    // Overlay da galeria completa
-    const galleryOverlay = document.getElementById('galleryOverlay');
-    const fullGallery = document.getElementById('fullGallery');
-    const closeGalleryOverlay = document.getElementById('closeGalleryOverlay');
+      spotifyPlayer.addListener("not_ready", ({ device_id }) => {
+        log("Device não está pronto: " + device_id);
+      });
 
-    function openFullGalleryOverlay(){
-      if(!galleryOverlay || !fullGallery) return;
-      fullGallery.innerHTML = '';
+      spotifyPlayer.addListener("initialization_error", ({ message }) => {
+        log("Erro de inicialização: " + message);
+      });
+      spotifyPlayer.addListener("authentication_error", ({ message }) => {
+        log("Erro de autenticação: " + message);
+        setStatus("Problema com o login no Spotify 😢");
+      });
+      spotifyPlayer.addListener("account_error", ({ message }) => {
+        log("Erro de conta: " + message);
+        setStatus("Conta Spotify precisa ser Premium pra usar o Web Playback.");
+      });
 
-      dynamicPhotosList.forEach(item => {
-        const wrap = document.createElement('div');
-        wrap.className = 'thumb-wrapper';
-        wrap.dataset.photoId = item.id;
+      spotifyPlayer.connect();
+      log("Conectando player Spotify...");
+    }
 
-        const img = document.createElement('img');
-        img.src = item.dataUrl;
-        img.className = 'thumb dynamic-photo';
-        img.addEventListener('click', () => setHeroFromSrc(item.dataUrl));
-        wrap.appendChild(img);
-
-        const btn = document.createElement('button');
-        btn.className = 'thumb-remove';
-        btn.innerText = '×';
-        btn.title = 'Remover esta foto';
-        btn.addEventListener('click', ev => {
-          ev.stopPropagation();
-          if(!confirm('Tem certeza que quer remover esta foto da galeria?')) return;
-          if(!db){
-            showTinyNote('Firebase não disponível 😢');
-            return;
-          }
-          firebase.database().ref('gallery/' + coupleId + '/' + item.id)
-            .remove()
-            .then(() => {
-              showTinyNote('Foto removida 🗑️');
-              heroSources = heroSources.filter(u => u !== item.dataUrl);
+    async function startSpotifyPlaylist(){
+      const token = getSpotifyAccessToken();
+      if(!token){
+        alert("Antes você precisa entrar com o Spotify 💚");
+        return;
+      }
+      if(!spotifyPlayer || !spotifyDeviceId){
+        log("Player ainda não pronto, tentando iniciar...");
+        initSpotifyPlayer();
+        setTimeout(startSpotifyPlaylist, 1200);
+        return;
+      }
+      try{
+        log("Enviando comando de play para a playlist...");
+        const resp = await fetch(
+          "https://api.spotify.com/v1/me/player/play?device_id=" + encodeURIComponent(spotifyDeviceId),
+          {
+            method: "PUT",
+            headers: {
+              "Authorization": "Bearer " + token,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              context_uri: spotifyPlaylistUri
             })
-            .catch(err => {
-              console.warn('Erro ao remover foto:', err);
-              showTinyNote('Não consegui remover 😢');
-            });
-        });
-        wrap.appendChild(btn);
-
-        fullGallery.appendChild(wrap);
-      });
-
-      galleryOverlay.classList.add('show');
-    }
-
-    if(closeGalleryOverlay){
-      closeGalleryOverlay.addEventListener('click', () => {
-        galleryOverlay.classList.remove('show');
-      });
-    }
-
-    function renderDynamicPreview(){
-      // remove thumbs dinâmicas antigas e botão "+N"
-      const oldDyn = gallery.querySelectorAll('.dynamic-photo');
-      oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
-      const moreWrappers = gallery.querySelectorAll('.thumb-more-wrapper');
-      moreWrappers.forEach(el => el.remove());
-
-      if(!dynamicPhotosList.length) return;
-
-      const preview = dynamicPhotosList.slice(0, MAX_PREVIEW_DYNAMIC);
-      preview.forEach(item => {
-        createThumb(item.dataUrl, true, item.id);
-      });
-
-      const extraCount = dynamicPhotosList.length - preview.length;
-      if(extraCount > 0){
-        const wrap = document.createElement('div');
-        wrap.className = 'thumb-more-wrapper';
-
-        const inner = document.createElement('div');
-        inner.className = 'thumb-more-inner';
-
-        const spanCount = document.createElement('span');
-        spanCount.className = 'thumb-more-count';
-        spanCount.textContent = '+' + extraCount;
-
-        const spanLabel = document.createElement('span');
-        spanLabel.className = 'thumb-more-label';
-        spanLabel.textContent = 'ver tudo';
-
-        inner.appendChild(spanCount);
-        inner.appendChild(spanLabel);
-        wrap.appendChild(inner);
-
-        wrap.addEventListener('click', () => {
-          openFullGalleryOverlay();
-        });
-
-        gallery.appendChild(wrap);
-      }
-    }
-
-    if(db){
-      firebase.database()
-        .ref('gallery/' + coupleId)
-        .orderByChild('createdAt')
-        .limitToLast(MAX_DYNAMIC_PHOTOS)
-        .on('value', snapshot => {
-          const data = snapshot.val() || {};
-          const entries = Object.entries(data).sort((a,b) => {
-            const va = (a[1] && a[1].createdAt) || 0;
-            const vb = (b[1] && b[1].createdAt) || 0;
-            return va - vb;
-          });
-
-          dynamicPhotosList = entries.map(([id, item]) => ({
-            id,
-            dataUrl: item.dataUrl,
-            createdAt: item.createdAt || 0
-          })).filter(p => !!p.dataUrl);
-
-          // registra TODAS as fotos dinâmicas no carrossel
-          dynamicPhotosList.forEach(p => {
-            registerHeroSrc(p.dataUrl);
-          });
-
-          renderDynamicPreview();
-        }, err => {
-          console.warn('Erro ao ler galeria do Firebase:', err);
-        });
-    }
-
-// Overlays
-    const overlay = document.getElementById('overlay');
-    const overlayTitle = document.getElementById('overlayTitle');
-    const overlayText = document.getElementById('overlayText');
-    const showMsg = document.getElementById('showMsg');
-    const closeOverlay = document.getElementById('closeOverlay');
-    showMsg.onclick = ()=>{
-      overlayTitle.innerText = 'Ana Clara, eu te amo ❤';
-      overlayText.innerText = document.getElementById('loveMsg').value;
-      overlay.classList.add('show');
-      initialRain(40);
-    };
-    closeOverlay.onclick = ()=> overlay.classList.remove('show');
-
-    const proposalBtn = document.getElementById('proposalBtn');
-    const proposalOverlay = document.getElementById('proposalOverlay');
-    const closeProposal = document.getElementById('closeProposal');
-    proposalBtn.onclick = ()=>{
-      proposalOverlay.classList.add('show');
-      initialRain(35);
-    };
-    closeProposal.onclick = ()=> proposalOverlay.classList.remove('show');
-
-    document.getElementById('surprise').onclick = ()=>{ initialRain(36); popupHeartsBurst(); };
-    document.getElementById('popupLove').onclick = ()=>{ initialRain(30); popupHeartsBurst(); };
-
-    function popupHeartsBurst(){
-      const burst = document.createElement('div');
-      burst.className='burst';
-      document.body.appendChild(burst);
-      for(let i=0;i<18;i++){
-        const b = document.createElement('div'); b.className='bheart'; b.innerText='❤';
-        const angle = Math.random()*Math.PI*2; const radius = Math.random()*140+20;
-        b.style.left = (50 + Math.cos(angle)*radius) + 'vw';
-        b.style.top = (40 + Math.sin(angle)*radius) + 'vh';
-        b.style.opacity = 1; b.style.transform = 'scale(0.9)';
-        b.style.transition = 'transform 900ms cubic-bezier(.2,1,.3,1), opacity 900ms';
-        burst.appendChild(b);
-        setTimeout(()=>{ b.style.transform='translateY(-40vh) scale(1.2)'; b.style.opacity=0; }, 40+i*20);
-      }
-      setTimeout(()=> burst.remove(), 1200);
-    }
-
-    function popupEmojiBurst(emoji){
-      const burst = document.createElement('div');
-      burst.className='burst';
-      document.body.appendChild(burst);
-      for(let i=0;i<14;i++){
-        const b = document.createElement('div'); b.className='bheart'; b.innerText=emoji;
-        const angle = Math.random()*Math.PI*2; const radius = Math.random()*140+20;
-        b.style.left = (50 + Math.cos(angle)*radius) + 'vw';
-        b.style.top = (45 + Math.sin(angle)*radius) + 'vh';
-        b.style.opacity = 1; b.style.transform = 'scale(0.9)';
-        b.style.transition = 'transform 900ms cubic-bezier(.2,1,.3,1), opacity 900ms';
-        burst.appendChild(b);
-        setTimeout(()=>{ b.style.transform='translateY(-40vh) scale(1.2)'; b.style.opacity=0; }, 40+i*20);
-      }
-      setTimeout(()=> burst.remove(), 1200);
-    }
-
-    function iceRain(){
-      const container = document.createElement('div');
-      container.className = 'burst';
-      document.body.appendChild(container);
-      for(let i=0;i<18;i++){
-        const ice = document.createElement('div');
-        ice.className = 'bheart';
-        ice.innerText = '🧊';
-        const startX = Math.random()*100;
-        ice.style.left = startX + 'vw';
-        ice.style.top = '-10vh';
-        ice.style.opacity = 1;
-        ice.style.transform = 'scale(1)';
-        ice.style.transition = 'transform 1300ms ease-out, top 1300ms linear, opacity 1300ms ease-out';
-        container.appendChild(ice);
-        setTimeout(()=>{
-          ice.style.top = '100vh';
-          ice.style.transform = 'scale(0.4)';
-          ice.style.opacity = 0;
-        }, 30 + i*35);
-      }
-      setTimeout(()=> container.remove(), 1500);
-    }
-
-    function showTinyNote(text){
-      const t = document.createElement('div');
-      t.style.position='fixed'; t.style.right='18px'; t.style.bottom='18px'; t.style.padding='10px 14px'; t.style.background='linear-gradient(90deg,#ff9fc9,#ff4da6)'; t.style.color='white'; t.style.borderRadius='12px'; t.style.boxShadow='0 6px 20px rgba(0,0,0,0.18)'; t.style.zIndex=999; t.innerText=text;
-      document.body.appendChild(t);
-      setTimeout(()=> t.style.opacity=0, 1600);
-      setTimeout(()=> t.remove(), 2100);
-    }
-
-    // Painel de satisfação
-    const satButtons = document.querySelectorAll('.sat-user-btn');
-    const satCurrentUserLabel = document.getElementById('satCurrentUser');
-    const satRows = document.querySelectorAll('.sat-row');
-    const markerPablo = document.querySelector('.sat-marker-pablo');
-    const markerAna   = document.querySelector('.sat-marker-ana');
-    const satCard = document.querySelector('.satisfaction-card');
-
-    const levelEmoji = {
-      perfect: '💘',
-      good: '⭐',
-      chill: '😎',
-      ice: '🧊',
-      jail: '⛓️'
-    };
-
-    let currentUser = localStorage.getItem('satCurrentUser') || null;
-    const jailExtra = document.getElementById('jailExtra');
-    const jailLabel = document.getElementById('jailLabel');
-    const jailText = document.getElementById('jailText');
-    const jailSaveBtn = document.getElementById('jailSaveBtn');
-    let jailStatus = {pablo:false, ana:false};
-    let jailFor = null;
-
-    function updateCurrentUserUI(){
-      satButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.user === currentUser);
-      });
-      satCurrentUserLabel.textContent = currentUser ? 
-        (currentUser === 'pablo' ? 'Pablo (namorado)' : 'Ana Clara (namorada)') : 
-        'ninguém';
-    }
-
-    satButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        currentUser = btn.dataset.user;
-        localStorage.setItem('satCurrentUser', currentUser);
-        updateCurrentUserUI();
-      });
-    });
-    updateCurrentUserUI();
-
-    const levelMap = {};
-    satRows.forEach(row => {
-      levelMap[row.dataset.level] = row;
-      row.addEventListener('click', () => {
-        if(!currentUser){
-          alert('Escolhe se você é o Pablo ou a Ana primeiro 😉');
-          return;
-        }
-        const levelKey = row.dataset.level;
-        const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
-
-        placeMarker(targetUser, levelKey);
-
-        localStorage.setItem('satLevel_' + targetUser, levelKey);
-
-        if(levelKey === 'perfect'){
-          initialRain(24);
-          popupHeartsBurst();
-          popupEmojiBurst('💘');
-          popupEmojiBurst('🔥');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' é amorzinho perfeito(a)!');
-        } else if(levelKey === 'good'){
-          popupEmojiBurst('⭐');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está muito bonzinho(a) ⭐');
-        } else if(levelKey === 'chill'){
-          popupEmojiBurst('😎');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está de boa / chill 😎');
-        } else if(levelKey === 'ice'){
-          iceRain();
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' está em gelo fino 🧊');
-        } else if(levelKey === 'jail'){
-          showJailAnimation(targetUser);
-          popupEmojiBurst('⛓️');
-          showTinyNote((targetUser === 'pablo' ? 'Pablo' : 'Ana') + ' foi pra cadeia 😬');
-        }
-
-        if(db){
-          firebase.database().ref('satisfaction/' + coupleId + '/' + targetUser).set(levelKey)
-            .catch(err => console.warn('Erro ao salvar no Firebase:', err));
-        }
-      });
-    });
-
-    function placeMarker(user, levelKey){
-      const row = levelMap[levelKey];
-      if(!row) return;
-      const container = row.querySelector('.sat-markers');
-      const emoji = levelEmoji[levelKey] || '❤';
-      const marker = (user === 'pablo') ? markerPablo : markerAna;
-      const letra = (user === 'pablo') ? 'P ' : 'A ';
-      marker.textContent = letra + emoji;
-      container.appendChild(marker);
-
-      jailStatus[user] = (levelKey === 'jail');
-      updateJailUIFromStatus();
-    }
-
-    function updateJailUIFromStatus(){
-      const someone = jailStatus.pablo ? 'pablo' : (jailStatus.ana ? 'ana' : null);
-      jailFor = someone;
-      if(!jailFor){
-        jailExtra.style.display = 'none';
-        return;
-      }
-      jailExtra.style.display = 'block';
-      const alvoNome = jailFor === 'pablo' ? 'Pablo' : 'Ana';
-      jailLabel.textContent = `O que o ${alvoNome} pode fazer para sair da cadeia?`;
-
-      const noteKey = 'jailNote_' + jailFor;
-      const note = localStorage.getItem(noteKey) || '';
-      jailText.value = note;
-    }
-
-    function showJailAnimation(forUser){
-      if(!satCard) return;
-      const wrap = document.createElement('div');
-      wrap.className = 'jail-anim';
-      const bars = document.createElement('div');
-      bars.className = 'jail-bars';
-      for(let i=0;i<5;i++){
-        const s = document.createElement('span');
-        bars.appendChild(s);
-      }
-      wrap.appendChild(bars);
-      satCard.appendChild(wrap);
-      setTimeout(()=>{ wrap.style.opacity='0'; }, 900);
-      setTimeout(()=> wrap.remove(), 1300);
-    }
-
-    jailSaveBtn.addEventListener('click', () => {
-      if(!jailFor){
-        alert('Ninguém está na cadeia agora 😂');
-        return;
-      }
-      const text = jailText.value.trim();
-      const key = 'jailNote_' + jailFor;
-      localStorage.setItem(key, text);
-      if(db){
-        firebase.database().ref('satisfaction/' + coupleId + '/note_' + jailFor).set(text)
-          .catch(err => console.warn('Erro ao salvar nota da cadeia:', err));
-      }
-      showTinyNote('Plano para sair da cadeia salvo 📝');
-    });
-
-    const localPablo = localStorage.getItem('satLevel_pablo');
-    const localAna = localStorage.getItem('satLevel_ana');
-    if(localPablo) placeMarker('pablo', localPablo);
-    if(localAna) placeMarker('ana', localAna);
-
-    if(db){
-      firebase.database().ref('satisfaction/' + coupleId).on('value', snapshot => {
-        const data = snapshot.val() || {};
-        if(data.pablo) {
-          localStorage.setItem('satLevel_pablo', data.pablo);
-          placeMarker('pablo', data.pablo);
-        }
-        if(data.ana)   {
-          localStorage.setItem('satLevel_ana', data.ana);
-          placeMarker('ana', data.ana);
-        }
-        if(data.note_pablo){
-          localStorage.setItem('jailNote_pablo', data.note_pablo);
-          if(jailFor === 'pablo') jailText.value = data.note_pablo;
-        }
-        if(data.note_ana){
-          localStorage.setItem('jailNote_ana', data.note_ana);
-          if(jailFor === 'ana') jailText.value = data.note_ana;
-        }
-      });
-    }
-
-    
-    // MÚSICA DE FUNDO
-    const bgMusic     = document.getElementById('bgMusic');
-    const musicToggle = document.getElementById('musicToggle');
-    const musicIcon   = document.getElementById('musicIcon');
-    let musicPlaying  = false;
-
-    if(musicToggle && bgMusic){
-      musicToggle.addEventListener('click', () => {
-        if(!musicPlaying){
-          bgMusic.play().then(() => {
-            musicPlaying = true;
-            musicToggle.classList.add('playing');
-            musicIcon.textContent = '⏸️';
-            showTinyNote('Música ligada 🎶');
-          }).catch(err => {
-            console.warn('Erro ao tocar música:', err);
-            alert('O navegador pode ter bloqueado o áudio. Confere se o som do site está permitido na barra de endereço 🙂');
-          });
-        }else{
-          bgMusic.pause();
-          musicPlaying = false;
-          musicToggle.classList.remove('playing');
-          musicIcon.textContent = '▶️';
-        }
-      });
-    }
-
-// ENQUETE "SEXO HOJE"
-    const pollSexoBtns = document.querySelectorAll('.poll-btn[data-poll="sexo"]');
-    const pollSexoStatus = document.getElementById('pollSexoStatus');
-
-    function setSexoUI(choice){
-      pollSexoBtns.forEach(btn => {
-        btn.classList.toggle('selected', btn.getAttribute('data-value') === choice);
-      });
-
-      if(choice === 'sim'){
-        pollSexoStatus.textContent = 'Última resposta: Sim 😈';
-      }else if(choice === 'nao'){
-        pollSexoStatus.textContent = 'Última resposta: Não 🙅‍♀️';
-      }else{
-        pollSexoStatus.textContent = 'Ainda sem resposta hoje.';
-      }
-    }
-
-    pollSexoBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const choice = btn.getAttribute('data-value');
-        setSexoUI(choice);
-        if(db){
-          firebase.database().ref('polls/' + coupleId + '/sexoHoje').set({
-            value: choice,
-            updatedAt: Date.now()
-          }).catch(err => console.warn('Erro ao salvar enquete sexoHoje:', err));
-        }
-      });
-    });
-
-    if(db){
-      firebase.database().ref('polls/' + coupleId + '/sexoHoje').on('value', snap => {
-        const data = snap.val();
-        if(!data || !data.value){
-          setSexoUI(null);
-          return;
-        }
-        setSexoUI(data.value);
-      });
-    }
-
-    // CARDÁPIO DO DIA
-    const menuInput  = document.getElementById('menuInput');
-    const menuSaveBtn = document.getElementById('menuSaveBtn');
-    const menuStatus = document.getElementById('menuStatus');
-
-    menuSaveBtn.addEventListener('click', () => {
-      const text = (menuInput.value || '').trim();
-      if(!text){
-        alert('Escreve alguma coisa pro cardápio 😋');
-        return;
-      }
-      if(db){
-        firebase.database().ref('polls/' + coupleId + '/cardapioHoje').set({
-          text,
-          updatedAt: Date.now()
-        }).then(() => {
-          showTinyNote('Cardápio atualizado 🍽️');
-        }).catch(err => console.warn('Erro ao salvar cardápio:', err));
-      }else{
-        menuStatus.textContent = 'Sugestão atual: ' + text;
-      }
-    });
-
-    if(db){
-      firebase.database().ref('polls/' + coupleId + '/cardapioHoje').on('value', snap => {
-        const data = snap.val();
-        if(!data || !data.text){
-          menuStatus.textContent = 'Sem sugestão ainda. Escrevam algo gostoso pra hoje 😋';
-          return;
-        }
-        menuInput.value = data.text;
-        menuStatus.textContent = 'Sugestão atual: ' + data.text;
-      });
-    }
-
-    // MURAL DE RECADOS
-    const muralInput   = document.getElementById('muralInput');
-    const muralTipo    = document.getElementById('muralTipo');
-    const muralAddBtn  = document.getElementById('muralAddBtn');
-    const muralListEl  = document.getElementById('muralList');
-
-    let muralItems = [];
-
-    function renderMuralList(){
-      if(!muralListEl) return;
-      muralListEl.innerHTML = '';
-
-      if(!muralItems.length){
-        muralListEl.textContent = 'Nenhum recadinho ainda. Comecem escrevendo o primeiro 💕';
-        muralListEl.classList.add('mural-list-empty');
-        return;
-      }
-      muralListEl.classList.remove('mural-list-empty');
-
-      muralItems.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'mural-card';
-
-        const main = document.createElement('div');
-        main.className = 'mural-main';
-
-        const pText = document.createElement('p');
-        pText.className = 'mural-text';
-        pText.textContent = item.text || '';
-        main.appendChild(pText);
-
-        const meta = document.createElement('div');
-        meta.className = 'mural-meta';
-
-        const tag = document.createElement('span');
-        tag.className = 'mural-tag ' + (item.tipo || 'fofo');
-        if(item.tipo === 'missao'){
-          tag.textContent = 'Missão / lembrete ✅';
-        }else if(item.tipo === 'importante'){
-          tag.textContent = 'Importante ❗';
-        }else{
-          tag.textContent = 'Recadinho fofo 💖';
-        }
-        meta.appendChild(tag);
-
-        const status = document.createElement('span');
-        status.className = 'mural-status' + (item.done ? ' done' : '');
-        status.textContent = item.done ? 'Concluído ✔' : 'Pendente';
-        meta.appendChild(status);
-
-        if(item.createdAt){
-          const dt = new Date(item.createdAt);
-          const dataStr = dt.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
-          const horaStr = dt.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-          const spanData = document.createElement('span');
-          spanData.textContent = ' • ' + dataStr + ' às ' + horaStr;
-          meta.appendChild(spanData);
-        }
-
-        main.appendChild(meta);
-        card.appendChild(main);
-
-        const actions = document.createElement('div');
-        actions.className = 'mural-actions';
-
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'mural-action-btn' + (item.done ? ' done' : '');
-        toggleBtn.textContent = item.done ? 'Marcar como pendente' : 'Marcar como feito';
-        toggleBtn.addEventListener('click', () => {
-          const newDone = !item.done;
-          if(db){
-            firebase.database().ref('mural/' + coupleId + '/' + item.id).update({ done: newDone })
-              .catch(err => console.warn('Erro ao atualizar mural:', err));
-          }else{
-            item.done = newDone;
-            renderMuralList();
           }
-        });
-        actions.appendChild(toggleBtn);
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'mural-action-btn delete';
-        deleteBtn.textContent = 'Apagar';
-        deleteBtn.addEventListener('click', () => {
-          if(!confirm('Tem certeza que quer apagar esse recado?')) return;
-          if(db){
-            firebase.database().ref('mural/' + coupleId + '/' + item.id).remove()
-              .catch(err => console.warn('Erro ao remover recado:', err));
-          }else{
-            muralItems = muralItems.filter(m => m.id !== item.id);
-            renderMuralList();
-          }
-        });
-        actions.appendChild(deleteBtn);
-
-        card.appendChild(actions);
-        muralListEl.appendChild(card);
-      });
-    }
-
-    if(muralAddBtn){
-      muralAddBtn.addEventListener('click', () => {
-        const text = (muralInput.value || '').trim();
-        const tipo = muralTipo ? muralTipo.value : 'fofo';
-        if(!text){
-          alert('Escreve alguma coisa no recadinho primeiro 💌');
-          return;
-        }
-        const payload = {
-          text,
-          tipo,
-          done: false,
-          createdAt: Date.now()
-        };
-        if(db){
-          firebase.database().ref('mural/' + coupleId).push(payload)
-            .then(() => {
-              muralInput.value = '';
-              showTinyNote('Recadinho adicionado no mural 💌');
-            })
-            .catch(err => console.warn('Erro ao salvar recado:', err));
+        );
+        if(!resp.ok){
+          const txt = await resp.text();
+          log("Erro ao dar play: " + txt);
+          alert("Não consegui dar play na playlist 😢 (vê o log embaixo)");
         }else{
-          // fallback local
-          const id = 'local-' + Date.now();
-          muralItems.push({ id, ...payload });
-          muralInput.value = '';
-          renderMuralList();
+          log("Comando de play enviado com sucesso.");
+          setStatus("Playlist tocando no player web do Spotify 💚");
         }
-      });
+      }catch(e){
+        console.error(e);
+        log("Erro ao falar com o Spotify (play): " + e);
+        alert("Erro ao falar com o Spotify 😢");
+      }
     }
 
-    if(db){
-      firebase.database().ref('mural/' + coupleId)
-        .orderByChild('createdAt')
-        .on('value', snap => {
-          const data = snap.val() || {};
-          const entries = Object.entries(data).sort((a,b) => {
-            const va = (a[1] && a[1].createdAt) || 0;
-            const vb = (b[1] && b[1].createdAt) || 0;
-            return va - vb;
-          });
-          muralItems = entries.map(([id, item]) => ({
-            id,
-            text: item.text || '',
-            tipo: item.tipo || 'fofo',
-            done: !!item.done,
-            createdAt: item.createdAt || 0
-          }));
-          renderMuralList();
-        }, err => console.warn('Erro ao ler mural:', err));
-    }else{
-      renderMuralList();
-    }
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      log("Spotify Web Playback SDK pronto.");
+      initSpotifyPlayer();
+    };
 
-  </script>
-
-  <script>
-    // CONTAGEM REGRESSIVA PARA O ENCONTRO
-    (function(){
-      var countdownTimeEl = document.getElementById('countdownTime');
-      var countdownMsgEl  = document.getElementById('countdownMsg');
-
-      if(!countdownTimeEl || !countdownMsgEl) return;
-
-      // Encontro: 19/11/2025 às 18h (horário local - Brasil)
-      // meses: 0 = jan, 10 = nov
-      var targetDate = new Date(2025, 10, 19, 18, 0, 0);
-
-      function pad2(n){
-        return (n < 10 ? '0' : '') + n;
+    // ==============================
+    // INICIALIZAÇÃO
+    // ==============================
+    (async function(){
+      await handleSpotifyCallbackIfNeeded();
+      const stored = loadStoredSpotifyToken();
+      if(stored){
+        log("Token já existente, tentando iniciar player...");
+        initSpotifyPlayer();
       }
-
-      function updateCountdown(){
-        var now  = new Date();
-        var diff = targetDate.getTime() - now.getTime();
-
-        if(diff <= 0){
-          countdownTimeEl.innerHTML =
-            '<span>00d</span> <span>00h</span> <span>00m</span> <span>00s</span>';
-          countdownMsgEl.textContent =
-            'Já é o dia do encontro! Espero que vocês estejam juntinhos agora 💖';
-          return;
-        }
-
-        var totalSeconds = Math.floor(diff / 1000);
-        var days    = Math.floor(totalSeconds / 86400);
-        var hours   = Math.floor((totalSeconds % 86400) / 3600);
-        var minutes = Math.floor((totalSeconds % 3600) / 60);
-        var seconds = totalSeconds % 60;
-
-        var htmlTime =
-          '<span>' + pad2(days)    + 'd</span> ' +
-          '<span>' + pad2(hours)   + 'h</span> ' +
-          '<span>' + pad2(minutes) + 'm</span> ' +
-          '<span>' + pad2(seconds) + 's</span>';
-
-        countdownTimeEl.innerHTML = htmlTime;
-
-        var msg;
-        if(days > 1){
-          msg = 'Faltam ' + days + ' dias pro próximo encontro. Aguenta coraçãozinho 💘';
-        }else if(days === 1){
-          msg = 'Falta 1 dia pro encontro! Já pode começar a surtar de ansiedade 🥹';
-        }else{
-          msg = 'É hoje! Daqui a pouquinho vocês vão se abraçar 💞';
-        }
-        countdownMsgEl.textContent = msg;
-      }
-
-      updateCountdown();
-      setInterval(updateCountdown, 1000);
     })();
+
+    document.getElementById("spotifyLoginBtn").addEventListener("click", (ev) => {
+      ev.preventDefault();
+      startSpotifyLogin();
+    });
+    document.getElementById("spotifyPlayBtn").addEventListener("click", (ev) => {
+      ev.preventDefault();
+      startSpotifyPlaylist();
+    });
   </script>
 </body>
 </html>

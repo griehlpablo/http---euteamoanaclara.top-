@@ -59,7 +59,45 @@
     .btn-sim{background:linear-gradient(90deg,#ff9fc9,#ff4da6); color:white}
     .btn-nao{background:linear-gradient(90deg,#ffd6d6,#ffc9ff); color:#333}
 
-    .gallery{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    
+    .thumb-more-wrapper{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:72px;
+      height:72px;
+      border-radius:12px;
+      background:rgba(255,255,255,0.9);
+      box-shadow:0 6px 18px rgba(0,0,0,0.08);
+      cursor:pointer;
+      border:3px solid white;
+    }
+    .thumb-more-inner{
+      text-align:center;
+      font-size:13px;
+      font-weight:700;
+      color:var(--accent);
+      line-height:1.2;
+    }
+    .thumb-more-count{
+      font-size:16px;
+      display:block;
+    }
+    .thumb-more-label{
+      font-size:11px;
+      opacity:0.8;
+    }
+    .gallery-full{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+    .gallery-full .thumb{
+      width:80px;
+      height:80px;
+    }
+.gallery{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
     .thumb-wrapper{position:relative; display:inline-block;}
     .thumb{width:72px;height:72px; border-radius:8px; object-fit:cover; border:3px solid white; box-shadow:0 6px 18px rgba(0,0,0,0.08); cursor:pointer}
     .thumb-remove{
@@ -675,6 +713,19 @@
     <span class="music-toggle-text">música</span>
   </div>
 
+
+  <!-- Overlay galeria completa -->
+  <div class="overlay" id="galleryOverlay">
+    <div class="overlay-card" style="max-width:900px; text-align:left;">
+      <h2>Galeria completa 💞</h2>
+      <p class="small">Aqui aparecem todas as fotos que vocês salvaram no site. Dá pra apagar alguma se quiser também.</p>
+      <div id="fullGallery" class="gallery-full"></div>
+      <div style="margin-top:14px; text-align:center;">
+        <button class="btn btn-sim" id="closeGalleryOverlay">Fechar</button>
+      </div>
+    </div>
+  </div>
+
 <!-- Overlay mensagem grande -->
   <div class="overlay" id="overlay">
     <div class="overlay-card">
@@ -869,9 +920,47 @@
     setHeroFromSrc('images/wedding.jpg');
     startHeroCarousel();
 
-    // Upload fotos -> Realtime DB
+    
+    // Upload fotos -> Realtime DB (com compressão + prévia limitada + galeria completa)
     const fileInput = document.getElementById('fileInput');
     const savePhotosBtn = document.getElementById('savePhotosBtn');
+
+    const MAX_DYNAMIC_PHOTOS = 60;
+    const MAX_PREVIEW_DYNAMIC = 12;
+
+    let dynamicPhotosList = [];
+
+    // Compressão básica da imagem antes de salvar
+    function resizeImageToDataURL(file, maxSize = 900, quality = 0.7){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+            if(w > h && w > maxSize){
+              h = Math.round(h * maxSize / w);
+              w = maxSize;
+            }else if(h >= w && h > maxSize){
+              w = Math.round(w * maxSize / h);
+              h = maxSize;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            resolve(dataUrl);
+          };
+          img.onerror = err => reject(err);
+          img.src = e.target.result;
+        };
+        reader.onerror = err => reject(err);
+        reader.readAsDataURL(file);
+      });
+    }
 
     savePhotosBtn.addEventListener('click', () => {
       const files = Array.from(fileInput.files || []);
@@ -883,45 +972,158 @@
         showTinyNote('Firebase não disponível, não consegui salvar 😢');
         return;
       }
+
       files.forEach(file => {
         if(!file.type.startsWith('image/')) return;
-        const reader = new FileReader();
-        reader.onload = function(ev){
-          const dataUrl = ev.target.result;
-          firebase.database().ref('gallery/' + coupleId).push({
-            dataUrl,
-            name: file.name || null,
-            createdAt: Date.now()
-          }).then(()=>{
+        resizeImageToDataURL(file, 900, 0.7)
+          .then(dataUrl => {
+            return firebase.database().ref('gallery/' + coupleId).push({
+              dataUrl,
+              name: file.name || null,
+              createdAt: Date.now()
+            });
+          })
+          .then(() => {
             showTinyNote('Foto salva na galeria 💖');
-          }).catch(err => {
+          })
+          .catch(err => {
             console.warn('Erro ao salvar foto:', err);
             showTinyNote('Não consegui salvar uma das fotos 😢');
           });
-        };
-        reader.readAsDataURL(file);
       });
+
       fileInput.value = '';
     });
 
-    if(db){
-      firebase.database().ref('gallery/' + coupleId).on('value', snapshot => {
-        const data = snapshot.val() || {};
-        const oldDyn = gallery.querySelectorAll('.dynamic-photo');
-        oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
-        const entries = Object.entries(data).sort((a,b) => {
-          const va = a[1]?.createdAt || 0;
-          const vb = b[1]?.createdAt || 0;
-          return va - vb;
+    // Overlay da galeria completa
+    const galleryOverlay = document.getElementById('galleryOverlay');
+    const fullGallery = document.getElementById('fullGallery');
+    const closeGalleryOverlay = document.getElementById('closeGalleryOverlay');
+
+    function openFullGalleryOverlay(){
+      if(!galleryOverlay || !fullGallery) return;
+      fullGallery.innerHTML = '';
+
+      dynamicPhotosList.forEach(item => {
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-wrapper';
+        wrap.dataset.photoId = item.id;
+
+        const img = document.createElement('img');
+        img.src = item.dataUrl;
+        img.className = 'thumb dynamic-photo';
+        img.addEventListener('click', () => setHeroFromSrc(item.dataUrl));
+        wrap.appendChild(img);
+
+        const btn = document.createElement('button');
+        btn.className = 'thumb-remove';
+        btn.innerText = '×';
+        btn.title = 'Remover esta foto';
+        btn.addEventListener('click', ev => {
+          ev.stopPropagation();
+          if(!confirm('Tem certeza que quer remover esta foto da galeria?')) return;
+          if(!db){
+            showTinyNote('Firebase não disponível 😢');
+            return;
+          }
+          firebase.database().ref('gallery/' + coupleId + '/' + item.id)
+            .remove()
+            .then(() => {
+              showTinyNote('Foto removida 🗑️');
+              heroSources = heroSources.filter(u => u !== item.dataUrl);
+            })
+            .catch(err => {
+              console.warn('Erro ao remover foto:', err);
+              showTinyNote('Não consegui remover 😢');
+            });
         });
-        entries.forEach(([id, item]) => {
-          if(!item.dataUrl) return;
-          createThumb(item.dataUrl, true, id);
-        });
+        wrap.appendChild(btn);
+
+        fullGallery.appendChild(wrap);
+      });
+
+      galleryOverlay.classList.add('show');
+    }
+
+    if(closeGalleryOverlay){
+      closeGalleryOverlay.addEventListener('click', () => {
+        galleryOverlay.classList.remove('show');
       });
     }
 
-    // Overlays
+    function renderDynamicPreview(){
+      // remove thumbs dinâmicas antigas e botão "+N"
+      const oldDyn = gallery.querySelectorAll('.dynamic-photo');
+      oldDyn.forEach(el => el.parentElement && el.parentElement.remove());
+      const moreWrappers = gallery.querySelectorAll('.thumb-more-wrapper');
+      moreWrappers.forEach(el => el.remove());
+
+      if(!dynamicPhotosList.length) return;
+
+      const preview = dynamicPhotosList.slice(0, MAX_PREVIEW_DYNAMIC);
+      preview.forEach(item => {
+        createThumb(item.dataUrl, true, item.id);
+      });
+
+      const extraCount = dynamicPhotosList.length - preview.length;
+      if(extraCount > 0){
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-more-wrapper';
+
+        const inner = document.createElement('div');
+        inner.className = 'thumb-more-inner';
+
+        const spanCount = document.createElement('span');
+        spanCount.className = 'thumb-more-count';
+        spanCount.textContent = '+' + extraCount;
+
+        const spanLabel = document.createElement('span');
+        spanLabel.className = 'thumb-more-label';
+        spanLabel.textContent = 'ver tudo';
+
+        inner.appendChild(spanCount);
+        inner.appendChild(spanLabel);
+        wrap.appendChild(inner);
+
+        wrap.addEventListener('click', () => {
+          openFullGalleryOverlay();
+        });
+
+        gallery.appendChild(wrap);
+      }
+    }
+
+    if(db){
+      firebase.database()
+        .ref('gallery/' + coupleId)
+        .orderByChild('createdAt')
+        .limitToLast(MAX_DYNAMIC_PHOTOS)
+        .on('value', snapshot => {
+          const data = snapshot.val() || {};
+          const entries = Object.entries(data).sort((a,b) => {
+            const va = (a[1] && a[1].createdAt) || 0;
+            const vb = (b[1] && b[1].createdAt) || 0;
+            return va - vb;
+          });
+
+          dynamicPhotosList = entries.map(([id, item]) => ({
+            id,
+            dataUrl: item.dataUrl,
+            createdAt: item.createdAt || 0
+          })).filter(p => !!p.dataUrl);
+
+          // registra TODAS as fotos dinâmicas no carrossel
+          dynamicPhotosList.forEach(p => {
+            registerHeroSrc(p.dataUrl);
+          });
+
+          renderDynamicPreview();
+        }, err => {
+          console.warn('Erro ao ler galeria do Firebase:', err);
+        });
+    }
+
+// Overlays
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlayTitle');
     const overlayText = document.getElementById('overlayText');

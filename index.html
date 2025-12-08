@@ -673,6 +673,166 @@
       white-space:pre-wrap;
     }
 
+    /* Abas principais */
+    .tabs-hub{
+      margin-top:26px;
+      background:#0f172a;
+      border-radius:18px;
+      padding:12px 12px 8px;
+      box-shadow:0 16px 38px rgba(15,23,42,0.25);
+      border:1px solid rgba(255,255,255,0.08);
+      color:#e2e8f0;
+    }
+    .tabs-title{
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:0.4px;
+      opacity:0.8;
+      margin:0 0 6px 4px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .tabs-title span{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      background:linear-gradient(120deg,#ff9fc9,#ff4da6);
+      color:#0f172a;
+      font-weight:800;
+      font-size:12px;
+    }
+    .tabs-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      overflow-x:auto;
+      padding-bottom:6px;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(255,255,255,0.25) transparent;
+    }
+    .tabs-row::-webkit-scrollbar{height:6px;}
+    .tabs-row::-webkit-scrollbar-thumb{
+      background:rgba(255,255,255,0.25);
+      border-radius:99px;
+    }
+    .tab-btn{
+      border:0;
+      background:rgba(255,255,255,0.06);
+      color:#e2e8f0;
+      padding:12px 14px;
+      border-radius:999px;
+      font-weight:800;
+      letter-spacing:0.1px;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,0.2);
+      transition:transform .12s ease, box-shadow .12s ease, background .18s ease, color .18s ease;
+      white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .tab-btn small{
+      font-size:11px;
+      opacity:0.7;
+      font-weight:700;
+    }
+    .tab-btn:hover{transform:translateY(-2px);}
+    .tab-btn.active{
+      background:#f8fafc;
+      color:#0f172a;
+      box-shadow:0 10px 26px rgba(255,77,166,0.35);
+    }
+    .tab-btn.active small{opacity:0.8;}
+    .tab-hidden{display:none!important;}
+
+    /* Retrospectiva */
+    .retro-section .retro-hero{
+      background:linear-gradient(135deg,#111827,#0f172a);
+      color:#f8fafc;
+      border-radius:16px;
+      padding:18px 16px;
+      display:grid;
+      grid-template-columns:1.4fr 1fr;
+      gap:14px;
+      box-shadow:0 12px 32px rgba(0,0,0,0.22);
+      border:1px solid rgba(255,255,255,0.08);
+      position:relative;
+      overflow:hidden;
+    }
+    .retro-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.08);
+      font-size:12px;
+      font-weight:700;
+      width:max-content;
+    }
+    .retro-hero h3{
+      margin:6px 0 4px;
+      font-size:24px;
+      letter-spacing:0.2px;
+    }
+    .retro-hero p{margin:0; opacity:0.88;}
+    .retro-cta{
+      display:flex;
+      align-items:flex-end;
+      justify-content:flex-end;
+    }
+    .retro-cta button{
+      border:0;
+      background:linear-gradient(135deg,#ff9fc9,#ff4da6);
+      color:#0f172a;
+      font-weight:900;
+      padding:12px 16px;
+      border-radius:14px;
+      cursor:pointer;
+      box-shadow:0 12px 30px rgba(255,77,166,0.35);
+      font-size:14px;
+      letter-spacing:0.2px;
+    }
+    .retro-grid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:10px;
+    }
+    .retro-card{
+      background:#0b1222;
+      color:#e2e8f0;
+      border-radius:12px;
+      padding:12px;
+      box-shadow:0 10px 24px rgba(0,0,0,0.2);
+      border:1px solid rgba(255,255,255,0.06);
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .retro-card strong{font-size:15px;}
+    .retro-card small{opacity:0.8;}
+    .retro-accent{
+      color:#ff9fc9;
+      font-weight:800;
+    }
+    .retro-subline{
+      margin-top:4px;
+      font-size:12px;
+      opacity:0.75;
+    }
+    .retro-canvas{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:radial-gradient(circle at 18% 30%, rgba(255,77,166,0.18), transparent 30%),
+                 radial-gradient(circle at 78% 70%, rgba(255,143,178,0.16), transparent 34%);
+    }
+
     /* Overlay galeria cheia */
     #galleryOverlay .overlay-card{
       max-width:860px;
@@ -1274,7 +1434,29 @@
       </div>
 
       <!-- Painel de satisfação -->
-      <section class="satisfaction-wrapper">
+      <div class="tabs-hub">
+        <p class="tabs-title"><span>*</span>Menu rapido</p>
+        <div class="tabs-row" id="tabButtons">
+          <button class="tab-btn active" data-tab="tudo">Tudo</button>
+          <button class="tab-btn" data-tab="painel">Painel</button>
+          <button class="tab-btn" data-tab="enquetes">Enquetes</button>
+          <button class="tab-btn" data-tab="retrospectiva">Retrospectiva</button>
+          <button class="tab-btn" data-tab="mural">Mural</button>
+          <button class="tab-btn" data-tab="historia">Historia</button>
+          <button class="tab-btn" data-tab="lugares">Lugares</button>
+          <button class="tab-btn" data-tab="sonhos">Sonhos</button>
+          <button class="tab-btn" data-tab="pote">Pote do amor</button>
+          <button class="tab-btn" data-tab="quiz">Quiz</button>
+          <button class="tab-btn" data-tab="videos">Videos</button>
+          <button class="tab-btn" data-tab="agenda">Calendario</button>
+          <button class="tab-btn" data-tab="humor">Humor</button>
+          <button class="tab-btn" data-tab="ideias">Inspiracoes</button>
+          <button class="tab-btn" data-tab="notif">Notificacoes</button>
+          <button class="tab-btn" data-tab="musica">Musica</button>
+        </div>
+      </div>
+
+      <section class="satisfaction-wrapper tab-panel" data-tab-section="painel">
         <div class="satisfaction-card">
           <h2>Nível de satisfação com o mozão 😏</h2>
           <p class="sat-sub">
@@ -1330,7 +1512,7 @@
       </section>
 
       <!-- ENQUETES -->
-      <section class="polls-wrapper">
+      <section class="polls-wrapper tab-panel" data-tab-section="enquetes">
         <div class="panel poll-card">
           <h2>Enquetes do dia 💭</h2>
           <p class="poll-sub">As respostas ficam salvas pra vocês dois verem, em qualquer dispositivo.</p>
@@ -1355,8 +1537,44 @@
         </div>
       </section>
 
+      <!-- RETROSPECTIVA -->
+      <section class="extra-section retro-section tab-panel" data-tab-section="retrospectiva">
+        <div class="retro-hero">
+          <div class="retro-badge">Retrospectiva</div>
+          <h3>Sua Retrospectiva 2025</h3>
+          <p>Hora de saber o que voces amaram esse ano. Destaques que misturam bilhetes, musicas e aventuras.</p>
+          <p class="retro-subline">Resumos carinhosos baseados no que registraram aqui.</p>
+          <div class="retro-canvas"></div>
+          <div class="retro-cta">
+            <button id="retroPlayBtn">Vamos la</button>
+          </div>
+        </div>
+        <div class="retro-grid">
+          <div class="retro-card">
+            <strong>Seus stories</strong>
+            <small>Momentos que voces registraram juntos</small>
+            <div class="retro-subline">Veja os 5 mais marcantes</div>
+          </div>
+          <div class="retro-card">
+            <strong>Suas musicas mais ouvidas</strong>
+            <small>Top trilhas que voces deram play</small>
+            <div class="retro-subline retro-accent">Montamos um ranking fofinho</div>
+          </div>
+          <div class="retro-card">
+            <strong>Festinha da Retrospectiva</strong>
+            <small>Cards bonitos pra compartilhar</small>
+            <div class="retro-subline">Inclui capa com nome de voces</div>
+          </div>
+          <div class="retro-card">
+            <strong>Top artistas do casal</strong>
+            <small>Quais artistas tocaram em loop</small>
+            <div class="retro-subline">Pablo + Ana = match perfeito</div>
+          </div>
+        </div>
+      </section>
+
       <!-- MURAL DE RECADOS -->
-      <section class="mural-wrapper">
+      <section class="mural-wrapper tab-panel" data-tab-section="mural">
         <div class="panel mural-card">
           <h2>Muralzinho de recados ✍️</h2>
           <p class="small">
@@ -1378,7 +1596,7 @@
 
 
       <!-- NOSSA HISTÓRIA -->
-      <section class="extra-section timeline-section">
+      <section class="extra-section timeline-section tab-panel" data-tab-section="historia">
         <div class="panel extra-card">
           <h2>Nossa história de amor 🗓️</h2>
           <p class="small">
@@ -1395,7 +1613,7 @@
       </section>
 
       <!-- MAPA / LUGARES ESPECIAIS -->
-      <section class="extra-section places-section">
+      <section class="extra-section places-section tab-panel" data-tab-section="lugares">
         <div class="panel extra-card">
           <h2>Mapa de memórias 🌍</h2>
           <p class="small">
@@ -1411,7 +1629,7 @@
       </section>
 
       <!-- BUCKET LIST DO CASAL -->
-      <section class="extra-section bucket-section">
+      <section class="extra-section bucket-section tab-panel" data-tab-section="sonhos">
         <div class="panel extra-card">
           <h2>Nossa lista de sonhos ✨</h2>
           <p class="small">
@@ -1427,7 +1645,7 @@
       </section>
 
       <!-- POTE DO AMOR -->
-      <section class="extra-section lovejar-section">
+      <section class="extra-section lovejar-section tab-panel" data-tab-section="pote">
         <div class="panel extra-card">
           <h2>Pote do amor 💌</h2>
           <p class="small">
@@ -1449,7 +1667,7 @@
       </section>
 
       <!-- QUIZ DO CASAL -->
-      <section class="extra-section quiz-section">
+      <section class="extra-section quiz-section tab-panel" data-tab-section="quiz">
         <div class="panel extra-card">
           <h2>Quiz do casal ❓</h2>
           <p class="small">
@@ -1461,7 +1679,7 @@
       </section>
 
       <!-- VÍDEOS & DEPOIMENTOS -->
-      <section class="extra-section videos-section">
+      <section class="extra-section videos-section tab-panel" data-tab-section="videos">
         <div class="panel extra-card">
           <h2>Vídeos & depoimentos 🎬</h2>
           <p class="small">
@@ -1477,7 +1695,7 @@
       </section>
 
       <!-- NOSSO CALENDÁRIO -->
-      <section class="extra-section calendar-section">
+      <section class="extra-section calendar-section tab-panel" data-tab-section="agenda">
         <div class="panel extra-card">
           <h2>Nosso calendário ❤️</h2>
           <p class="small">
@@ -1494,7 +1712,7 @@
       </section>
 
       <!-- HUMOR & GRAFICO -->
-      <section class="extra-section mood-section">
+      <section class="extra-section mood-section tab-panel" data-tab-section="humor">
         <div class="panel extra-card">
           <h2>Histórico de humor do casal 📈</h2>
           <p class="small">
@@ -1506,7 +1724,7 @@
       </section>
 
       <!-- INSPIRAÇÕES & IDEIAS -->
-      <section class="extra-section ideas-section">
+      <section class="extra-section ideas-section tab-panel" data-tab-section="ideias">
         <div class="panel extra-card">
           <h2>Inspirações & ideias ✨</h2>
           <p class="small">
@@ -1521,7 +1739,7 @@
       </section>
 
       <!-- NOTIFICAÇÕES -->
-      <section class="extra-section notif-section">
+      <section class="extra-section notif-section tab-panel" data-tab-section="notif">
         <div class="panel extra-card">
           <h2>Lembretes & notificações 🔔</h2>
           <p class="small">
@@ -1536,7 +1754,7 @@
       </section>
 
       <!-- MÚSICA -->
-      <section class="music-wrapper">
+      <section class="music-wrapper tab-panel" data-tab-section="musica">
         <div class="panel music-card">
           <h2>Música do nosso amor 🎵</h2>
           <p class="music-sub">
@@ -3338,6 +3556,30 @@
     const setLS = (k, v) => { try{ localStorage.setItem(prefix + k, JSON.stringify(v)); }catch(e){} };
     const sync = (k, data) => { if(!hasFirebase) return; try{ db.ref('hub/' + coupleId + '/' + k).set(data); }catch(e){} };
     const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+    // Abas principais (menu a partir do painel de satisfação)
+    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+    const tabPanels = Array.from(document.querySelectorAll('[data-tab-section]'));
+    function setMainTab(tab){
+      const exists = tabButtons.some(btn => btn.dataset.tab === tab);
+      const target = exists ? tab : 'tudo';
+      tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === target));
+      tabPanels.forEach(panel => {
+        const tags = (panel.dataset.tabSection || '').split(/\s+/).filter(Boolean);
+        const show = target === 'tudo' || tags.includes(target);
+        panel.classList.toggle('tab-hidden', !show);
+      });
+      setLS('mainTab', target);
+    }
+    if(tabButtons.length && tabPanels.length){
+      const savedTab = getLS('mainTab', 'tudo');
+      setMainTab(savedTab);
+      tabButtons.forEach(btn => btn.addEventListener('click', ()=> setMainTab(btn.dataset.tab)));
+    }
+    const retroPlayBtn = document.getElementById('retroPlayBtn');
+    if(retroPlayBtn){
+      retroPlayBtn.addEventListener('click', ()=> setMainTab('retrospectiva'));
+    }
 
     // Navegação
     function setSection(id){

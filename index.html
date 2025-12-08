@@ -742,7 +742,154 @@
         margin-bottom:40px;
       }
     }
-  </style>
+  
+    /* Seções extras (nossa história, mapa, bucket list etc.) */
+    .extra-section{
+      margin-top:24px;
+    }
+    .extra-card h2{
+      margin-top:0;
+      font-size:20px;
+    }
+    .extra-card .small{
+      font-size:13px;
+      opacity:0.85;
+    }
+    .extra-form{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .extra-input{
+      width:100%;
+      border-radius:8px;
+      border:1px solid rgba(0,0,0,0.08);
+      padding:8px 10px;
+      font-family:inherit;
+      font-size:14px;
+    }
+    .extra-textarea{
+      min-height:70px;
+      resize:vertical;
+    }
+    .extra-list{
+      list-style:none;
+      padding:0;
+      margin:10px 0 0;
+      max-height:280px;
+      overflow-y:auto;
+    }
+    .extra-list li{
+      border-radius:10px;
+      padding:8px 10px;
+      background:rgba(255,255,255,0.9);
+      box-shadow:0 2px 6px rgba(0,0,0,0.04);
+      font-size:14px;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      margin-bottom:6px;
+    }
+    .extra-list li .extra-meta{
+      font-size:11px;
+      opacity:0.7;
+    }
+    .extra-list-check li{
+      flex-direction:row;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .extra-list-check label{
+      flex:1;
+      display:flex;
+      gap:6px;
+      align-items:flex-start;
+      font-size:14px;
+    }
+    .extra-list-check input[type=checkbox]{
+      margin-top:3px;
+    }
+    .extra-list-links a{
+      word-break:break-all;
+      font-size:13px;
+    }
+    .calendar-form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows:auto auto;
+      gap:6px;
+    }
+    .calendar-form #eventTitle{
+      grid-column:1 / span 2;
+    }
+    .calendar-form #eventAddBtn{
+      grid-column:1 / span 2;
+    }
+    .lovejar-random{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .lovejar-details{
+      margin-top:8px;
+    }
+    .lovejar-details summary{
+      cursor:pointer;
+    }
+    .quiz-question{
+      margin-top:10px;
+      padding:10px;
+      border-radius:10px;
+      background:rgba(255,255,255,0.9);
+      box-shadow:0 2px 6px rgba(0,0,0,0.04);
+    }
+    .quiz-options{
+      margin-top:6px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .quiz-option-btn{
+      border-radius:8px;
+      border:1px solid rgba(0,0,0,0.06);
+      padding:6px 8px;
+      text-align:left;
+      cursor:pointer;
+      background:#fff;
+      font-size:14px;
+    }
+    .quiz-option-btn.selected-correct{
+      background:#e6ffe6;
+      border-color:#8cd98c;
+    }
+    .quiz-option-btn.selected-wrong{
+      background:#ffe6e6;
+      border-color:#ff9999;
+    }
+    .mood-section canvas{
+      margin-top:10px;
+      width:100%;
+      max-width:100%;
+      background:#fff;
+      border-radius:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    }
+    .extra-card .btn{
+      align-self:flex-start;
+    }
+    @media (max-width:700px){
+      .calendar-form{
+        grid-template-columns:1fr;
+      }
+      .calendar-form #eventTitle,
+      .calendar-form #eventAddBtn{
+        grid-column:auto;
+      }
+    }
+</style>
 </head>
 <body>
   <div class="stage">
@@ -945,6 +1092,165 @@
           </div>
 
           <ul id="muralList" class="mural-list"></ul>
+        </div>
+      </section>
+
+
+      <!-- NOSSA HISTÓRIA -->
+      <section class="extra-section timeline-section">
+        <div class="panel extra-card">
+          <h2>Nossa história de amor 🗓️</h2>
+          <p class="small">
+            Uma linha do tempo com os momentos mais importantes. Vocês podem ir adicionando aos poucos.
+          </p>
+          <div class="extra-form">
+            <input type="date" id="timelineDate" class="extra-input" />
+            <input type="text" id="timelineTitle" class="extra-input" placeholder="Título do momento (ex.: primeiro encontro)" />
+            <textarea id="timelineDesc" class="extra-input extra-textarea" placeholder="Detalhes fofos, memórias, sensações..."></textarea>
+            <button class="btn btn-sim" id="timelineAddBtn">Adicionar à linha do tempo</button>
+          </div>
+          <ul id="timelineList" class="extra-list"></ul>
+        </div>
+      </section>
+
+      <!-- MAPA / LUGARES ESPECIAIS -->
+      <section class="extra-section places-section">
+        <div class="panel extra-card">
+          <h2>Mapa de memórias 🌍</h2>
+          <p class="small">
+            Guardem os lugares especiais de vocês. Cada item abre o lugar no Google Maps.
+          </p>
+          <div class="extra-form">
+            <input type="text" id="placeName" class="extra-input" placeholder="Nome do lugar (ex.: nosso restaurante favorito)" />
+            <input type="text" id="placeAddress" class="extra-input" placeholder="Endereço ou cidade (ex.: Curitiba, PR)" />
+            <button class="btn btn-sim" id="placeAddBtn">Salvar lugar</button>
+          </div>
+          <ul id="placesList" class="extra-list"></ul>
+        </div>
+      </section>
+
+      <!-- BUCKET LIST DO CASAL -->
+      <section class="extra-section bucket-section">
+        <div class="panel extra-card">
+          <h2>Nossa lista de sonhos ✨</h2>
+          <p class="small">
+            Coisas que vocês querem fazer juntos: viagens, cursos, planos pra casa...
+          </p>
+          <div class="extra-form">
+            <input type="text" id="bucketInput" class="extra-input" placeholder="Ex.: viajar pra praia tal, morar juntos, adotar um gatinho..." />
+            <button class="btn btn-sim" id="bucketAddBtn">Adicionar à lista</button>
+          </div>
+          <p class="small" id="bucketProgress">Nenhum sonho marcado ainda.</p>
+          <ul id="bucketList" class="extra-list extra-list-check"></ul>
+        </div>
+      </section>
+
+      <!-- POTE DO AMOR -->
+      <section class="extra-section lovejar-section">
+        <div class="panel extra-card">
+          <h2>Pote do amor 💌</h2>
+          <p class="small">
+            Guardem bilhetes do tipo “Hoje eu te amo porque...”. Dá pra sortear um aleatoriamente.
+          </p>
+          <div class="extra-form">
+            <textarea id="loveJarInput" class="extra-input extra-textarea" placeholder="Hoje eu te amo porque..."></textarea>
+            <button class="btn btn-sim" id="loveJarAddBtn">Guardar bilhete</button>
+          </div>
+          <div class="lovejar-random">
+            <button class="btn btn-nao" id="loveJarRandomBtn">Sortear bilhete aleatório</button>
+            <p class="small" id="loveJarRandomText">Nenhum bilhete sorteado ainda.</p>
+          </div>
+          <details class="lovejar-details">
+            <summary class="small">Ver todos os bilhetes</summary>
+            <ul id="loveJarList" class="extra-list"></ul>
+          </details>
+        </div>
+      </section>
+
+      <!-- QUIZ DO CASAL -->
+      <section class="extra-section quiz-section">
+        <div class="panel extra-card">
+          <h2>Quiz do casal ❓</h2>
+          <p class="small">
+            Um joguinho simples sobre a história de vocês. Vocês podem brincar juntos.
+          </p>
+          <div id="quizContainer"></div>
+          <p class="small" id="quizResult"></p>
+        </div>
+      </section>
+
+      <!-- VÍDEOS & DEPOIMENTOS -->
+      <section class="extra-section videos-section">
+        <div class="panel extra-card">
+          <h2>Vídeos & depoimentos 🎬</h2>
+          <p class="small">
+            Guardem links de vídeos especiais (YouTube, Drive, etc.) pra assistir quando der saudade.
+          </p>
+          <div class="extra-form">
+            <input type="text" id="videoTitle" class="extra-input" placeholder="Título do vídeo" />
+            <input type="text" id="videoUrl" class="extra-input" placeholder="Link do vídeo (YouTube, Drive, etc.)" />
+            <button class="btn btn-sim" id="videoAddBtn">Adicionar vídeo</button>
+          </div>
+          <ul id="videosList" class="extra-list extra-list-links"></ul>
+        </div>
+      </section>
+
+      <!-- NOSSO CALENDÁRIO -->
+      <section class="extra-section calendar-section">
+        <div class="panel extra-card">
+          <h2>Nosso calendário ❤️</h2>
+          <p class="small">
+            Datas importantes, combinados e rolês marcados. Vocês podem usar isso como base pra adicionar no calendário do celular.
+          </p>
+          <div class="extra-form calendar-form">
+            <input type="date" id="eventDate" class="extra-input" />
+            <input type="time" id="eventTime" class="extra-input" />
+            <input type="text" id="eventTitle" class="extra-input" placeholder="Ex.: jantar especial, viagem, cinema..." />
+            <button class="btn btn-sim" id="eventAddBtn">Salvar evento</button>
+          </div>
+          <ul id="eventsList" class="extra-list extra-list-events"></ul>
+        </div>
+      </section>
+
+      <!-- HUMOR & GRAFICO -->
+      <section class="extra-section mood-section">
+        <div class="panel extra-card">
+          <h2>Histórico de humor do casal 📈</h2>
+          <p class="small">
+            Um gráfico simples usando os votos do “Nível de satisfação com o mozão”. Os dados ficam salvos nesse navegador.
+          </p>
+          <canvas id="moodChart" width="400" height="220"></canvas>
+          <p class="small" id="moodChartStatus"></p>
+        </div>
+      </section>
+
+      <!-- INSPIRAÇÕES & IDEIAS -->
+      <section class="extra-section ideas-section">
+        <div class="panel extra-card">
+          <h2>Inspirações & ideias ✨</h2>
+          <p class="small">
+            Receitas, filmes, lugares pra visitar, ideias de presentes... tudo o que lembre vocês dois.
+          </p>
+          <div class="extra-form">
+            <input type="text" id="ideaText" class="extra-input" placeholder="Ex.: maratonar tal série, cozinhar tal receita, visitar tal lugar..." />
+            <button class="btn btn-sim" id="ideaAddBtn">Adicionar inspiração</button>
+          </div>
+          <ul id="ideasList" class="extra-list"></ul>
+        </div>
+      </section>
+
+      <!-- NOTIFICAÇÕES -->
+      <section class="extra-section notif-section">
+        <div class="panel extra-card">
+          <h2>Lembretes & notificações 🔔</h2>
+          <p class="small">
+            Aqui vocês podem testar as notificações do navegador para o site. Funciona melhor quando o site está em HTTPS (por exemplo, no domínio oficial).
+          </p>
+          <div class="extra-form">
+            <button class="btn btn-sim" id="notifRequestBtn">Ativar/confirmar notificações</button>
+            <button class="btn btn-nao" id="notifTestBtn">Enviar notificação de teste</button>
+          </div>
+          <p class="small" id="notifStatus">As notificações ainda não foram configuradas.</p>
         </div>
       </section>
 
@@ -2075,6 +2381,660 @@
         updateSpotifyStatus('Conectado ao Spotify ✅ (cliquem em "Tocar playlist aqui")');
       }
     });
-  </script>
+  
+    
+    // =======================
+    // Seções extras do casal
+    // =======================
+    (function(){
+      const LS_PREFIX = 'acLove_';
+
+      function saveLS(key, value){
+        try{
+          localStorage.setItem(LS_PREFIX + key, JSON.stringify(value));
+        }catch(e){}
+      }
+      function loadLS(key, def){
+        try{
+          const raw = localStorage.getItem(LS_PREFIX + key);
+          if(!raw) return def;
+          return JSON.parse(raw);
+        }catch(e){
+          return def;
+        }
+      }
+      function uid(){
+        return Date.now().toString(36) + Math.random().toString(36).slice(2);
+      }
+
+      function hasFirebase(){
+        return typeof window !== 'undefined' && !!window.db && typeof coupleId !== 'undefined';
+      }
+      function syncToFirebase(sectionKey, data){
+        if(!hasFirebase()) return;
+        try{
+          window.db.ref('extras/' + coupleId + '/' + sectionKey).set(data);
+        }catch(e){
+          console.warn('Erro ao salvar seção extra no Firebase:', sectionKey, e);
+        }
+      }
+      function listenFromFirebase(sectionKey, setter){
+        if(!hasFirebase()) return;
+        try{
+          window.db.ref('extras/' + coupleId + '/' + sectionKey).on('value', function(snap){
+            const val = snap.val();
+            let arr;
+            if(val == null){
+              arr = [];
+            }else if(Array.isArray(val)){
+              arr = val;
+            }else if(typeof val === 'object'){
+              arr = Object.values(val);
+            }else{
+              arr = [];
+            }
+            setter(arr);
+          });
+        }catch(e){
+          console.warn('Erro ao ler seção extra do Firebase:', sectionKey, e);
+        }
+      }
+
+      // ---- Linha do tempo ----
+      const tlDate = document.getElementById('timelineDate');
+      const tlTitle = document.getElementById('timelineTitle');
+      const tlDesc = document.getElementById('timelineDesc');
+      const tlBtn = document.getElementById('timelineAddBtn');
+      const tlList = document.getElementById('timelineList');
+      let tlData = loadLS('timeline', []);
+
+      function setTimelineData(arr){
+        tlData = Array.isArray(arr) ? arr : [];
+        saveLS('timeline', tlData);
+        renderTimeline();
+      }
+      function renderTimeline(){
+        if(!tlList) return;
+        tlList.innerHTML = '';
+        const sorted = [].concat(tlData).sort(function(a,b){
+          return (a.date || '').localeCompare(b.date || '');
+        });
+        sorted.forEach(function(item){
+          const li = document.createElement('li');
+          const title = document.createElement('div');
+          title.textContent = (item.date || '') + (item.title ? ' — ' + item.title : '');
+          const desc = document.createElement('div');
+          desc.textContent = item.desc || '';
+          desc.className = 'extra-meta';
+          li.appendChild(title);
+          if(item.desc){
+            li.appendChild(desc);
+          }
+          tlList.appendChild(li);
+        });
+      }
+      if(tlBtn && tlList){
+        tlBtn.addEventListener('click', function(){
+          const d = tlDate.value || '';
+          const t = (tlTitle.value || '').trim();
+          const desc = (tlDesc.value || '').trim();
+          if(!d && !t && !desc) return;
+          tlData.push({id:uid(), date:d, title:t, desc:desc});
+          saveLS('timeline', tlData);
+          syncToFirebase('timeline', tlData);
+          tlTitle.value = '';
+          tlDesc.value = '';
+          renderTimeline();
+        });
+        renderTimeline();
+        listenFromFirebase('timeline', setTimelineData);
+      }
+
+      // ---- Lugares especiais ----
+      const plName = document.getElementById('placeName');
+      const plAddr = document.getElementById('placeAddress');
+      const plBtn = document.getElementById('placeAddBtn');
+      const plList = document.getElementById('placesList');
+      let plData = loadLS('places', []);
+
+      function setPlacesData(arr){
+        plData = Array.isArray(arr) ? arr : [];
+        saveLS('places', plData);
+        renderPlaces();
+      }
+      function renderPlaces(){
+        if(!plList) return;
+        plList.innerHTML = '';
+        plData.forEach(function(item){
+          const li = document.createElement('li');
+          const title = document.createElement('div');
+          title.textContent = item.name || item.address || 'Lugar';
+          const meta = document.createElement('div');
+          meta.className = 'extra-meta';
+          meta.textContent = item.address || '';
+          const a = document.createElement('a');
+          a.href = item.mapUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.textContent = 'Abrir no mapa';
+          li.appendChild(title);
+          if(item.address){
+            li.appendChild(meta);
+          }
+          li.appendChild(a);
+          plList.appendChild(li);
+        });
+      }
+      if(plBtn && plList){
+        plBtn.addEventListener('click', function(){
+          const name = (plName.value || '').trim();
+          const address = (plAddr.value || '').trim();
+          if(!name && !address) return;
+          const query = address || name;
+          const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+          plData.push({id:uid(), name:name, address:address, mapUrl:mapUrl});
+          saveLS('places', plData);
+          syncToFirebase('places', plData);
+          plName.value = '';
+          plAddr.value = '';
+          renderPlaces();
+        });
+        renderPlaces();
+        listenFromFirebase('places', setPlacesData);
+      }
+
+      // ---- Bucket list ----
+      const bkInput = document.getElementById('bucketInput');
+      const bkBtn = document.getElementById('bucketAddBtn');
+      const bkList = document.getElementById('bucketList');
+      const bkProgress = document.getElementById('bucketProgress');
+      let bkData = loadLS('bucket', []);
+
+      function setBucketData(arr){
+        bkData = Array.isArray(arr) ? arr : [];
+        saveLS('bucket', bkData);
+        renderBucket();
+      }
+      function updateBucketProgress(){
+        if(!bkProgress) return;
+        const total = bkData.length;
+        const done = bkData.filter(function(i){return i.done;}).length;
+        if(!total){
+          bkProgress.textContent = 'Nenhum sonho marcado ainda.';
+        }else{
+          const pct = Math.round((done/total)*100);
+          bkProgress.textContent = done + ' de ' + total + ' sonhos concluídos (' + pct + '%).';
+        }
+      }
+      function renderBucket(){
+        if(!bkList) return;
+        bkList.innerHTML = '';
+        bkData.forEach(function(item){
+          const li = document.createElement('li');
+          const label = document.createElement('label');
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = !!item.done;
+          cb.addEventListener('change', function(){
+            item.done = cb.checked;
+            saveLS('bucket', bkData);
+            syncToFirebase('bucket', bkData);
+            updateBucketProgress();
+          });
+          const text = document.createElement('span');
+          text.textContent = item.text;
+          label.appendChild(cb);
+          label.appendChild(text);
+          li.appendChild(label);
+          bkList.appendChild(li);
+        });
+        updateBucketProgress();
+      }
+      if(bkBtn && bkList){
+        bkBtn.addEventListener('click', function(){
+          const txt = (bkInput.value || '').trim();
+          if(!txt) return;
+          bkData.push({id:uid(), text:txt, done:false});
+          saveLS('bucket', bkData);
+          syncToFirebase('bucket', bkData);
+          bkInput.value = '';
+          renderBucket();
+        });
+        renderBucket();
+        listenFromFirebase('bucket', setBucketData);
+      }
+
+      // ---- Pote do amor ----
+      const ljInput = document.getElementById('loveJarInput');
+      const ljAddBtn = document.getElementById('loveJarAddBtn');
+      const ljRandomBtn = document.getElementById('loveJarRandomBtn');
+      const ljRandomText = document.getElementById('loveJarRandomText');
+      const ljList = document.getElementById('loveJarList');
+      let ljData = loadLS('loveJar', []);
+
+      function setLoveJarData(arr){
+        ljData = Array.isArray(arr) ? arr : [];
+        saveLS('loveJar', ljData);
+        renderLoveJar();
+      }
+      function renderLoveJar(){
+        if(!ljList) return;
+        ljList.innerHTML = '';
+        ljData.forEach(function(item){
+          const li = document.createElement('li');
+          const txt = document.createElement('div');
+          txt.textContent = item.text;
+          const meta = document.createElement('div');
+          meta.className = 'extra-meta';
+          meta.textContent = item.date || '';
+          li.appendChild(txt);
+          if(item.date){
+            li.appendChild(meta);
+          }
+          ljList.appendChild(li);
+        });
+      }
+      function randomLoveNote(){
+        if(!ljData.length){
+          if(ljRandomText) ljRandomText.textContent = 'Ainda não tem nenhum bilhete salvo.';
+          return;
+        }
+        const item = ljData[Math.floor(Math.random()*ljData.length)];
+        if(ljRandomText){
+          ljRandomText.textContent = item.text + (item.date ? ' (' + item.date + ')' : '');
+        }
+      }
+      if(ljAddBtn){
+        ljAddBtn.addEventListener('click', function(){
+          const txt = (ljInput.value || '').trim();
+          if(!txt) return;
+          const today = new Date();
+          const dateStr = today.toLocaleDateString('pt-BR');
+          ljData.push({id:uid(), text:txt, date:dateStr});
+          saveLS('loveJar', ljData);
+          syncToFirebase('loveJar', ljData);
+          ljInput.value = '';
+          renderLoveJar();
+        });
+      }
+      if(ljRandomBtn){
+        ljRandomBtn.addEventListener('click', randomLoveNote);
+      }
+      if(ljList){
+        renderLoveJar();
+        listenFromFirebase('loveJar', setLoveJarData);
+      }
+
+      // ---- Quiz do casal ----
+      const quizContainer = document.getElementById('quizContainer');
+      const quizResult = document.getElementById('quizResult');
+      const quizData = [
+        {
+          q: 'Quando a gente mais sente falta um do outro?',
+          options: ['De manhã', 'No meio do dia', 'À noite', 'Nunca sentimos falta'],
+          correct: 2
+        },
+        {
+          q: 'Qual é o melhor programa pra nós dois?',
+          options: ['Ver filme abraçados', 'Sair pra comer', 'Viajar juntos', 'Qualquer coisa, se for contigo'],
+          correct: 3
+        },
+        {
+          q: 'Se o nosso amor fosse um emoji, qual seria?',
+          options: ['💔', '🙂', '🔥', '💖'],
+          correct: 3
+        }
+      ];
+      let quizAnswers = {};
+
+      function updateQuizResult(){
+        if(!quizResult) return;
+        const total = quizData.length;
+        let correct = 0;
+        quizData.forEach(function(item, idx){
+          if(quizAnswers[idx] === item.correct) correct++;
+        });
+        if(Object.keys(quizAnswers).length === 0){
+          quizResult.textContent = '';
+          return;
+        }
+        if(correct === total){
+          quizResult.textContent = 'Vocês são 100% almas gêmeas, tá decidido. 💖';
+        }else{
+          quizResult.textContent = correct + ' de ' + total + ' respostas combinando. O importante é rir juntos!';
+        }
+      }
+      function renderQuiz(){
+        if(!quizContainer) return;
+        quizContainer.innerHTML = '';
+        quizData.forEach(function(item, qi){
+          const wrap = document.createElement('div');
+          wrap.className = 'quiz-question';
+          const q = document.createElement('div');
+          q.textContent = item.q;
+          wrap.appendChild(q);
+          const optsWrap = document.createElement('div');
+          optsWrap.className = 'quiz-options';
+          item.options.forEach(function(opt, oi){
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'quiz-option-btn';
+            btn.textContent = opt;
+            btn.addEventListener('click', function(){
+              quizAnswers[qi] = oi;
+              Array.prototype.forEach.call(optsWrap.children, function(ch){
+                ch.classList.remove('selected-correct', 'selected-wrong');
+              });
+              if(oi === item.correct){
+                btn.classList.add('selected-correct');
+              }else{
+                btn.classList.add('selected-wrong');
+              }
+              updateQuizResult();
+            });
+            optsWrap.appendChild(btn);
+          });
+          wrap.appendChild(optsWrap);
+          quizContainer.appendChild(wrap);
+        });
+      }
+      if(quizContainer){
+        renderQuiz();
+      }
+
+      // ---- Vídeos ----
+      const vdTitle = document.getElementById('videoTitle');
+      const vdUrl = document.getElementById('videoUrl');
+      const vdBtn = document.getElementById('videoAddBtn');
+      const vdList = document.getElementById('videosList');
+      let vdData = loadLS('videos', []);
+
+      function setVideosData(arr){
+        vdData = Array.isArray(arr) ? arr : [];
+        saveLS('videos', vdData);
+        renderVideos();
+      }
+      function renderVideos(){
+        if(!vdList) return;
+        vdList.innerHTML = '';
+        vdData.forEach(function(item){
+          const li = document.createElement('li');
+          const title = document.createElement('div');
+          title.textContent = item.title || 'Vídeo';
+          const a = document.createElement('a');
+          a.href = item.url;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.textContent = item.url;
+          li.appendChild(title);
+          li.appendChild(a);
+          vdList.appendChild(li);
+        });
+      }
+      if(vdBtn && vdList){
+        vdBtn.addEventListener('click', function(){
+          const t = (vdTitle.value || '').trim();
+          const u = (vdUrl.value || '').trim();
+          if(!u) return;
+          vdData.push({id:uid(), title:t, url:u});
+          saveLS('videos', vdData);
+          syncToFirebase('videos', vdData);
+          vdTitle.value = '';
+          vdUrl.value = '';
+          renderVideos();
+        });
+        renderVideos();
+        listenFromFirebase('videos', setVideosData);
+      }
+
+      // ---- Calendário ----
+      const evDate = document.getElementById('eventDate');
+      const evTime = document.getElementById('eventTime');
+      const evTitle = document.getElementById('eventTitle');
+      const evBtn = document.getElementById('eventAddBtn');
+      const evList = document.getElementById('eventsList');
+      let evData = loadLS('events', []);
+
+      function setEventsData(arr){
+        evData = Array.isArray(arr) ? arr : [];
+        saveLS('events', evData);
+        renderEvents();
+      }
+      function renderEvents(){
+        if(!evList) return;
+        evList.innerHTML = '';
+        const sorted = [].concat(evData).sort(function(a,b){
+          const da = (a.date || '') + ' ' + (a.time || '');
+          const db = (b.date || '') + ' ' + (b.time || '');
+          return da.localeCompare(db);
+        });
+        sorted.forEach(function(item){
+          const li = document.createElement('li');
+          const title = document.createElement('div');
+          const dt = (item.date || '') + (item.time ? ' às ' + item.time : '');
+          title.textContent = item.title || 'Evento';
+          const meta = document.createElement('div');
+          meta.className = 'extra-meta';
+          meta.textContent = dt;
+          li.appendChild(title);
+          if(dt.trim()){
+            li.appendChild(meta);
+          }
+          evList.appendChild(li);
+        });
+      }
+      if(evBtn && evList){
+        evBtn.addEventListener('click', function(){
+          const d = evDate.value || '';
+          const t = evTime.value || '';
+          const title = (evTitle.value || '').trim();
+          if(!d && !title) return;
+          evData.push({id:uid(), date:d, time:t, title:title});
+          saveLS('events', evData);
+          syncToFirebase('events', evData);
+          evTitle.value = '';
+          renderEvents();
+        });
+        renderEvents();
+        listenFromFirebase('events', setEventsData);
+      }
+
+      // ---- Inspirações ----
+      const idInput = document.getElementById('ideaText');
+      const idBtn = document.getElementById('ideaAddBtn');
+      const idList = document.getElementById('ideasList');
+      let idData = loadLS('ideas', []);
+
+      function setIdeasData(arr){
+        idData = Array.isArray(arr) ? arr : [];
+        saveLS('ideas', idData);
+        renderIdeas();
+      }
+      function renderIdeas(){
+        if(!idList) return;
+        idList.innerHTML = '';
+        idData.forEach(function(item){
+          const li = document.createElement('li');
+          li.textContent = item.text;
+          idList.appendChild(li);
+        });
+      }
+      if(idBtn && idList){
+        idBtn.addEventListener('click', function(){
+          const txt = (idInput.value || '').trim();
+          if(!txt) return;
+          idData.push({id:uid(), text:txt});
+          saveLS('ideas', idData);
+          syncToFirebase('ideas', idData);
+          idInput.value = '';
+          renderIdeas();
+        });
+        renderIdeas();
+        listenFromFirebase('ideas', setIdeasData);
+      }
+
+      // ---- Histórico de humor (gráfico) ----
+      const moodCanvas = document.getElementById('moodChart');
+      const moodStatus = document.getElementById('moodChartStatus');
+      let moodData = loadLS('moodHistory', []);
+
+      function setMoodData(arr){
+        moodData = Array.isArray(arr) ? arr : [];
+        saveLS('moodHistory', moodData);
+        drawMoodChart();
+      }
+      function moodLevelValue(level){
+        switch(level){
+          case 'perfect': return 5;
+          case 'good': return 4;
+          case 'chill': return 3;
+          case 'ice': return 2;
+          case 'jail': return 1;
+          default: return 3;
+        }
+      }
+      function drawMoodChart(){
+        if(!moodCanvas){
+          return;
+        }
+        const ctx = moodCanvas.getContext('2d');
+        const w = moodCanvas.width;
+        const h = moodCanvas.height;
+        ctx.clearRect(0,0,w,h);
+        if(!moodData.length){
+          if(moodStatus){
+            moodStatus.textContent = 'Ainda não há votos suficientes pra mostrar o gráfico. Use o painel "Nível de satisfação com o mozão".';
+          }
+          return;
+        }
+        if(moodStatus){
+          moodStatus.textContent = 'Mostrando até ' + moodData.length + ' votos recentes.';
+        }
+        const minV = 1;
+        const maxV = 5;
+        const margin = 20;
+        const innerW = w - margin*2;
+        const innerH = h - margin*2;
+        const stepX = innerW / Math.max(1, moodData.length-1);
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#cccccc';
+        ctx.beginPath();
+        ctx.moveTo(margin, margin);
+        ctx.lineTo(margin, h - margin);
+        ctx.lineTo(w - margin, h - margin);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ff4da6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        moodData.forEach(function(item, idx){
+          const x = margin + stepX*idx;
+          const norm = (item.v - minV) / (maxV - minV || 1);
+          const y = (h - margin) - norm * innerH;
+          if(idx === 0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff4da6';
+        moodData.forEach(function(item, idx){
+          const x = margin + stepX*idx;
+          const norm = (item.v - minV) / (maxV - minV || 1);
+          const y = (h - margin) - norm * innerH;
+          ctx.beginPath();
+          ctx.arc(x,y,3,0,Math.PI*2);
+          ctx.fill();
+        });
+      }
+      function registerMood(level){
+        const who = localStorage.getItem('satCurrentUser') || 'desconhecido';
+        const now = new Date();
+        moodData.push({
+          t: now.toISOString(),
+          level: level,
+          who: who,
+          v: moodLevelValue(level)
+        });
+        if(moodData.length > 50){
+          moodData = moodData.slice(moodData.length - 50);
+        }
+        saveLS('moodHistory', moodData);
+        syncToFirebase('moodHistory', moodData);
+        drawMoodChart();
+      }
+      if(moodCanvas){
+        drawMoodChart();
+        listenFromFirebase('moodHistory', setMoodData);
+        const satRows = document.querySelectorAll('.sat-row');
+        satRows.forEach(function(row){
+          row.addEventListener('click', function(){
+            const levelKey = row.dataset.level;
+            if(levelKey){
+              registerMood(levelKey);
+            }
+          });
+        });
+      }
+
+      // ---- Notificações ----
+      const notifRequestBtn = document.getElementById('notifRequestBtn');
+      const notifTestBtn = document.getElementById('notifTestBtn');
+      const notifStatus = document.getElementById('notifStatus');
+
+      function updateNotifStatus(msg){
+        if(notifStatus){
+          notifStatus.textContent = msg;
+        }
+      }
+      if('Notification' in window){
+        updateNotifStatus('As notificações estão disponíveis neste navegador.');
+      }else if(notifStatus){
+        updateNotifStatus('Esse navegador não suporta notificações, mas o resto do site funciona normal 🙂.');
+      }
+
+      if(notifRequestBtn){
+        notifRequestBtn.addEventListener('click', function(){
+          if(!('Notification' in window)){
+            updateNotifStatus('Notificações não suportadas aqui.');
+            return;
+          }
+          Notification.requestPermission().then(function(permission){
+            if(permission === 'granted'){
+              updateNotifStatus('Notificações ativadas! Você pode receber lembretes fofos.');
+            }else if(permission === 'denied'){
+              updateNotifStatus('Notificações bloqueadas. Se quiser, você pode reativar nas configurações do navegador.');
+            }else{
+              updateNotifStatus('Permissão de notificação pendente.');
+            }
+          }).catch(function(){
+            updateNotifStatus('Não foi possível pedir permissão de notificação.');
+          });
+        });
+      }
+
+      if(notifTestBtn){
+        notifTestBtn.addEventListener('click', function(){
+          if(!('Notification' in window)){
+            updateNotifStatus('Notificações não suportadas aqui.');
+            return;
+          }
+          if(Notification.permission !== 'granted'){
+            updateNotifStatus('Ative as notificações primeiro para testar.');
+            return;
+          }
+          try{
+            new Notification('Lembrete fofinho 💕', {
+              body: 'Passando só pra lembrar que vocês se amam muito.'
+            });
+            updateNotifStatus('Notificação de teste enviada.');
+          }catch(e){
+            updateNotifStatus('Não deu pra enviar a notificação de teste.');
+          }
+        });
+      }
+    })();
+
+</script>
 </body>
 </html>

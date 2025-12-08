@@ -742,6 +742,78 @@
         margin-bottom:40px;
       }
     }
+
+    /* Hub compacto com abas e hambúrguer */
+    .hub-card{
+      margin-top:22px;
+      border:1px solid rgba(0,0,0,0.05);
+      border-radius:16px;
+      background:linear-gradient(180deg, #fff, #fff5fb);
+      box-shadow:0 12px 26px rgba(0,0,0,0.08);
+      overflow:hidden;
+    }
+    .hub-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 14px;
+      gap:10px;
+      border-bottom:1px solid rgba(0,0,0,0.04);
+      background:linear-gradient(90deg,rgba(255,77,166,0.08),rgba(255,143,178,0.12));
+    }
+    .hub-title{margin:0; font-size:16px; font-weight:800; color:#b10061;}
+    .hub-nav-btn{
+      border:0;
+      background:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      box-shadow:0 6px 12px rgba(0,0,0,0.06);
+      cursor:pointer;
+    }
+    .hub-menu{display:none; padding:12px; border-bottom:1px solid rgba(0,0,0,0.04); background:#fff;}
+    .hub-menu.show{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px;}
+    .hub-menu button{
+      border:0;
+      padding:10px 12px;
+      background:#fff6fb;
+      border-radius:12px;
+      font-weight:700;
+      color:#a00063;
+      cursor:pointer;
+      box-shadow:0 4px 10px rgba(0,0,0,0.05);
+    }
+    .hub-menu button.active{
+      background:linear-gradient(90deg,#ff9fc9,#ff4da6);
+      color:#fff;
+    }
+    .hub-section{display:none; padding:14px; background:#fff;}
+    .hub-section.active{display:block;}
+    .hub-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px;}
+    .hub-box{
+      padding:12px;
+      border-radius:12px;
+      background:#fff8ff;
+      border:1px solid rgba(0,0,0,0.04);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .hub-box h3{margin-top:0; margin-bottom:4px;}
+    .hub-box small{opacity:0.8;}
+    .input-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+    .input-row input, .input-row select, .input-row textarea{flex:1; padding:10px; border-radius:10px; border:1px solid rgba(0,0,0,0.08); font-family:inherit;}
+    .tag{display:inline-flex; padding:4px 8px; border-radius:999px; font-size:11px; background:#ffe3f3; color:#a00063; margin-right:6px;}
+    .list{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px;}
+    .list li{background:#fff; padding:10px; border-radius:10px; border:1px solid rgba(0,0,0,0.05);}
+    .badge{display:inline-flex; padding:4px 8px; border-radius:999px; font-size:12px; background:#e0f2fe; color:#0b4f71;}
+    .pill{display:inline-flex; padding:4px 8px; border-radius:999px; font-size:12px; background:#dcfce7; color:#166534;}
+    .locked{opacity:0.65;}
+    .wheel{width:100%; height:180px; background:conic-gradient(#ff9fc9 0 25%, #ffe6f4 25% 50%, #ffd6b6 50% 75%, #c4f1f5 75% 100%); border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#b10061;}
+    .progress{height:10px; border-radius:999px; background:rgba(0,0,0,0.05); overflow:hidden;}
+    .progress span{display:block; height:100%; background:linear-gradient(90deg,#ff9fc9,#ff4da6);}
+    .chart-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px;}
   
     /* Seções extras (nossa história, mapa, bucket list etc.) */
     .extra-section{
@@ -903,6 +975,215 @@
           <p class="lead">Um site só pra você — com muito amor, carinho, músicas e corações 💖</p>
         </div>
       </header>
+
+      <div class="hub-card" id="megaHub">
+        <div class="hub-header">
+          <h3 class="hub-title">Central secreta de vocês (com abas) ✨</h3>
+          <button class="hub-nav-btn" id="hubToggle">☰ Abrir menu</button>
+        </div>
+        <div class="hub-menu" id="hubMenu">
+          <button data-target="hub-login" class="active">Login / Perfis</button>
+          <button data-target="hub-chat">Bilhetes & Time-capsule</button>
+          <button data-target="hub-fun">Roleta & Cupons</button>
+          <button data-target="hub-viagem">Planner da viagem</button>
+          <button data-target="hub-achievements">Achievements & Timeline</button>
+          <button data-target="hub-stats">Resumo & PWA</button>
+        </div>
+
+        <div class="hub-section active" id="hub-login">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Login leve com PIN 🔒</h3>
+              <small>Escolha quem é você e digite o PIN fofinho de 4 dígitos.</small>
+              <div class="input-row">
+                <select id="hubUser">
+                  <option value="pablo">Pablo</option>
+                  <option value="ana">Ana</option>
+                </select>
+                <input id="hubPin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN (ex.: 1234)">
+              </div>
+              <div class="input-row">
+                <button class="btn btn-sim" id="hubLoginBtn">Entrar</button>
+                <button class="btn btn-nao" id="hubPinSaveBtn">Atualizar PIN</button>
+              </div>
+              <div id="hubLoginStatus" class="small"></div>
+            </div>
+            <div class="hub-box">
+              <h3>Resumo rápido do mês 📅</h3>
+              <small>Mostra tudo que rolou usando os registros do site.</small>
+              <div class="input-row">
+                <input id="hubResumoMes" type="month">
+                <button class="btn btn-sim" id="hubResumoBtn">Calcular</button>
+              </div>
+              <div id="hubResumoDados" class="small"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-chat">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Bilhetes em tempo real 💌</h3>
+              <small>Filtre por categoria e veja se há novidade.</small>
+              <div class="input-row">
+                <select id="msgAuthor">
+                  <option value="pablo">Pablo</option>
+                  <option value="ana">Ana</option>
+                </select>
+                <select id="msgType">
+                  <option value="fofura">Fofura</option>
+                  <option value="segredo">Segredo</option>
+                  <option value="safadeza">Safadeza</option>
+                </select>
+              </div>
+              <div class="input-row">
+                <input id="msgText" type="text" placeholder="Escreva um recado" />
+                <button class="btn btn-sim" id="sendMsgBtn">Enviar</button>
+              </div>
+              <div class="input-row">
+                <select id="msgFilter">
+                  <option value="todos">Todos</option>
+                  <option value="fofura">Só fofos</option>
+                  <option value="segredo">Só segredos</option>
+                  <option value="safadeza">Só safadeza</option>
+                </select>
+                <span class="badge" id="msgUnread">0 novos</span>
+              </div>
+              <ul class="list" id="msgList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Cartas para o futuro ⏳</h3>
+              <small>Escolha a data de abertura e deixe o futuro cuidar.</small>
+              <div class="input-row">
+                <input id="capsTitle" type="text" placeholder="Título da carta">
+                <input id="capsFrom" type="text" placeholder="De">
+                <input id="capsTo" type="text" placeholder="Para">
+              </div>
+              <div class="input-row">
+                <textarea id="capsText" placeholder="Escreva a carta" rows="3"></textarea>
+              </div>
+              <div class="input-row">
+                <input id="capsDate" type="date">
+                <button class="btn btn-sim" id="capsSaveBtn">Guardar</button>
+              </div>
+              <ul class="list" id="capsList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-fun">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Roleta do amor 🎡</h3>
+              <small>Cadastre atividades e gire.</small>
+              <div class="input-row">
+                <input id="wheelItem" type="text" placeholder="Nova atividade (massagem, filme...)" />
+                <select id="wheelMode">
+                  <option value="amor">Mimo</option>
+                  <option value="castigo">Castigo</option>
+                </select>
+                <button class="btn btn-sim" id="wheelAddBtn">Adicionar</button>
+              </div>
+              <div class="wheel" id="wheelResult">Clique em girar</div>
+              <div class="input-row">
+                <button class="btn btn-sim" id="wheelSpinBtn">Girar roleta</button>
+                <button class="btn btn-nao" id="wheelClearBtn">Limpar opções</button>
+              </div>
+              <ul class="list" id="wheelList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Cupons do amor 🎟️</h3>
+              <small>Registre cupons e marque quando usar.</small>
+              <div class="input-row">
+                <input id="couponText" type="text" placeholder="Vale um abraço longo" />
+                <button class="btn btn-sim" id="couponAddBtn">Criar cupom</button>
+              </div>
+              <div class="input-row">
+                <span class="badge" id="couponStats">0 cupons</span>
+              </div>
+              <ul class="list" id="couponList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-viagem">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Meta de viagem ✈️</h3>
+              <small>Quanto falta para a viagem dos sonhos.</small>
+              <div class="input-row">
+                <input id="goalValue" type="number" min="0" step="50" placeholder="Meta em R$">
+                <button class="btn btn-sim" id="goalSaveBtn">Salvar meta</button>
+              </div>
+              <div class="input-row">
+                <input id="goalWho" type="text" placeholder="Quem contribuiu?">
+                <input id="goalAmount" type="number" min="0" step="10" placeholder="Valor" />
+                <button class="btn btn-nao" id="goalAddBtn">Registrar contribuição</button>
+              </div>
+              <div class="progress"><span id="goalProgress" style="width:0%"></span></div>
+              <div id="goalStatus" class="small"></div>
+              <ul class="list" id="goalList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Roteiro & Mapa 🗺️</h3>
+              <small>Planeje etapas como capítulos de viagem.</small>
+              <div class="input-row">
+                <input id="routePlace" type="text" placeholder="Lugar / data" />
+                <input id="routeBudget" type="text" placeholder="Orçamento estimado" />
+                <button class="btn btn-sim" id="routeAddBtn">Adicionar</button>
+              </div>
+              <ul class="list" id="routeList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-achievements">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Achievements do casal 🏆</h3>
+              <small>Desbloqueia conforme vocês usam o site.</small>
+              <ul class="list" id="achList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Timeline em capítulos 📖</h3>
+              <div class="input-row">
+                <input id="chapterTitle" type="text" placeholder="Título do capítulo">
+                <input id="chapterCat" type="text" placeholder="Categoria (encontro, viagem...)" />
+              </div>
+              <div class="input-row">
+                <textarea id="chapterText" rows="3" placeholder="Mini crônica"></textarea>
+              </div>
+              <button class="btn btn-sim" id="chapterAddBtn">Salvar capítulo</button>
+              <ul class="list" id="chapterList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Diário compartilhado 📓</h3>
+              <div class="input-row">
+                <input id="diaryDate" type="date">
+                <textarea id="diaryText" rows="2" placeholder="Texto do dia"></textarea>
+              </div>
+              <button class="btn btn-sim" id="diarySaveBtn">Registrar</button>
+              <ul class="list" id="diaryList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-stats">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Painel de dados ❤️‍🔥</h3>
+              <div class="chart-row" id="statsCards"></div>
+              <canvas id="statsCanvas" width="320" height="180" style="width:100%; margin-top:8px; background:#fff; border-radius:8px;"></canvas>
+            </div>
+            <div class="hub-box">
+              <h3>Modo offline & push 🔔</h3>
+              <p class="small">Registramos um Service Worker pra cachear e preparar push pelo Firebase mais tarde.</p>
+              <button class="btn btn-sim" id="pwaRegisterBtn">Ativar modo offline</button>
+              <div id="pwaStatus" class="small"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="main-grid">
         <div class="left-col">
@@ -3039,6 +3320,380 @@
       }
     })();
 
+</script>
+<script>
+  (function(){
+    const hub = {
+      menu: document.getElementById('hubMenu'),
+      toggle: document.getElementById('hubToggle'),
+      sections: Array.from(document.querySelectorAll('.hub-section')),
+      buttons: Array.from(document.querySelectorAll('.hub-menu button'))
+    };
+    const prefix = 'megaHub_';
+    const hasFirebase = typeof db !== 'undefined' && db;
+
+    const getLS = (k, def) => {
+      try{ const v = localStorage.getItem(prefix + k); return v ? JSON.parse(v) : def; }catch(e){ return def; }
+    };
+    const setLS = (k, v) => { try{ localStorage.setItem(prefix + k, JSON.stringify(v)); }catch(e){} };
+    const sync = (k, data) => { if(!hasFirebase) return; try{ db.ref('hub/' + coupleId + '/' + k).set(data); }catch(e){} };
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+    // Navegação
+    function setSection(id){
+      hub.sections.forEach(sec => sec.classList.toggle('active', sec.id === id));
+      hub.buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.target === id));
+    }
+    if(hub.toggle){
+      hub.toggle.addEventListener('click', ()=> hub.menu.classList.toggle('show'));
+    }
+    hub.buttons.forEach(btn => btn.addEventListener('click', ()=>{ setSection(btn.dataset.target); hub.menu.classList.remove('show'); }));
+
+    // Login leve
+    const defaultPins = {pablo:'1111', ana:'2222'};
+    const pins = Object.assign({}, defaultPins, getLS('pins', {}));
+    const currentUser = getLS('currentUser', 'pablo');
+    const hubUser = document.getElementById('hubUser');
+    const hubPin = document.getElementById('hubPin');
+    const hubLoginBtn = document.getElementById('hubLoginBtn');
+    const hubPinSaveBtn = document.getElementById('hubPinSaveBtn');
+    const hubLoginStatus = document.getElementById('hubLoginStatus');
+    if(hubUser){ hubUser.value = currentUser; }
+    function setStatus(msg){ if(hubLoginStatus) hubLoginStatus.textContent = msg; }
+    if(hubLoginBtn){
+      hubLoginBtn.addEventListener('click', ()=>{
+        const u = hubUser.value || 'pablo';
+        const pin = hubPin.value || '';
+        if(pin === pins[u]){
+          setLS('currentUser', u);
+          setStatus('Oi, ' + u + '! Login leve feito.');
+        }else{
+          setStatus('PIN incorreto para ' + u + '.');
+        }
+      });
+    }
+    if(hubPinSaveBtn){
+      hubPinSaveBtn.addEventListener('click', ()=>{
+        const u = hubUser.value || 'pablo';
+        const pin = hubPin.value || '';
+        if(pin.length === 4){
+          pins[u] = pin;
+          setLS('pins', pins);
+          setStatus('Novo PIN salvo para ' + u + '.');
+          sync('pins', pins);
+        }else{
+          setStatus('Use 4 dígitos.');
+        }
+      });
+    }
+
+    // Bilhetes
+    let messages = getLS('messages', []);
+    const msgAuthor = document.getElementById('msgAuthor');
+    const msgType = document.getElementById('msgType');
+    const msgText = document.getElementById('msgText');
+    const msgFilter = document.getElementById('msgFilter');
+    const msgList = document.getElementById('msgList');
+    const msgUnread = document.getElementById('msgUnread');
+    let lastRead = getLS('lastRead', Date.now());
+    function renderMessages(){
+      if(!msgList) return;
+      const filter = msgFilter.value;
+      msgList.innerHTML = '';
+      const unreadCount = messages.filter(m => m.ts > lastRead).length;
+      if(msgUnread){ msgUnread.textContent = unreadCount + ' novos'; }
+      messages.filter(m => filter === 'todos' || m.type === filter).sort((a,b)=>b.ts-a.ts).forEach(m=>{
+        const li = document.createElement('li');
+        li.innerHTML = `<div><strong>${m.author}</strong> • <span class="tag">${m.type}</span></div><div>${m.text}</div><small>${new Date(m.ts).toLocaleString()}</small>`;
+        msgList.appendChild(li);
+      });
+      lastRead = Date.now();
+      setLS('lastRead', lastRead);
+    }
+    if(msgFilter) msgFilter.addEventListener('change', renderMessages);
+    const sendMsgBtn = document.getElementById('sendMsgBtn');
+    if(sendMsgBtn){
+      sendMsgBtn.addEventListener('click', ()=>{
+        const text = msgText.value.trim();
+        if(!text) return;
+        const data = {id:uid(), author:msgAuthor.value, type:msgType.value, text, ts:Date.now()};
+        messages.push(data);
+        setLS('messages', messages);
+        sync('messages', messages);
+        msgText.value = '';
+        renderMessages();
+      });
+    }
+    if(hasFirebase){ db.ref('hub/' + coupleId + '/messages').on('value', snap=>{ if(snap.val()) { messages = Object.values(snap.val()); setLS('messages', messages); renderMessages(); } }); }
+    renderMessages();
+
+    // Time-capsule
+    let capsules = getLS('capsules', []);
+    const capsList = document.getElementById('capsList');
+    function renderCaps(){
+      if(!capsList) return;
+      capsList.innerHTML='';
+      capsules.sort((a,b)=>a.unlockAt-b.unlockAt).forEach(c=>{
+        const unlocked = Date.now() >= c.unlockAt;
+        const li = document.createElement('li');
+        li.className = unlocked ? '' : 'locked';
+        li.innerHTML = `<div><strong>${c.title}</strong> <span class="badge">${new Date(c.unlockAt).toLocaleDateString()}</span></div><div>${unlocked ? c.text : 'Abre em ' + Math.ceil((c.unlockAt-Date.now())/86400000) + ' dias'}</div><small>${c.from} ➜ ${c.to}</small>`;
+        capsList.appendChild(li);
+      });
+    }
+    const capsSaveBtn = document.getElementById('capsSaveBtn');
+    if(capsSaveBtn){
+      capsSaveBtn.addEventListener('click', ()=>{
+        const title = document.getElementById('capsTitle').value.trim();
+        const from = document.getElementById('capsFrom').value.trim();
+        const to = document.getElementById('capsTo').value.trim();
+        const text = document.getElementById('capsText').value.trim();
+        const date = document.getElementById('capsDate').value;
+        if(!title || !date) return;
+        const unlockAt = new Date(date + 'T00:00:00').getTime();
+        capsules.push({id:uid(), title, from, to, text, unlockAt});
+        setLS('capsules', capsules);
+        sync('capsules', capsules);
+        renderCaps();
+      });
+    }
+    if(hasFirebase){ db.ref('hub/' + coupleId + '/capsules').on('value', snap=>{ if(snap.val()){ capsules = Object.values(snap.val()); setLS('capsules', capsules); renderCaps(); } }); }
+    renderCaps();
+
+    // Roleta
+    let wheelData = getLS('wheel', []);
+    const wheelList = document.getElementById('wheelList');
+    const wheelResult = document.getElementById('wheelResult');
+    function renderWheel(){
+      if(!wheelList) return;
+      wheelList.innerHTML='';
+      wheelData.forEach(item=>{
+        const li=document.createElement('li');
+        li.innerHTML = `<strong>${item.text}</strong> <span class="tag">${item.mode}</span>`;
+        wheelList.appendChild(li);
+      });
+    }
+    const wheelAddBtn = document.getElementById('wheelAddBtn');
+    if(wheelAddBtn){
+      wheelAddBtn.addEventListener('click', ()=>{
+        const text = document.getElementById('wheelItem').value.trim();
+        const mode = document.getElementById('wheelMode').value;
+        if(!text) return;
+        wheelData.push({id:uid(), text, mode});
+        setLS('wheel', wheelData);
+        sync('wheel', wheelData);
+        document.getElementById('wheelItem').value='';
+        renderWheel();
+      });
+    }
+    const wheelSpinBtn = document.getElementById('wheelSpinBtn');
+    if(wheelSpinBtn){
+      wheelSpinBtn.addEventListener('click', ()=>{
+        if(!wheelData.length){ if(wheelResult) wheelResult.textContent='Cadastre algo primeiro'; return; }
+        const choice = wheelData[Math.floor(Math.random()*wheelData.length)];
+        if(wheelResult){ wheelResult.textContent = choice.text + ' (' + choice.mode + ')'; }
+      });
+    }
+    const wheelClearBtn = document.getElementById('wheelClearBtn');
+    if(wheelClearBtn){ wheelClearBtn.addEventListener('click', ()=>{ wheelData=[]; setLS('wheel', wheelData); sync('wheel', wheelData); renderWheel(); }); }
+    if(hasFirebase){ db.ref('hub/' + coupleId + '/wheel').on('value', snap=>{ if(snap.val()){ wheelData=Object.values(snap.val()); setLS('wheel', wheelData); renderWheel(); } }); }
+    renderWheel();
+
+    // Cupons
+    let coupons = getLS('coupons', []);
+    const couponList = document.getElementById('couponList');
+    const couponStats = document.getElementById('couponStats');
+    function renderCoupons(){
+      if(!couponList) return;
+      couponList.innerHTML='';
+      coupons.forEach(c=>{
+        const li=document.createElement('li');
+        li.innerHTML = `<div><strong>${c.text}</strong></div><small>${c.used ? 'Usado em ' + new Date(c.usedAt).toLocaleDateString() : 'Disponível'}</small>`;
+        const btn=document.createElement('button');
+        btn.className='btn btn-mini ' + (c.used ? 'btn-mini-danger' : 'btn-mini-primary');
+        btn.textContent = c.used ? 'Reabrir' : 'Resgatar';
+        btn.addEventListener('click', ()=>{
+          c.used = !c.used;
+          c.usedAt = c.used ? Date.now() : null;
+          setLS('coupons', coupons);
+          sync('coupons', coupons);
+          renderCoupons();
+        });
+        li.appendChild(btn);
+        couponList.appendChild(li);
+      });
+      const usados = coupons.filter(c=>c.used).length;
+      if(couponStats) couponStats.textContent = `${coupons.length} cupons • ${usados} usados`;
+    }
+    const couponAddBtn = document.getElementById('couponAddBtn');
+    if(couponAddBtn){
+      couponAddBtn.addEventListener('click', ()=>{
+        const text = document.getElementById('couponText').value.trim();
+        if(!text) return;
+        coupons.push({id:uid(), text, used:false, usedAt:null});
+        setLS('coupons', coupons);
+        sync('coupons', coupons);
+        document.getElementById('couponText').value='';
+        renderCoupons();
+      });
+    }
+    if(hasFirebase){ db.ref('hub/' + coupleId + '/coupons').on('value', snap=>{ if(snap.val()){ coupons=Object.values(snap.val()); setLS('coupons', coupons); renderCoupons(); } }); }
+    renderCoupons();
+
+    // Viagem e metas
+    let goal = getLS('goal', {meta:0, contribs:[]});
+    const goalProgress = document.getElementById('goalProgress');
+    const goalStatus = document.getElementById('goalStatus');
+    const goalList = document.getElementById('goalList');
+    function renderGoal(){
+      const total = goal.contribs.reduce((s,c)=>s+Number(c.amount||0),0);
+      const pct = goal.meta ? Math.min(100, Math.round((total/goal.meta)*100)) : 0;
+      if(goalProgress) goalProgress.style.width = pct + '%';
+      if(goalStatus) goalStatus.textContent = `Meta: R$${goal.meta || 0} | Já temos R$${total} (${pct}%)`;
+      if(goalList){
+        goalList.innerHTML='';
+        goal.contribs.sort((a,b)=>b.ts-a.ts).forEach(c=>{
+          const li=document.createElement('li');
+          li.innerHTML = `<strong>${c.who}</strong> contribuiu R$${c.amount} em ${new Date(c.ts).toLocaleDateString()}`;
+          goalList.appendChild(li);
+        });
+      }
+    }
+    const goalSaveBtn = document.getElementById('goalSaveBtn');
+    if(goalSaveBtn){ goalSaveBtn.addEventListener('click', ()=>{ goal.meta = Number(document.getElementById('goalValue').value)||0; setLS('goal', goal); sync('goal', goal); renderGoal(); }); }
+    const goalAddBtn = document.getElementById('goalAddBtn');
+    if(goalAddBtn){ goalAddBtn.addEventListener('click', ()=>{ const who=document.getElementById('goalWho').value.trim(); const amount=Number(document.getElementById('goalAmount').value)||0; if(!who||!amount) return; goal.contribs.push({id:uid(), who, amount, ts:Date.now()}); setLS('goal', goal); sync('goal', goal); renderGoal(); }); }
+    if(hasFirebase){ db.ref('hub/' + coupleId + '/goal').on('value', snap=>{ if(snap.val()){ goal=snap.val(); setLS('goal', goal); renderGoal(); } }); }
+    renderGoal();
+
+    // Roteiro
+    let routes = getLS('routes', []);
+    const routeList = document.getElementById('routeList');
+    function renderRoutes(){ if(!routeList) return; routeList.innerHTML=''; routes.forEach(r=>{ const li=document.createElement('li'); li.innerHTML = `<strong>${r.place}</strong> — ${r.budget}`; routeList.appendChild(li); }); }
+    const routeAddBtn = document.getElementById('routeAddBtn');
+    if(routeAddBtn){ routeAddBtn.addEventListener('click', ()=>{ const place=document.getElementById('routePlace').value.trim(); const budget=document.getElementById('routeBudget').value.trim(); if(!place) return; routes.push({id:uid(), place, budget}); setLS('routes', routes); sync('routes', routes); renderRoutes(); }); }
+    if(hasFirebase){ db.ref('hub/' + coupleId + '/routes').on('value', snap=>{ if(snap.val()){ routes=Object.values(snap.val()); setLS('routes', routes); renderRoutes(); } }); }
+    renderRoutes();
+
+    // Capítulos
+    let chapters = getLS('chapters', []);
+    const chapterList = document.getElementById('chapterList');
+    function renderChapters(){ if(!chapterList) return; chapterList.innerHTML=''; chapters.forEach(c=>{ const li=document.createElement('li'); li.innerHTML = `<div><strong>${c.title}</strong> <span class="tag">${c.cat}</span></div><div>${c.text}</div>`; chapterList.appendChild(li); }); }
+    const chapterAddBtn = document.getElementById('chapterAddBtn');
+    if(chapterAddBtn){ chapterAddBtn.addEventListener('click', ()=>{ const title=document.getElementById('chapterTitle').value.trim(); const cat=document.getElementById('chapterCat').value.trim(); const text=document.getElementById('chapterText').value.trim(); if(!title||!text) return; chapters.push({id:uid(), title, cat, text}); setLS('chapters', chapters); sync('chapters', chapters); renderChapters(); }); }
+    if(hasFirebase){ db.ref('hub/' + coupleId + '/chapters').on('value', snap=>{ if(snap.val()){ chapters=Object.values(snap.val()); setLS('chapters', chapters); renderChapters(); } }); }
+    renderChapters();
+
+    // Diário
+    let diary = getLS('diary', []);
+    const diaryList = document.getElementById('diaryList');
+    function renderDiary(){ if(!diaryList) return; diaryList.innerHTML=''; diary.sort((a,b)=>b.date.localeCompare(a.date)).forEach(d=>{ const li=document.createElement('li'); li.innerHTML = `<strong>${d.date}</strong><div>${d.text}</div>`; diaryList.appendChild(li); }); }
+    const diarySaveBtn = document.getElementById('diarySaveBtn');
+    if(diarySaveBtn){ diarySaveBtn.addEventListener('click', ()=>{ const date=document.getElementById('diaryDate').value; const text=document.getElementById('diaryText').value.trim(); if(!date||!text) return; diary.push({id:uid(), date, text}); setLS('diary', diary); sync('diary', diary); renderDiary(); }); }
+    if(hasFirebase){ db.ref('hub/' + coupleId + '/diary').on('value', snap=>{ if(snap.val()){ diary=Object.values(snap.val()); setLS('diary', diary); renderDiary(); } }); }
+    renderDiary();
+
+    // Achievements
+    const achList = document.getElementById('achList');
+    function renderAchievements(){
+      if(!achList) return;
+      const stats = {
+        msgs: messages.length,
+        caps: capsules.length,
+        couponsUsed: coupons.filter(c=>c.used).length,
+        dreams: (JSON.parse(localStorage.getItem('acLove_bucket')||'[]')).length,
+        mood: (JSON.parse(localStorage.getItem('acLove_moodHistory')||'[]')).length
+      };
+      const achievements = [
+        {title:'10 bilhetes no pote', ok: stats.msgs >=10},
+        {title:'Primeiro segredo aberto', ok: capsules.some(c=>Date.now()>=c.unlockAt)},
+        {title:'5 cupons resgatados', ok: stats.couponsUsed>=5},
+        {title:'Mapa/roteiro criado', ok: routes.length>0},
+        {title:'Humor registrado 15x', ok: stats.mood>=15}
+      ];
+      achList.innerHTML='';
+      achievements.forEach(a=>{
+        const li=document.createElement('li');
+        li.innerHTML = `${a.ok ? '🏅' : '🔒'} ${a.title}`;
+        achList.appendChild(li);
+      });
+    }
+    renderAchievements();
+
+    // Resumo mensal
+    const hubResumoBtn = document.getElementById('hubResumoBtn');
+    const hubResumoMes = document.getElementById('hubResumoMes');
+    const hubResumoDados = document.getElementById('hubResumoDados');
+    if(hubResumoBtn){
+      hubResumoBtn.addEventListener('click', ()=>{
+        const month = hubResumoMes.value;
+        if(!month) return;
+        const [y,m] = month.split('-');
+        const start = new Date(Number(y), Number(m)-1,1).getTime();
+        const end = new Date(Number(y), Number(m),1).getTime();
+        const msgsMes = messages.filter(m=>m.ts>=start && m.ts<end).length;
+        const capsMes = capsules.filter(c=>c.unlockAt>=start && c.unlockAt<end).length;
+        const contribMes = goal.contribs.filter(c=>c.ts>=start && c.ts<end).reduce((s,c)=>s+Number(c.amount||0),0);
+        const diarioMes = diary.filter(d=>{ const t=new Date(d.date).getTime(); return t>=start && t<end; }).length;
+        const humor = (JSON.parse(localStorage.getItem('acLove_moodHistory')||'[]')).filter(h=>{ const t=new Date(h.t||h.ts||h.date||h).getTime(); return t>=start && t<end; });
+        const humorMedio = humor.length ? Math.round(humor.reduce((s,h)=>s+(h.v||h.level||0),0)/humor.length) : 0;
+        hubResumoDados.textContent = `Bilhetes: ${msgsMes}, Cartas futuras: ${capsMes}, Contribuições: R$${contribMes}, Diário: ${diarioMes}, Humor médio: ${humorMedio}`;
+      });
+    }
+
+    // Stats dashboard
+    const statsCards = document.getElementById('statsCards');
+    const statsCanvas = document.getElementById('statsCanvas');
+    function renderStats(){
+      if(statsCards){
+        statsCards.innerHTML='';
+        const cards = [
+          {label:'Bilhetes', value: messages.length},
+          {label:'Cupons usados', value: coupons.filter(c=>c.used).length},
+          {label:'Metas alcançadas', value: goal.meta>0 && goal.contribs.reduce((s,c)=>s+Number(c.amount||0),0)>=goal.meta ? 1 : 0},
+          {label:'Capsulas', value: capsules.length}
+        ];
+        cards.forEach(c=>{
+          const div=document.createElement('div');
+          div.className='hub-box';
+          div.innerHTML = `<div class="pill">${c.label}</div><h2 style="margin:6px 0;">${c.value}</h2>`;
+          statsCards.appendChild(div);
+        });
+      }
+      if(statsCanvas){
+        const ctx = statsCanvas.getContext('2d');
+        ctx.clearRect(0,0,statsCanvas.width, statsCanvas.height);
+        const data = goal.contribs.slice(-8);
+        const max = Math.max(1, ...data.map(d=>Number(d.amount||0)));
+        const step = statsCanvas.width / (data.length||1);
+        ctx.strokeStyle='#ff4da6';
+        ctx.beginPath();
+        data.forEach((d,i)=>{
+          const x = i*step + 10;
+          const y = statsCanvas.height - (Number(d.amount||0)/max)*(statsCanvas.height-20) - 10;
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          ctx.fillText(d.who||'', x, statsCanvas.height-4);
+        });
+        ctx.stroke();
+      }
+    }
+    renderStats();
+
+    // PWA / service worker
+    const pwaBtn = document.getElementById('pwaRegisterBtn');
+    const pwaStatus = document.getElementById('pwaStatus');
+    if(pwaBtn){
+      pwaBtn.addEventListener('click', ()=>{
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.register('sw.js').then(()=>{
+            if(pwaStatus) pwaStatus.textContent = 'Modo offline ativado!';
+          }).catch(()=>{ if(pwaStatus) pwaStatus.textContent = 'Não deu pra registrar agora.'; });
+        }else{
+          if(pwaStatus) pwaStatus.textContent = 'Seu navegador não aceita service worker.';
+        }
+      });
+    }
+  })();
 </script>
 </body>
 </html>

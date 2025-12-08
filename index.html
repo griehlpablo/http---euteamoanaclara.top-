@@ -1121,6 +1121,146 @@
         grid-column:auto;
       }
     }
+
+    /* ==== RETROSPECTIVA TIPO SPOTIFY WRAPPED ==== */
+    .love-wrapped-section{
+      margin-top:40px;
+    }
+    .love-wrapped-card{
+      background: radial-gradient(circle at top left,#ff9fc9,#ff4da6 35%,#1b1b2f 75%);
+      border-radius:24px;
+      padding:26px 28px;
+      color:#fff;
+      box-shadow:0 18px 40px rgba(0,0,0,0.32);
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .love-wrapped-tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      background:rgba(0,0,0,0.35);
+    }
+    .love-wrapped-tag-dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:#fffb;
+    }
+    .love-wrapped-title{
+      font-size:26px;
+      margin:0;
+    }
+    .love-wrapped-sub{
+      font-size:14px;
+      max-width:420px;
+      opacity:.9;
+    }
+    .love-wrapped-main-metric{
+      margin-top:8px;
+    }
+    .love-wrapped-label{
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.85;
+    }
+    .love-wrapped-number{
+      font-size:38px;
+      font-weight:800;
+      line-height:1.1;
+      margin-top:4px;
+    }
+    .love-wrapped-number span{
+      display:inline-block;
+    }
+    .love-wrapped-unit{
+      font-size:18px;
+      opacity:.85;
+      margin-left:4px;
+    }
+    .love-wrapped-note{
+      font-size:13px;
+      opacity:.9;
+      max-width:380px;
+    }
+    .love-wrapped-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:14px;
+      margin-top:12px;
+    }
+    .love-wrapped-mini{
+      background:rgba(0,0,0,0.22);
+      border-radius:18px;
+      padding:10px 12px;
+      font-size:13px;
+    }
+    .love-wrapped-mini-label{
+      font-size:11px;
+      opacity:.85;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .love-wrapped-mini-number{
+      font-size:18px;
+      font-weight:700;
+      margin-top:4px;
+    }
+    .love-wrapped-mini-note{
+      font-size:11px;
+      opacity:.85;
+      margin-top:3px;
+    }
+    .love-wrapped-secondary{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+      margin-top:10px;
+    }
+    .love-wrapped-secondary-card{
+      background:#111321;
+      border-radius:18px;
+      padding:12px 14px;
+      color:#fff;
+      font-size:13px;
+      box-shadow:0 8px 22px rgba(0,0,0,0.4);
+    }
+    .love-wrapped-secondary-title{
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.9;
+    }
+    .love-wrapped-secondary-number{
+      font-size:22px;
+      font-weight:700;
+      margin-top:4px;
+    }
+    .love-wrapped-secondary-note{
+      font-size:11px;
+      opacity:.85;
+      margin-top:4px;
+    }
+    @media (max-width:800px){
+      .love-wrapped-card{
+        padding:20px 18px;
+        border-radius:20px;
+      }
+      .love-wrapped-title{
+        font-size:22px;
+      }
+      .love-wrapped-grid{
+        grid-template-columns:1fr;
+      }
+      .love-wrapped-secondary{
+        grid-template-columns:1fr;
+      }
+    }
 </style>
 </head>
 <body>
@@ -1539,36 +1679,72 @@
 
       <!-- RETROSPECTIVA -->
       <section class="extra-section retro-section tab-panel" data-tab-section="retrospectiva">
-        <div class="retro-hero">
-          <div class="retro-badge">Retrospectiva</div>
-          <h3>Sua Retrospectiva 2025</h3>
-          <p>Hora de saber o que voces amaram esse ano. Destaques que misturam bilhetes, musicas e aventuras.</p>
-          <p class="retro-subline">Resumos carinhosos baseados no que registraram aqui.</p>
-          <div class="retro-canvas"></div>
-          <div class="retro-cta">
-            <button id="retroPlayBtn">Vamos la</button>
-          </div>
-        </div>
-        <div class="retro-grid">
-          <div class="retro-card">
-            <strong>Seus stories</strong>
-            <small>Momentos que voces registraram juntos</small>
-            <div class="retro-subline">Veja os 5 mais marcantes</div>
-          </div>
-          <div class="retro-card">
-            <strong>Suas musicas mais ouvidas</strong>
-            <small>Top trilhas que voces deram play</small>
-            <div class="retro-subline retro-accent">Montamos um ranking fofinho</div>
-          </div>
-          <div class="retro-card">
-            <strong>Festinha da Retrospectiva</strong>
-            <small>Cards bonitos pra compartilhar</small>
-            <div class="retro-subline">Inclui capa com nome de voces</div>
-          </div>
-          <div class="retro-card">
-            <strong>Top artistas do casal</strong>
-            <small>Quais artistas tocaram em loop</small>
-            <div class="retro-subline">Pablo + Ana = match perfeito</div>
+        <div class="love-wrapped-section">
+          <div class="panel love-wrapped-card">
+            <div class="love-wrapped-tag">
+              <span class="love-wrapped-tag-dot"></span>
+              <span>Retrospectiva do casal • 2025</span>
+            </div>
+
+            <h2 class="love-wrapped-title">Sua retrospectiva 2025 💕</h2>
+            <p class="love-wrapped-sub">
+              Um Wrapped versão relacionamento: em vez de horas de música, aqui são as
+              <strong>horas que vocês passaram juntos</strong> desde o primeiro encontro.
+            </p>
+
+            <div class="love-wrapped-main-metric">
+              <div class="love-wrapped-label">Horas juntos desde 06/07/2023</div>
+              <div class="love-wrapped-number">
+                <span id="wrHoursTogether">--</span><span class="love-wrapped-unit">h</span>
+              </div>
+              <p class="love-wrapped-note">
+                É como se uma playlist tivesse dado play lá em julho de 2023 e nunca tivesse parado.
+              </p>
+            </div>
+
+            <div class="love-wrapped-grid">
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Dias juntos</div>
+                <div class="love-wrapped-mini-number" id="wrDaysTogether">--</div>
+                <div class="love-wrapped-mini-note">
+                  Desde 06/07/2023 contando cada “oi”, cada rolê e cada cochilo na call.
+                </div>
+              </div>
+
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Dias de namoro</div>
+                <div class="love-wrapped-mini-number" id="wrDaysDating">--</div>
+                <div class="love-wrapped-mini-note">
+                  Oficialmente namorando desde 23/09/2023. Spoiler: deu muito certo.
+                </div>
+              </div>
+
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Horas só em 2025</div>
+                <div class="love-wrapped-mini-number" id="wrHoursYear">-- h</div>
+                <div class="love-wrapped-mini-note">
+                  Só esse ano vocês já somaram esse tanto de horas sendo “Pablo + Ana”.
+                </div>
+              </div>
+            </div>
+
+            <div class="love-wrapped-secondary">
+              <div class="love-wrapped-secondary-card">
+                <div class="love-wrapped-secondary-title">Top artista do seu ano</div>
+                <div class="love-wrapped-secondary-number">Ana Clara 👑</div>
+                <div class="love-wrapped-secondary-note">
+                  Presença confirmada em 100% das melhores memórias da playlist “Vida do Pablo”.
+                </div>
+              </div>
+
+              <div class="love-wrapped-secondary-card">
+                <div class="love-wrapped-secondary-title">Gênero mais tocado</div>
+                <div class="love-wrapped-secondary-number">Amorzinho intenso</div>
+                <div class="love-wrapped-secondary-note">
+                  Com uma pitada de drama, muito carinho e algumas horas extras de saudade.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -3936,6 +4112,51 @@
       });
     }
   })();
+
+// =====================
+// RETROSPECTIVA (HORAS JUNTOS)
+// =====================
+(function(){
+  // Datas base (ano, mês-0-a-11, dia)
+  const togetherSince = new Date(2023, 6, 6);   // 06/07/2023
+  const datingSince   = new Date(2023, 8, 23);  // 23/09/2023
+
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+
+  function diffInfo(start){
+    const current = new Date();
+    const diffMs  = current.getTime() - start.getTime();
+    const hours   = Math.floor(diffMs / (1000 * 60 * 60));
+    const days    = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return { hours, days };
+  }
+
+  function renderWrapped(){
+    const elHoursTogether = document.getElementById('wrHoursTogether');
+    const elHoursYear     = document.getElementById('wrHoursYear');
+    const elDaysTogether  = document.getElementById('wrDaysTogether');
+    const elDaysDating    = document.getElementById('wrDaysDating');
+
+    if(!elHoursTogether) return;
+
+    const together = diffInfo(togetherSince);
+    const dating   = diffInfo(datingSince);
+    const yearOnly = diffInfo(yearStart);
+
+    elHoursTogether.textContent = together.hours.toLocaleString('pt-BR');
+    elDaysTogether.textContent  = together.days.toLocaleString('pt-BR');
+    if(elDaysDating){
+      elDaysDating.textContent = dating.days.toLocaleString('pt-BR');
+    }
+    if(elHoursYear){
+      elHoursYear.textContent = yearOnly.hours.toLocaleString('pt-BR') + ' h';
+    }
+  }
+
+  renderWrapped();
+  setInterval(renderWrapped, 1000 * 60 * 10);
+})();
 </script>
 </body>
 </html>

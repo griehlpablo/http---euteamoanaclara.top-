@@ -84,6 +84,8 @@
     /* Galeria + carrossel com +N */
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
+    const heroPrev = document.getElementById('heroPrev');
+    const heroNext = document.getElementById('heroNext');
     const fullGallery = document.getElementById('fullGallery');
     const galleryOverlay = document.getElementById('galleryOverlay');
     const closeGalleryOverlay = document.getElementById('closeGalleryOverlay');
@@ -123,6 +125,14 @@
         const idx = heroSources.indexOf(src);
         if(idx >= 0) currentHeroIndex = idx;
       }
+    }
+
+    function goHero(delta){
+      if(heroSources.length === 0) return;
+      currentHeroIndex = (currentHeroIndex + delta + heroSources.length) % heroSources.length;
+      const nextSrc = heroSources[currentHeroIndex];
+      setHeroFromSrc(nextSrc, true);
+      startHeroCarousel();
     }
 
     function startHeroCarousel(){
@@ -212,6 +222,13 @@
     closeGalleryOverlay.addEventListener('click', ()=>{
       galleryOverlay.classList.remove('show');
     });
+
+    if(heroPrev){
+      heroPrev.addEventListener('click', ()=> goHero(-1));
+    }
+    if(heroNext){
+      heroNext.addEventListener('click', ()=> goHero(1));
+    }
 
     // Carrega fotos base
     basePhotos.forEach(src => registerHeroSrc(src));
@@ -401,7 +418,7 @@
       var countdownTimeEl = document.getElementById('countdownTime');
       var countdownMsgEl  = document.getElementById('countdownMsg');
       if(!countdownTimeEl || !countdownMsgEl) return;
-      var targetDate = new Date(2025, 11, 24, 5, 0, 0); // mÃªs 10 = novembro
+      var targetDate = new Date('2025-12-24T05:00:00-03:00'); // encontro em 24/12/2025 às 05h (Brasília)
 
       function pad2(n){ return (n<10?'0':'') + n; }
 
@@ -1691,6 +1708,10 @@
         });
       }
     })();
+
+
+
+
 
 
 

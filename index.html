@@ -84,6 +84,21 @@
       box-shadow:0 6px 20px rgba(255,77,166,0.18);
       flex-shrink:0;
     }
+    /* Barra superior */
+    .top-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:#fff;box-shadow:0 10px 28px rgba(0,0,0,0.08);gap:14px;flex-wrap:wrap;position:sticky;top:12px;z-index:80;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-logo-chip{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#ff9fc9,#ff4da6);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;box-shadow:0 8px 18px rgba(255,77,166,0.25);}
+    .nav-links{list-style:none;display:flex;gap:12px;margin:0;padding:0;flex-wrap:wrap;}
+    .nav-links a, .nav-links button{border:0;background:transparent;font-weight:700;font-family:inherit;cursor:pointer;color:#111;text-decoration:none;padding:10px 12px;border-radius:10px;transition:background .15s ease, color .15s ease;}
+    .nav-links a:hover, .nav-links button:hover{background:#f3f4f6;color:#0f172a;}
+    .nav-links .has-sub{position:relative;}
+    .nav-links .dropdown{position:absolute;top:105%;left:0;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,0.08);padding:8px 0;display:none;min-width:180px;z-index:50;}
+    .nav-links .has-sub:hover .dropdown{display:block;}
+    .nav-links .dropdown a{display:block;padding:8px 14px;color:#111;}
+    .nav-links .dropdown a:hover{background:#f8fafc;}
+    .nav-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .nav-search{padding:9px 12px;border-radius:12px;border:1px solid #e5e7eb;background:#f8fafc;min-width:160px;font-family:inherit;}
+    .login-top-btn{border:0;background:linear-gradient(120deg,#0f172a,#111827);color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(15,23,42,0.2);}
     h1{margin:0; font-size:26px}
     p.lead{margin:4px 0 0 0; opacity:0.9}
 
@@ -331,6 +346,19 @@
     #heroImg{transition:opacity .6s ease;}
     #heroImg.fade-out{opacity:0;}
     #heroImg.fade-in{opacity:1;}
+    .hero-carousel{position:relative;overflow:hidden;border-radius:12px;}
+    .hero-carousel img{display:block;width:100%;border-radius:12px;object-fit:cover;max-height:320px;}
+    .hero-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.85);border:0;border-radius:999px;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.15);}
+    .hero-nav:hover{background:#fff;}
+    .hero-prev{left:10px;}
+    .hero-next{right:10px;}
+
+    /* Abas de mensagens */
+    .msg-tabs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+    .msg-tab-btn{border:1px solid #eee;background:#f8fafc;color:#111;font-weight:700;border-radius:10px;padding:8px 12px;cursor:pointer;}
+    .msg-tab-btn.active{background:#0f172a;color:#fff;border-color:#0f172a;}
+    .msg-tab-panel{display:none;}
+    .msg-tab-panel.active{display:block;}
 
     /* Painel de satisfação */
     .satisfaction-wrapper{
@@ -1268,6 +1296,32 @@
     <div class="card" id="card">
       <div class="hearts-layer" id="heartsLayer"></div>
 
+      <nav class="top-nav" id="menuPrincipal">
+        <div class="nav-left">
+          <div class="nav-logo-chip">AC</div>
+          <ul class="nav-links">
+            <li><a href="#painel">Painel</a></li>
+            <li><a href="#retrospectiva">Retrospectiva</a></li>
+            <li><a href="#mensagens">Mensagens</a></li>
+            <li><a href="#galeria">Galeria</a></li>
+            <li class="has-sub">
+              <button type="button">Outros v</button>
+              <div class="dropdown">
+                <a href="#central">Central</a>
+                <a href="#contagem">Contagem</a>
+                <a href="#carta">Carta</a>
+                <a href="#links">Links uteis</a>
+              </div>
+            </li>
+            <li><a href="#login">Login</a></li>
+          </ul>
+        </div>
+        <div class="nav-actions">
+          <input class="nav-search" type="search" placeholder="Buscar">
+          <button class="login-top-btn" type="button" onclick="document.getElementById('login')?.scrollIntoView({behavior:'smooth'});">Ir para login</button>
+        </div>
+      </nav>
+
       <header>
         <div class="logo">❤</div>
         <div>
@@ -1276,9 +1330,11 @@
         </div>
       </header>
 
+      <div id="login"></div>
+      <section id="central">
       <div class="hub-card" id="megaHub">
         <div class="hub-header">
-          <h3 class="hub-title">Central secreta de vocês (com abas) ✨</h3>
+          <h3 class="hub-title">Central do casal (com abas) ✨</h3>
           <button class="hub-nav-btn" id="hubToggle">☰ Abrir menu</button>
         </div>
         <div class="hub-menu" id="hubMenu">
@@ -1304,7 +1360,6 @@
               </div>
               <div class="input-row">
                 <button class="btn btn-sim" id="hubLoginBtn">Entrar</button>
-                <button class="btn btn-nao" id="hubPinSaveBtn">Atualizar PIN</button>
               </div>
               <div id="hubLoginStatus" class="small"></div>
             </div>
@@ -1484,6 +1539,7 @@
           </div>
         </div>
       </div>
+      </section>
 
       <div class="main-grid">
         <div class="left-col">
@@ -1519,7 +1575,7 @@
             </div>
           </div>
 
-          <div class="panel message-box">
+          <div class="panel message-box" id="mensagens">
             <div class="big-love">
               <strong>Mensagem do Pablo pra você</strong>
               <div class="footer-hearts">❤ ❤ ❤</div>
@@ -1534,11 +1590,13 @@
         </div>
 
         <aside class="right-col">
-          <div class="panel" style="text-align:center">
+          <div class="panel" id="galeria" style="text-align:center">
             <h3>Galeria & momento</h3>
             <p class="small">As fotos vão passando sozinhas, mas você pode tocar em qualquer miniatura pra escolher 💕</p>
-            <div style="margin-top:10px">
-              <img id="heroImg" src="images/wedding.jpg" alt="foto destaque" style="width:100%; border-radius:12px; display:block; object-fit:cover; max-height:320px">
+            <div class="hero-carousel" style="margin-top:10px">
+              <button class="hero-nav hero-prev" id="heroPrev" aria-label="Foto anterior">&lt;</button>
+              <img id="heroImg" src="images/wedding.jpg" alt="foto destaque">
+              <button class="hero-nav hero-next" id="heroNext" aria-label="Proxima foto">&gt;</button>
             </div>
             <div style="margin-top:12px; text-align:left">
               <small class="small">Dica: se o slider ficar menor que 10, ele volta pra 10 automaticamente — porque você merece tudo.</small>
@@ -1548,10 +1606,10 @@
           <div style="height:14px"></div>
 
           <!-- Contagem regressiva para o encontro -->
-          <div class="panel countdown-panel" style="text-align:center">
-            <h3>Contagem para nosso próximo encontro ⏳</h3>
+          <div class="panel countdown-panel" id="contagem" style="text-align:center">
+            <h3>Contagem para 24/12/2025 05:00</h3>
             <p class="small">
-              Encontro em <strong>19/11/2025 às 18h</strong> (horário de Brasília).
+              Encontro em <strong>24/12/2025 as 05h</strong> (horario de Brasilia).
             </p>
             <div class="countdown-time" id="countdownTime">
               --d --h --m --s
@@ -1569,6 +1627,13 @@
             <div style="margin-top:8px">
               <button class="btn btn-sim" id="popupLove">Mostrar Amor</button>
             </div>
+          </div>
+          <div class="panel" id="links">
+            <h3>Links uteis</h3>
+            <p class="small">Guarde links de referencia (Drive, YouTube, docs) para abrir rapido.</p>
+            <ul class="small">
+              <li>Adicione aqui seus links favoritos para o casal.</li>
+            </ul>
           </div>
         </aside>
       </div>
@@ -1596,7 +1661,7 @@
         </div>
       </div>
 
-      <section class="satisfaction-wrapper tab-panel" data-tab-section="painel">
+      <section class="satisfaction-wrapper tab-panel" data-tab-section="painel" id="painel">
         <div class="satisfaction-card">
           <h2>Nível de satisfação com o mozão 😏</h2>
           <p class="sat-sub">
@@ -1678,7 +1743,7 @@
       </section>
 
       <!-- RETROSPECTIVA -->
-      <section class="extra-section retro-section tab-panel" data-tab-section="retrospectiva">
+      <section class="extra-section retro-section tab-panel" data-tab-section="retrospectiva" id="retrospectiva">
         <div class="love-wrapped-section">
           <div class="panel love-wrapped-card">
             <div class="love-wrapped-tag">
@@ -1982,6 +2047,7 @@
   </div>
 
   <!-- Overlay da carta de pedido de casamento -->
+  <div id="carta"></div>
   <div class="overlay" id="proposalOverlay">
     <div class="letter-card">
       <div class="ring-icon">💍</div>
@@ -2106,6 +2172,8 @@
     /* Galeria + carrossel com +N */
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
+    const heroPrev = document.getElementById('heroPrev');
+    const heroNext = document.getElementById('heroNext');
     const fullGallery = document.getElementById('fullGallery');
     const galleryOverlay = document.getElementById('galleryOverlay');
     const closeGalleryOverlay = document.getElementById('closeGalleryOverlay');
@@ -2147,14 +2215,16 @@
       }
     }
 
+    function moveHero(offset){
+      if(heroSources.length <= 1) return;
+      currentHeroIndex = (currentHeroIndex + offset + heroSources.length) % heroSources.length;
+      const nextSrc = heroSources[currentHeroIndex];
+      setHeroFromSrc(nextSrc, true);
+    }
+
     function startHeroCarousel(){
       if(heroTimer) clearInterval(heroTimer);
-      heroTimer = setInterval(()=>{
-        if(heroSources.length <= 1) return;
-        currentHeroIndex = (currentHeroIndex + 1) % heroSources.length;
-        const nextSrc = heroSources[currentHeroIndex];
-        setHeroFromSrc(nextSrc, true);
-      }, 6000);
+      heroTimer = setInterval(()=>{ moveHero(1); }, 6000);
     }
 
     function rebuildAllPhotos(){
@@ -2238,6 +2308,8 @@
     // Carrega fotos base
     basePhotos.forEach(src => registerHeroSrc(src));
     setHeroFromSrc(basePhotos[basePhotos.length-1]);
+    if(heroPrev){ heroPrev.addEventListener('click', ()=>{ moveHero(-1); startHeroCarousel(); }); }
+    if(heroNext){ heroNext.addEventListener('click', ()=>{ moveHero(1); startHeroCarousel(); }); }
     startHeroCarousel();
 
     // Upload fotos -> Realtime DB
@@ -2418,12 +2490,12 @@
       setTimeout(()=> t.remove(), 2100);
     }
 
-    /* Contagem regressiva 19/11/2025 18h */
+        /* Contagem regressiva 24/12/2025 05:00 */
     (function(){
       var countdownTimeEl = document.getElementById('countdownTime');
       var countdownMsgEl  = document.getElementById('countdownMsg');
       if(!countdownTimeEl || !countdownMsgEl) return;
-      var targetDate = new Date(2025, 10, 19, 18, 0, 0); // mês 10 = novembro
+      var targetDate = new Date(2025, 11, 24, 5, 0, 0);
 
       function pad2(n){ return (n<10?'0':'') + n; }
 
@@ -2431,10 +2503,8 @@
         var now  = new Date();
         var diff = targetDate.getTime() - now.getTime();
         if(diff <= 0){
-          countdownTimeEl.innerHTML =
-            '<span>00d</span> <span>00h</span> <span>00m</span> <span>00s</span>';
-          countdownMsgEl.textContent =
-            'Já é o dia do encontro! Espero que vocês estejam juntinhos agora 💖';
+          countdownTimeEl.innerHTML = '<span>00d</span> <span>00h</span> <span>00m</span> <span>00s</span>';
+          countdownMsgEl.textContent = 'Chegou! Hora de se abracar.';
           return;
         }
         var totalSeconds = Math.floor(diff / 1000);
@@ -2452,11 +2522,11 @@
 
         var msg;
         if(days > 1){
-          msg = 'Faltam ' + days + ' dias pro próximo encontro. Aguenta coraçãozinho 💘';
+          msg = 'Faltam ' + days + ' dias para o grande encontro.';
         }else if(days === 1){
-          msg = 'Falta 1 dia pro encontro! Já pode começar a surtar de ansiedade 🥹';
+          msg = 'Falta 1 dia! Separa o cafe da manha e o abraco.';
         }else{
-          msg = 'É hoje! Daqui a pouquinho vocês vão se abraçar 💞';
+          msg = 'E hoje! Falta bem pouquinho.';
         }
         countdownMsgEl.textContent = msg;
       }
@@ -4160,3 +4230,7 @@
 </script>
 </body>
 </html>
+
+
+
+

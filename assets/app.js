@@ -1,6 +1,5 @@
 
-  const START_PAGE = window.START_PAGE || (document.querySelector('html')?.dataset?.page) || 'painel';
-  const firebaseConfig = {
+    const firebaseConfig = {
       apiKey: "AIzaSyDS1YA0FRvCIryjreFVzRMZyaHhYtm-pUU",
       authDomain: "euteamoanaclaraks.firebaseapp.com",
       databaseURL: "https://euteamoanaclaraks-default-rtdb.firebaseio.com",
@@ -85,8 +84,6 @@
     /* Galeria + carrossel com +N */
     const gallery = document.getElementById('gallery');
     const heroImg = document.getElementById('heroImg');
-    const heroPrev = document.getElementById('heroPrev');
-    const heroNext = document.getElementById('heroNext');
     const fullGallery = document.getElementById('fullGallery');
     const galleryOverlay = document.getElementById('galleryOverlay');
     const closeGalleryOverlay = document.getElementById('closeGalleryOverlay');
@@ -128,16 +125,14 @@
       }
     }
 
-    function moveHero(offset){
-      if(heroSources.length <= 1) return;
-      currentHeroIndex = (currentHeroIndex + offset + heroSources.length) % heroSources.length;
-      const nextSrc = heroSources[currentHeroIndex];
-      setHeroFromSrc(nextSrc, true);
-    }
-
     function startHeroCarousel(){
       if(heroTimer) clearInterval(heroTimer);
-      heroTimer = setInterval(()=>{ moveHero(1); }, 6000);
+      heroTimer = setInterval(()=>{
+        if(heroSources.length <= 1) return;
+        currentHeroIndex = (currentHeroIndex + 1) % heroSources.length;
+        const nextSrc = heroSources[currentHeroIndex];
+        setHeroFromSrc(nextSrc, true);
+      }, 6000);
     }
 
     function rebuildAllPhotos(){
@@ -221,8 +216,6 @@
     // Carrega fotos base
     basePhotos.forEach(src => registerHeroSrc(src));
     setHeroFromSrc(basePhotos[basePhotos.length-1]);
-    if(heroPrev){ heroPrev.addEventListener('click', ()=>{ moveHero(-1); startHeroCarousel(); }); }
-    if(heroNext){ heroNext.addEventListener('click', ()=>{ moveHero(1); startHeroCarousel(); }); }
     startHeroCarousel();
 
     // Upload fotos -> Realtime DB
@@ -403,12 +396,12 @@
       setTimeout(()=> t.remove(), 2100);
     }
 
-        /* Contagem regressiva 24/12/2025 05:00 */
+    /* Contagem regressiva 19/11/2025 18h */
     (function(){
       var countdownTimeEl = document.getElementById('countdownTime');
       var countdownMsgEl  = document.getElementById('countdownMsg');
       if(!countdownTimeEl || !countdownMsgEl) return;
-      var targetDate = new Date(2025, 11, 24, 5, 0, 0);
+      var targetDate = new Date(2025, 11, 24, 5, 0, 0); // mês 10 = novembro
 
       function pad2(n){ return (n<10?'0':'') + n; }
 
@@ -416,8 +409,10 @@
         var now  = new Date();
         var diff = targetDate.getTime() - now.getTime();
         if(diff <= 0){
-          countdownTimeEl.innerHTML = '<span>00d</span> <span>00h</span> <span>00m</span> <span>00s</span>';
-          countdownMsgEl.textContent = 'Chegou! Hora de se abracar.';
+          countdownTimeEl.innerHTML =
+            '<span>00d</span> <span>00h</span> <span>00m</span> <span>00s</span>';
+          countdownMsgEl.textContent =
+            'Já é o dia do encontro! Espero que vocês estejam juntinhos agora 💖';
           return;
         }
         var totalSeconds = Math.floor(diff / 1000);
@@ -435,11 +430,11 @@
 
         var msg;
         if(days > 1){
-          msg = 'Faltam ' + days + ' dias para o grande encontro.';
+          msg = 'Faltam ' + days + ' dias pro próximo encontro. Aguenta coraçãozinho 💘';
         }else if(days === 1){
-          msg = 'Falta 1 dia! Separa o cafe da manha e o abraco.';
+          msg = 'Falta 1 dia pro encontro! Já pode começar a surtar de ansiedade 🥹';
         }else{
-          msg = 'E hoje! Falta bem pouquinho.';
+          msg = 'É hoje! Daqui a pouquinho vocês vão se abraçar 💞';
         }
         countdownMsgEl.textContent = msg;
       }
@@ -1697,76 +1692,6 @@
       }
     })();
 
-</script>
-<script>
-  (function(){
-    const hub = {
-      menu: document.getElementById('hubMenu'),
-      toggle: document.getElementById('hubToggle'),
-      sections: Array.from(document.querySelectorAll('.hub-section')),
-      buttons: Array.from(document.querySelectorAll('.hub-menu button'))
-    };
-    const prefix = 'megaHub_';
-    const hasFirebase = typeof db !== 'undefined' && db;
 
-    const getLS = (k, def) => {
-      try{ const v = localStorage.getItem(prefix + k); return v ? JSON.parse(v) : def; }catch(e){ return def; }
-    };
-    const setLS = (k, v) => { try{ localStorage.setItem(prefix + k, JSON.stringify(v)); }catch(e){} };
-    const sync = (k, data) => { if(!hasFirebase) return; try{ db.ref('hub/' + coupleId + '/' + k).set(data); }catch(e){} };
-    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
 
-    // Abas principais (menu a partir do painel de satisfação)
-    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
-    const tabPanels = Array.from(document.querySelectorAll('[data-tab-section]'));
-    function setMainTab(tab){
-      const exists = tabButtons.some(btn => btn.dataset.tab === tab);
-      const target = exists ? tab : 'tudo';
-      tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === target));
-      tabPanels.forEach(panel => {
-        const tags = (panel.dataset.tabSection || '').split(/\s+/).filter(Boolean);
-        const show = target === 'tudo' || tags.includes(target);
-        panel.classList.toggle('tab-hidden', !show);
-      });
-      setLS('mainTab', target);
-    }
-    if(tabButtons.length && tabPanels.length){
-      const savedTab = getLS('mainTab', 'tudo');
-      setMainTab(savedTab);
-      tabButtons.forEach(btn => btn.addEventListener('click', ()=> setMainTab(btn.dataset.tab)));
-    }
-    // Navegacao principal para multiplas paginas
-    const navButtons = Array.from(document.querySelectorAll('.nav-btn, .dropdown a[data-page]'));
-    function highlightNav(page){
-      navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.page === page));
-    }
-    function showPage(page){
-      highlightNav(page);
-      if(page === 'painel' || page === 'retrospectiva'){
-        setMainTab(page);
-      }
-      const map = {
-        painel:['painel'],
-        retrospectiva:['retrospectiva'],
-        mensagens:['mensagens'],
-        galeria:['galeria'],
-        central:['megaHub'],
-        contagem:['contagem'],
-        carta:['carta'],
-        links:['links'],
-        login:['login']
-      };
-      const ids = map[page] || [];
-      ids.forEach(id=>{
-        const el = document.getElementById(id);
-        if(el){ el.scrollIntoView({behavior:'instant', block:'start'}); }
-      });
-    }
-    if(navButtons.length){
-      navButtons.forEach(btn => btn.addEventListener('click', (e)=>{
-        if(btn.href && btn.href.includes(location.origin)) e.preventDefault();
-        showPage(btn.dataset.page);
-      }));
-      highlightNav(START_PAGE);
-      showPage(START_PAGE);
-    }
+

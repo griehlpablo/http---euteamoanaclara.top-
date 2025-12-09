@@ -176,9 +176,9 @@
       font-size:14px;
       cursor:pointer;
     }
-    .thumb-remove:hover{background:rgba(0,0,0,0.95);}
+  .thumb-remove:hover{background:rgba(0,0,0,0.95);}
 
-    .thumb-extra{
+  .thumb-extra{
       width:74px;
       height:74px;
       border-radius:8px;

@@ -91,6 +91,7 @@
     .nav-links{list-style:none;display:flex;gap:12px;margin:0;padding:0;flex-wrap:wrap;}
     .nav-links a, .nav-links button{border:0;background:transparent;font-weight:700;font-family:inherit;cursor:pointer;color:#111;text-decoration:none;padding:10px 12px;border-radius:10px;transition:background .15s ease, color .15s ease;}
     .nav-links a:hover, .nav-links button:hover{background:#f3f4f6;color:#0f172a;}
+    .nav-links .active{background:#0f172a;color:#fff;box-shadow:0 8px 18px rgba(15,23,42,0.18);}
     .nav-links .has-sub{position:relative;}
     .nav-links .dropdown{position:absolute;top:105%;left:0;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,0.08);padding:8px 0;display:none;min-width:180px;z-index:50;}
     .nav-links .has-sub:hover .dropdown{display:block;}
@@ -1300,20 +1301,20 @@
         <div class="nav-left">
           <div class="nav-logo-chip">AC</div>
           <ul class="nav-links">
-            <li><a href="#painel">Painel</a></li>
-            <li><a href="#retrospectiva">Retrospectiva</a></li>
-            <li><a href="#mensagens">Mensagens</a></li>
-            <li><a href="#galeria">Galeria</a></li>
+            <li><button type="button" class="nav-btn" data-page="painel">Painel</button></li>
+            <li><button type="button" class="nav-btn" data-page="retrospectiva">Retrospectiva</button></li>
+            <li><button type="button" class="nav-btn" data-page="mensagens">Mensagens</button></li>
+            <li><button type="button" class="nav-btn" data-page="galeria">Galeria</button></li>
             <li class="has-sub">
               <button type="button">Outros v</button>
               <div class="dropdown">
-                <a href="#central">Central</a>
-                <a href="#contagem">Contagem</a>
-                <a href="#carta">Carta</a>
-                <a href="#links">Links uteis</a>
+                <a href="#central" data-page="central">Central</a>
+                <a href="#contagem" data-page="contagem">Contagem</a>
+                <a href="#carta" data-page="carta">Carta</a>
+                <a href="#links" data-page="links">Links uteis</a>
               </div>
             </li>
-            <li><a href="#login">Login</a></li>
+            <li><button type="button" class="nav-btn" data-page="login">Login</button></li>
           </ul>
         </div>
         <div class="nav-actions">
@@ -3821,6 +3822,59 @@
       const savedTab = getLS('mainTab', 'tudo');
       setMainTab(savedTab);
       tabButtons.forEach(btn => btn.addEventListener('click', ()=> setMainTab(btn.dataset.tab)));
+    }
+
+    // NavegaÇõÇæo principal (modo pseudo-pÇ­gina)
+    const navButtons = Array.from(document.querySelectorAll('.nav-btn, .dropdown a[data-page]'));
+    function highlightNav(page){
+      navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.page === page));
+    }
+    function scrollToId(id){
+      const el = document.getElementById(id);
+      if(el){ el.scrollIntoView({behavior:'smooth', block:'start'}); }
+    }
+    function goPage(page){
+      highlightNav(page);
+      switch(page){
+        case 'painel':
+          setMainTab('painel');
+          scrollToId('painel');
+          break;
+        case 'retrospectiva':
+          setMainTab('retrospectiva');
+          scrollToId('retrospectiva');
+          break;
+        case 'mensagens':
+          scrollToId('mensagens');
+          break;
+        case 'galeria':
+          scrollToId('galeria');
+          break;
+        case 'central':
+          scrollToId('megaHub');
+          break;
+        case 'contagem':
+          scrollToId('contagem');
+          break;
+        case 'carta':
+          scrollToId('carta');
+          break;
+        case 'links':
+          scrollToId('links');
+          break;
+        case 'login':
+          scrollToId('login');
+          break;
+        default:
+          scrollToId('card');
+      }
+    }
+    if(navButtons.length){
+      navButtons.forEach(btn => btn.addEventListener('click', (e)=>{
+        e.preventDefault();
+        goPage(btn.dataset.page);
+      }));
+      highlightNav('painel');
     }
     const retroPlayBtn = document.getElementById('retroPlayBtn');
     if(retroPlayBtn){

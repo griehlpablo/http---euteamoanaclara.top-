@@ -1,20 +1,20 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Eu te amo Ana Clara ❤</title>
+  <title>Eu te amo Ana Clara â¤</title>
 
-  <!-- Ícones para iOS/Android -->
+  <!-- Ãcones para iOS/Android -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
-  <!-- Versão raiz para iOS (garante ícone na tela inicial) -->
+  <!-- VersÃ£o raiz para iOS (garante Ã­cone na tela inicial) -->
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-v2.png">
-  <!-- Versão em /images como fallback -->
+  <!-- VersÃ£o em /images como fallback -->
   <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Ana Clara ❤">
-  <!-- Manifesto PWA para ícone na tela inicial / app web -->
+  <meta name="apple-mobile-web-app-title" content="Ana Clara â¤">
+  <!-- Manifesto PWA para Ã­cone na tela inicial / app web -->
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#ff4da6">
 
@@ -161,7 +161,7 @@
       cursor:pointer;
       display:block;
     }
-    /* Navegação topo profissional */
+    /* NavegaÃ§Ã£o topo profissional */
     .top-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:#fff;box-shadow:0 10px 28px rgba(0,0,0,0.08);gap:14px;flex-wrap:wrap;position:relative;z-index:80;margin-bottom:10px;}
     .nav-left{display:flex;align-items:center;gap:12px;}
     .nav-logo-chip{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#ff9fc9,#ff4da6);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;box-shadow:0 8px 18px rgba(255,77,166,0.25);}
@@ -357,7 +357,7 @@
     #heroImg.fade-out{opacity:0;}
     #heroImg.fade-in{opacity:1;}
 
-    /* Painel de satisfação */
+    /* Painel de satisfaÃ§Ã£o */
     .satisfaction-wrapper{
       margin-top:24px;
       display:flex;
@@ -612,7 +612,7 @@
       margin-top:2px;
     }
     .mural-task .mural-text::before{
-      content:"✔ ";
+      content:"âœ” ";
       color:#16a34a;
       font-weight:600;
     }
@@ -643,7 +643,7 @@
       color:#7f1d1d;
     }
 
-    /* Música */
+    /* MÃºsica */
     .music-wrapper{
       margin-top:22px;
       display:flex;
@@ -773,6 +773,56 @@
     }
     .tab-btn.active small{opacity:0.8;}
     .tab-hidden{display:none!important;}
+    /* Esconde a central antiga que estÃƒÂ¡ quebrada */
+    #central{display:none;}
+
+    /* ChatGPT */
+    .chatgpt-card{
+      background:linear-gradient(180deg,#0f172a,#101827);
+      color:#e2e8f0;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 14px 32px rgba(0,0,0,0.22);
+      border:1px solid rgba(255,255,255,0.06);
+    }
+    .chatgpt-card h2{margin-top:0; margin-bottom:4px;}
+    .chatgpt-key-row,
+    .chatgpt-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+    }
+    .chatgpt-key-row input,
+    .chatgpt-row textarea{
+      flex:1 1 220px;
+    }
+    .chatgpt-actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .chatgpt-messages{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:320px;
+      overflow:auto;
+    }
+    .chatgpt-bubble{
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.05);
+      white-space:pre-wrap;
+      line-height:1.4;
+    }
+    .chatgpt-bubble.assistant{
+      background:rgba(255,255,255,0.08);
+      border-color:rgba(255,255,255,0.1);
+    }
 
     /* Retrospectiva */
     .retro-section .retro-hero{
@@ -928,7 +978,7 @@
       }
     }
 
-    /* Hub compacto com abas e hambúrguer */
+    /* Hub compacto com abas e hambÃºrguer */
     .hub-card{
       margin-top:22px;
       border:1px solid rgba(0,0,0,0.05);
@@ -1000,7 +1050,7 @@
     .progress span{display:block; height:100%; background:linear-gradient(90deg,#ff9fc9,#ff4da6);}
     .chart-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px;}
   
-    /* Seções extras (nossa história, mapa, bucket list etc.) */
+    /* SeÃ§Ãµes extras (nossa histÃ³ria, mapa, bucket list etc.) */
     .extra-section{
       margin-top:24px;
     }
@@ -1303,10 +1353,10 @@
             <li><a class="nav-btn" data-page="retrospectiva" href="/retrospectiva.html">Retrospectiva</a></li>
             <li><a class="nav-btn" data-page="mensagens" href="/mensagens.html">Mensagens</a></li>
             <li><a class="nav-btn" data-page="galeria" href="/galeria.html">Galeria</a></li>
+            <li><a class="nav-btn" data-page="chatgpt" href="#chatgpt">ChatGPT</a></li>
             <li class="has-sub">
               <button type="button">Outros v</button>
               <div class="dropdown">
-                <a href="/central.html" data-page="central">Central</a>
                 <a href="/contagem.html" data-page="contagem">Contagem</a>
                 <a href="/carta.html" data-page="carta">Carta</a>
                 <a href="/links.html" data-page="links">Links uteis</a>
@@ -1331,10 +1381,10 @@
       </section>
 
       <header style="margin-top:8px">
-        <div class="logo">❤</div>
+        <div class="logo">â¤</div>
         <div>
           <h1>Eu te amo, Ana Clara</h1>
-          <p class="lead">Um site só pra você — com muito amor, carinho, músicas e corações 💖</p>
+          <p class="lead">Um site sÃ³ pra vocÃª â€” com muito amor, carinho, mÃºsicas e coraÃ§Ãµes ðŸ’–</p>
         </div>
       </header>
 
@@ -1342,8 +1392,8 @@
       <section id="central">
       <div class="hub-card" id="megaHub">
         <div class="hub-header">
-          <h3 class="hub-title">Central do casal (com abas) ✨</h3>
-          <button class="hub-nav-btn" id="hubToggle">☰ Abrir menu</button>
+          <h3 class="hub-title">Central do casal (com abas) âœ¨</h3>
+          <button class="hub-nav-btn" id="hubToggle">â˜° Abrir menu</button>
         </div>
         <div class="hub-menu" id="hubMenu">
           <button data-target="hub-login" class="active">Login / Perfis</button>
@@ -1357,8 +1407,8 @@
         <div class="hub-section active" id="hub-login">
           <div class="hub-grid">
             <div class="hub-box">
-              <h3>Login leve com PIN 🔒</h3>
-              <small>Escolha quem é você e digite o PIN fofinho de 4 dígitos.</small>
+              <h3>Login leve com PIN ðŸ”’</h3>
+              <small>Escolha quem Ã© vocÃª e digite o PIN fofinho de 4 dÃ­gitos.</small>
               <div class="input-row">
                 <select id="hubUser">
                   <option value="pablo">Pablo</option>
@@ -1372,7 +1422,7 @@
               <div id="hubLoginStatus" class="small"></div>
             </div>
             <div class="hub-box">
-              <h3>Resumo rápido do mês 📅</h3>
+              <h3>Resumo rÃ¡pido do mÃªs ðŸ“…</h3>
               <small>Mostra tudo que rolou usando os registros do site.</small>
               <div class="input-row">
                 <input id="hubResumoMes" type="month">
@@ -1386,8 +1436,8 @@
         <div class="hub-section" id="hub-chat">
           <div class="hub-grid">
             <div class="hub-box">
-              <h3>Bilhetes em tempo real 💌</h3>
-              <small>Filtre por categoria e veja se há novidade.</small>
+              <h3>Bilhetes em tempo real ðŸ’Œ</h3>
+              <small>Filtre por categoria e veja se hÃ¡ novidade.</small>
               <div class="input-row">
                 <select id="msgAuthor">
                   <option value="pablo">Pablo</option>
@@ -1406,19 +1456,19 @@
               <div class="input-row">
                 <select id="msgFilter">
                   <option value="todos">Todos</option>
-                  <option value="fofura">Só fofos</option>
-                  <option value="segredo">Só segredos</option>
-                  <option value="safadeza">Só safadeza</option>
+                  <option value="fofura">SÃ³ fofos</option>
+                  <option value="segredo">SÃ³ segredos</option>
+                  <option value="safadeza">SÃ³ safadeza</option>
                 </select>
                 <span class="badge" id="msgUnread">0 novos</span>
               </div>
               <ul class="list" id="msgList"></ul>
             </div>
             <div class="hub-box">
-              <h3>Cartas para o futuro ⏳</h3>
+              <h3>Cartas para o futuro â³</h3>
               <small>Escolha a data de abertura e deixe o futuro cuidar.</small>
               <div class="input-row">
-                <input id="capsTitle" type="text" placeholder="Título da carta">
+                <input id="capsTitle" type="text" placeholder="TÃ­tulo da carta">
                 <input id="capsFrom" type="text" placeholder="De">
                 <input id="capsTo" type="text" placeholder="Para">
               </div>
@@ -1437,7 +1487,7 @@
         <div class="hub-section" id="hub-fun">
           <div class="hub-grid">
             <div class="hub-box">
-              <h3>Roleta do amor 🎡</h3>
+              <h3>Roleta do amor ðŸŽ¡</h3>
               <small>Cadastre atividades e gire.</small>
               <div class="input-row">
                 <input id="wheelItem" type="text" placeholder="Nova atividade (massagem, filme...)" />
@@ -1450,15 +1500,15 @@
               <div class="wheel" id="wheelResult">Clique em girar</div>
               <div class="input-row">
                 <button class="btn btn-sim" id="wheelSpinBtn">Girar roleta</button>
-                <button class="btn btn-nao" id="wheelClearBtn">Limpar opções</button>
+                <button class="btn btn-nao" id="wheelClearBtn">Limpar opÃ§Ãµes</button>
               </div>
               <ul class="list" id="wheelList"></ul>
             </div>
             <div class="hub-box">
-              <h3>Cupons do amor 🎟️</h3>
+              <h3>Cupons do amor ðŸŽŸï¸</h3>
               <small>Registre cupons e marque quando usar.</small>
               <div class="input-row">
-                <input id="couponText" type="text" placeholder="Vale um abraço longo" />
+                <input id="couponText" type="text" placeholder="Vale um abraÃ§o longo" />
                 <button class="btn btn-sim" id="couponAddBtn">Criar cupom</button>
               </div>
               <div class="input-row">
@@ -1472,7 +1522,7 @@
         <div class="hub-section" id="hub-viagem">
           <div class="hub-grid">
             <div class="hub-box">
-              <h3>Meta de viagem ✈️</h3>
+              <h3>Meta de viagem âœˆï¸</h3>
               <small>Quanto falta para a viagem dos sonhos.</small>
               <div class="input-row">
                 <input id="goalValue" type="number" min="0" step="50" placeholder="Meta em R$">
@@ -1481,18 +1531,18 @@
               <div class="input-row">
                 <input id="goalWho" type="text" placeholder="Quem contribuiu?">
                 <input id="goalAmount" type="number" min="0" step="10" placeholder="Valor" />
-                <button class="btn btn-nao" id="goalAddBtn">Registrar contribuição</button>
+                <button class="btn btn-nao" id="goalAddBtn">Registrar contribuiÃ§Ã£o</button>
               </div>
               <div class="progress"><span id="goalProgress" style="width:0%"></span></div>
               <div id="goalStatus" class="small"></div>
               <ul class="list" id="goalList"></ul>
             </div>
             <div class="hub-box">
-              <h3>Roteiro & Mapa 🗺️</h3>
-              <small>Planeje etapas como capítulos de viagem.</small>
+              <h3>Roteiro & Mapa ðŸ—ºï¸</h3>
+              <small>Planeje etapas como capÃ­tulos de viagem.</small>
               <div class="input-row">
                 <input id="routePlace" type="text" placeholder="Lugar / data" />
-                <input id="routeBudget" type="text" placeholder="Orçamento estimado" />
+                <input id="routeBudget" type="text" placeholder="OrÃ§amento estimado" />
                 <button class="btn btn-sim" id="routeAddBtn">Adicionar</button>
               </div>
               <ul class="list" id="routeList"></ul>
@@ -1503,24 +1553,24 @@
         <div class="hub-section" id="hub-achievements">
           <div class="hub-grid">
             <div class="hub-box">
-              <h3>Achievements do casal 🏆</h3>
-              <small>Desbloqueia conforme vocês usam o site.</small>
+              <h3>Achievements do casal ðŸ†</h3>
+              <small>Desbloqueia conforme vocÃªs usam o site.</small>
               <ul class="list" id="achList"></ul>
             </div>
             <div class="hub-box">
-              <h3>Timeline em capítulos 📖</h3>
+              <h3>Timeline em capÃ­tulos ðŸ“–</h3>
               <div class="input-row">
-                <input id="chapterTitle" type="text" placeholder="Título do capítulo">
+                <input id="chapterTitle" type="text" placeholder="TÃ­tulo do capÃ­tulo">
                 <input id="chapterCat" type="text" placeholder="Categoria (encontro, viagem...)" />
               </div>
               <div class="input-row">
-                <textarea id="chapterText" rows="3" placeholder="Mini crônica"></textarea>
+                <textarea id="chapterText" rows="3" placeholder="Mini crÃ´nica"></textarea>
               </div>
-              <button class="btn btn-sim" id="chapterAddBtn">Salvar capítulo</button>
+              <button class="btn btn-sim" id="chapterAddBtn">Salvar capÃ­tulo</button>
               <ul class="list" id="chapterList"></ul>
             </div>
             <div class="hub-box">
-              <h3>Diário compartilhado 📓</h3>
+              <h3>DiÃ¡rio compartilhado ðŸ““</h3>
               <div class="input-row">
                 <input id="diaryDate" type="date">
                 <textarea id="diaryText" rows="2" placeholder="Texto do dia"></textarea>
@@ -1534,12 +1584,12 @@
         <div class="hub-section" id="hub-stats">
           <div class="hub-grid">
             <div class="hub-box">
-              <h3>Painel de dados ❤️‍🔥</h3>
+              <h3>Painel de dados â¤ï¸â€ðŸ”¥</h3>
               <div class="chart-row" id="statsCards"></div>
               <canvas id="statsCanvas" width="320" height="180" style="width:100%; margin-top:8px; background:#fff; border-radius:8px;"></canvas>
             </div>
             <div class="hub-box">
-              <h3>Modo offline & push 🔔</h3>
+              <h3>Modo offline & push ðŸ””</h3>
               <p class="small">Registramos um Service Worker pra cachear e preparar push pelo Firebase mais tarde.</p>
               <button class="btn btn-sim" id="pwaRegisterBtn">Ativar modo offline</button>
               <div id="pwaStatus" class="small"></div>
@@ -1552,14 +1602,14 @@
       <div class="main-grid">
         <div class="left-col">
           <div class="panel">
-            <h3>Quanto você ama o Pablo?</h3>
+            <h3>Quanto vocÃª ama o Pablo?</h3>
             <div class="range-wrap">
               <div style="display:flex; align-items:center; justify-content:space-between">
-                <div class="range-value">Nível: <span id="loveVal">10</span>/10</div>
+                <div class="range-value">NÃ­vel: <span id="loveVal">10</span>/10</div>
                 <div class="small">Deslize para escolher</div>
               </div>
               <input id="loveRange" type="range" min="0" max="10" step="1" value="10">
-              <small class="small">Dica: ele merece 10 sempre 😉</small>
+              <small class="small">Dica: ele merece 10 sempre ðŸ˜‰</small>
             </div>
 
             <hr style="margin:12px 0">
@@ -1567,14 +1617,14 @@
             <h3>Perdoa o Pablo?</h3>
             <div class="forgive">
               <button class="btn btn-sim" id="btnSim">SIM</button>
-              <button class="btn btn-nao" id="btnNao">NÃO</button>
+              <button class="btn btn-nao" id="btnNao">NÃƒO</button>
             </div>
 
             <div style="margin-top:12px">
               <label class="small">Fotos nossas:</label>
               <div class="gallery" id="gallery"></div>
               <small class="small" style="display:block; margin-top:4px;">
-                Vocês podem adicionar fotos direto do celular. Elas ficam salvas e aparecem em todos os dispositivos 💖
+                VocÃªs podem adicionar fotos direto do celular. Elas ficam salvas e aparecem em todos os dispositivos ðŸ’–
               </small>
               <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
                 <input id="fileInput" type="file" accept="image/*" multiple style="flex:1 1 180px;">
@@ -1585,14 +1635,14 @@
 
           <div class="panel message-box" id="mensagens">
             <div class="big-love">
-              <strong>Mensagem do Pablo pra você</strong>
-              <div class="footer-hearts">❤ ❤ ❤</div>
+              <strong>Mensagem do Pablo pra vocÃª</strong>
+              <div class="footer-hearts">â¤ â¤ â¤</div>
             </div>
-            <textarea id="loveMsg">Ana Clara, cada batida do meu coração lembra seu nome. Você é minha companheirinha, meu sorriso e meu porto seguro. Eu te amo mais do que palavras conseguem dizer. Sempre seu, Pablo.</textarea>
+            <textarea id="loveMsg">Ana Clara, cada batida do meu coraÃ§Ã£o lembra seu nome. VocÃª Ã© minha companheirinha, meu sorriso e meu porto seguro. Eu te amo mais do que palavras conseguem dizer. Sempre seu, Pablo.</textarea>
             <div class="action-row">
               <button class="btn btn-sim" id="showMsg">Mostrar em grande</button>
-              <button class="btn btn-nao" id="surprise">Surpresa (corações)</button>
-              <button class="btn btn-sim" id="proposalBtn">Clique aqui para descobrir 💌</button>
+              <button class="btn btn-nao" id="surprise">Surpresa (coraÃ§Ãµes)</button>
+              <button class="btn btn-sim" id="proposalBtn">Clique aqui para descobrir ðŸ’Œ</button>
             </div>
           </div>
         </div>
@@ -1619,8 +1669,8 @@
           <div style="height:14px"></div>
 
           <div class="panel" style="text-align:center">
-            <h3>Brilhos & Corações</h3>
-            <p class="small">Corações caem na página quando você visita ou quando algo especial acontece.</p>
+            <h3>Brilhos & CoraÃ§Ãµes</h3>
+            <p class="small">CoraÃ§Ãµes caem na pÃ¡gina quando vocÃª visita ou quando algo especial acontece.</p>
             <div style="margin-top:8px">
               <button class="btn btn-sim" id="popupLove">Mostrar Amor</button>
             </div>
@@ -1635,7 +1685,7 @@
         </aside>
       </div>
 
-      <!-- Painel de satisfação -->
+      <!-- Painel de satisfaÃ§Ã£o -->
       <div class="tabs-hub">
         <p class="tabs-title"><span>*</span>Menu rapido</p>
         <div class="tabs-row" id="tabButtons">
@@ -1655,14 +1705,15 @@
           <button class="tab-btn" data-tab="ideias">Inspiracoes</button>
           <button class="tab-btn" data-tab="notif">Notificacoes</button>
           <button class="tab-btn" data-tab="musica">Musica</button>
+          <button class="tab-btn" data-tab="chatgpt">ChatGPT</button>
         </div>
       </div>
 
       <section class="satisfaction-wrapper tab-panel" data-tab-section="painel" id="painel">
         <div class="satisfaction-card">
-          <h2>Nível de satisfação com o mozão 😏</h2>
+          <h2>NÃ­vel de satisfaÃ§Ã£o com o mozÃ£o ðŸ˜</h2>
           <p class="sat-sub">
-            Escolha quem você é e clique em um nível. Cada voto mexe o marcador da outra pessoa.
+            Escolha quem vocÃª Ã© e clique em um nÃ­vel. Cada voto mexe o marcador da outra pessoa.
           </p>
 
           <div class="who-are-you">
@@ -1671,38 +1722,38 @@
             <button class="sat-user-btn" data-user="ana">Ana Clara (namorada)</button>
           </div>
           <p class="sat-current">
-            Você está logado como: <strong id="satCurrentUser">ninguém</strong>
+            VocÃª estÃ¡ logado como: <strong id="satCurrentUser">ninguÃ©m</strong>
           </p>
 
           <div class="sat-board">
             <div class="sat-row" data-level="perfect">
-              <span class="sat-label">Amorzinho perfeito(a) 💘</span>
+              <span class="sat-label">Amorzinho perfeito(a) ðŸ’˜</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="good">
-              <span class="sat-label">Muito bonzinho(a) ⭐</span>
+              <span class="sat-label">Muito bonzinho(a) â­</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="chill">
-              <span class="sat-label">De boa / Chill 😎</span>
+              <span class="sat-label">De boa / Chill ðŸ˜Ž</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="ice">
-              <span class="sat-label">Em gelo fino 🧊</span>
+              <span class="sat-label">Em gelo fino ðŸ§Š</span>
               <div class="sat-markers"></div>
             </div>
             <div class="sat-row" data-level="jail">
-              <span class="sat-label">Cadeia (ai, ai, ai) ⛓️</span>
+              <span class="sat-label">Cadeia (ai, ai, ai) â›“ï¸</span>
               <div class="sat-markers"></div>
             </div>
           </div>
 
           <!-- Marcadores -->
-          <div class="sat-marker sat-marker-pablo" data-user="pablo">P 💘</div>
-          <div class="sat-marker sat-marker-ana" data-user="ana">A 💘</div>
+          <div class="sat-marker sat-marker-pablo" data-user="pablo">P ðŸ’˜</div>
+          <div class="sat-marker sat-marker-ana" data-user="ana">A ðŸ’˜</div>
 
           <p class="sat-tip">
-            Quando você entra como Ana, mexe o P (avaliando o Pablo). Quando entra como Pablo, mexe o A (avaliando a Ana).
+            Quando vocÃª entra como Ana, mexe o P (avaliando o Pablo). Quando entra como Pablo, mexe o A (avaliando a Ana).
           </p>
 
           <div class="jail-extra" id="jailExtra" style="display:none; margin-top:10px;">
@@ -1716,25 +1767,25 @@
       <!-- ENQUETES -->
       <section class="polls-wrapper tab-panel" data-tab-section="enquetes">
         <div class="panel poll-card">
-          <h2>Enquetes do dia 💭</h2>
-          <p class="poll-sub">As respostas ficam salvas pra vocês dois verem, em qualquer dispositivo.</p>
+          <h2>Enquetes do dia ðŸ’­</h2>
+          <p class="poll-sub">As respostas ficam salvas pra vocÃªs dois verem, em qualquer dispositivo.</p>
 
           <div class="poll-block" id="pollSexo">
-            <div class="poll-title">Sexo hoje: sim ou não? 😏</div>
+            <div class="poll-title">Sexo hoje: sim ou nÃ£o? ðŸ˜</div>
             <div class="poll-options">
-              <button class="btn btn-sim poll-btn" data-poll="sexo" data-value="sim">Sim 😈</button>
-              <button class="btn btn-nao poll-btn" data-poll="sexo" data-value="nao">Não 🙅‍♀️</button>
+              <button class="btn btn-sim poll-btn" data-poll="sexo" data-value="sim">Sim ðŸ˜ˆ</button>
+              <button class="btn btn-nao poll-btn" data-poll="sexo" data-value="nao">NÃ£o ðŸ™…â€â™€ï¸</button>
             </div>
             <p class="small" id="pollSexoStatus" style="margin-top:6px;">Ainda sem resposta hoje.</p>
           </div>
 
           <div class="poll-block" id="pollMenu">
-            <div class="poll-title">Cardápio do dia 🍽️</div>
-            <textarea id="menuInput" class="menu-textarea" placeholder="Ex.: noite do macarrão, pedir sushi, ver filme com pipoca..."></textarea>
+            <div class="poll-title">CardÃ¡pio do dia ðŸ½ï¸</div>
+            <textarea id="menuInput" class="menu-textarea" placeholder="Ex.: noite do macarrÃ£o, pedir sushi, ver filme com pipoca..."></textarea>
             <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn btn-sim" id="menuSaveBtn">Salvar cardápio</button>
+              <button class="btn btn-sim" id="menuSaveBtn">Salvar cardÃ¡pio</button>
             </div>
-            <p class="small" id="menuStatus" style="margin-top:6px;">Sem sugestão ainda. Escrevam algo gostoso pra hoje 😋</p>
+            <p class="small" id="menuStatus" style="margin-top:6px;">Sem sugestÃ£o ainda. Escrevam algo gostoso pra hoje ðŸ˜‹</p>
           </div>
         </div>
       </section>
@@ -1745,13 +1796,13 @@
           <div class="panel love-wrapped-card">
             <div class="love-wrapped-tag">
               <span class="love-wrapped-tag-dot"></span>
-              <span>Retrospectiva do casal • 2025</span>
+              <span>Retrospectiva do casal â€¢ 2025</span>
             </div>
 
-            <h2 class="love-wrapped-title">Sua retrospectiva 2025 💕</h2>
+            <h2 class="love-wrapped-title">Sua retrospectiva 2025 ðŸ’•</h2>
             <p class="love-wrapped-sub">
-              Um Wrapped versão relacionamento: em vez de horas de música, aqui são as
-              <strong>horas que vocês passaram juntos</strong> desde o primeiro encontro.
+              Um Wrapped versÃ£o relacionamento: em vez de horas de mÃºsica, aqui sÃ£o as
+              <strong>horas que vocÃªs passaram juntos</strong> desde o primeiro encontro.
             </p>
 
             <div class="love-wrapped-main-metric">
@@ -1760,7 +1811,7 @@
                 <span id="wrHoursTogether">--</span><span class="love-wrapped-unit">h</span>
               </div>
               <p class="love-wrapped-note">
-                É como se uma playlist tivesse dado play lá em julho de 2023 e nunca tivesse parado.
+                Ã‰ como se uma playlist tivesse dado play lÃ¡ em julho de 2023 e nunca tivesse parado.
               </p>
             </div>
 
@@ -1769,7 +1820,7 @@
                 <div class="love-wrapped-mini-label">Dias juntos</div>
                 <div class="love-wrapped-mini-number" id="wrDaysTogether">--</div>
                 <div class="love-wrapped-mini-note">
-                  Desde 06/07/2023 contando cada “oi”, cada rolê e cada cochilo na call.
+                  Desde 06/07/2023 contando cada â€œoiâ€, cada rolÃª e cada cochilo na call.
                 </div>
               </div>
 
@@ -1782,25 +1833,33 @@
               </div>
 
               <div class="love-wrapped-mini">
-                <div class="love-wrapped-mini-label">Horas só em 2025</div>
+                <div class="love-wrapped-mini-label">Horas sÃ³ em 2025</div>
                 <div class="love-wrapped-mini-number" id="wrHoursYear">-- h</div>
                 <div class="love-wrapped-mini-note">
-                  Só esse ano vocês já somaram esse tanto de horas sendo “Pablo + Ana”.
+                  SÃ³ esse ano vocÃªs jÃ¡ somaram esse tanto de horas sendo â€œPablo + Anaâ€.
                 </div>
+              </div>
+            </div>
+
+            <div class="love-wrapped-mini">
+              <div class="love-wrapped-mini-label">Beijos estimados</div>
+              <div class="love-wrapped-mini-number" id="wrKissesTotal">--</div>
+              <div class="love-wrapped-mini-note">
+                Aproximacao fofa: ~10 beijos por dia desde 06/07/2023.
               </div>
             </div>
 
             <div class="love-wrapped-secondary">
               <div class="love-wrapped-secondary-card">
                 <div class="love-wrapped-secondary-title">Top artista do seu ano</div>
-                <div class="love-wrapped-secondary-number">Ana Clara 👑</div>
+                <div class="love-wrapped-secondary-number">Ana Clara ðŸ‘‘</div>
                 <div class="love-wrapped-secondary-note">
-                  Presença confirmada em 100% das melhores memórias da playlist “Vida do Pablo”.
+                  PresenÃ§a confirmada em 100% das melhores memÃ³rias da playlist â€œVida do Pabloâ€.
                 </div>
               </div>
 
               <div class="love-wrapped-secondary-card">
-                <div class="love-wrapped-secondary-title">Gênero mais tocado</div>
+                <div class="love-wrapped-secondary-title">GÃªnero mais tocado</div>
                 <div class="love-wrapped-secondary-number">Amorzinho intenso</div>
                 <div class="love-wrapped-secondary-note">
                   Com uma pitada de drama, muito carinho e algumas horas extras de saudade.
@@ -1814,16 +1873,16 @@
       <!-- MURAL DE RECADOS -->
       <section class="mural-wrapper tab-panel" data-tab-section="mural">
         <div class="panel mural-card">
-          <h2>Muralzinho de recados ✍️</h2>
+          <h2>Muralzinho de recados âœï¸</h2>
           <p class="small">
-            Deixem lembretes, missões ou recados fofos um pro outro. Tudo fica salvo pra vocês dois.
+            Deixem lembretes, missÃµes ou recados fofos um pro outro. Tudo fica salvo pra vocÃªs dois.
           </p>
 
           <div class="mural-form">
             <input id="muralText" class="mural-input" placeholder="Ex.: comprar chocolate, noite do filme, mensagem fofa..." />
             <label class="mural-checkbox">
               <input type="checkbox" id="muralIsTask" />
-              missão
+              missÃ£o
             </label>
             <button class="btn btn-sim" id="muralAddBtn">Adicionar</button>
           </div>
@@ -1833,18 +1892,18 @@
       </section>
 
 
-      <!-- NOSSA HISTÓRIA -->
+      <!-- NOSSA HISTÃ“RIA -->
       <section class="extra-section timeline-section tab-panel" data-tab-section="historia">
         <div class="panel extra-card">
-          <h2>Nossa história de amor 🗓️</h2>
+          <h2>Nossa histÃ³ria de amor ðŸ—“ï¸</h2>
           <p class="small">
-            Uma linha do tempo com os momentos mais importantes. Vocês podem ir adicionando aos poucos.
+            Uma linha do tempo com os momentos mais importantes. VocÃªs podem ir adicionando aos poucos.
           </p>
           <div class="extra-form">
             <input type="date" id="timelineDate" class="extra-input" />
-            <input type="text" id="timelineTitle" class="extra-input" placeholder="Título do momento (ex.: primeiro encontro)" />
-            <textarea id="timelineDesc" class="extra-input extra-textarea" placeholder="Detalhes fofos, memórias, sensações..."></textarea>
-            <button class="btn btn-sim" id="timelineAddBtn">Adicionar à linha do tempo</button>
+            <input type="text" id="timelineTitle" class="extra-input" placeholder="TÃ­tulo do momento (ex.: primeiro encontro)" />
+            <textarea id="timelineDesc" class="extra-input extra-textarea" placeholder="Detalhes fofos, memÃ³rias, sensaÃ§Ãµes..."></textarea>
+            <button class="btn btn-sim" id="timelineAddBtn">Adicionar Ã  linha do tempo</button>
           </div>
           <ul id="timelineList" class="extra-list"></ul>
         </div>
@@ -1853,13 +1912,13 @@
       <!-- MAPA / LUGARES ESPECIAIS -->
       <section class="extra-section places-section tab-panel" data-tab-section="lugares">
         <div class="panel extra-card">
-          <h2>Mapa de memórias 🌍</h2>
+          <h2>Mapa de memÃ³rias ðŸŒ</h2>
           <p class="small">
-            Guardem os lugares especiais de vocês. Cada item abre o lugar no Google Maps.
+            Guardem os lugares especiais de vocÃªs. Cada item abre o lugar no Google Maps.
           </p>
           <div class="extra-form">
             <input type="text" id="placeName" class="extra-input" placeholder="Nome do lugar (ex.: nosso restaurante favorito)" />
-            <input type="text" id="placeAddress" class="extra-input" placeholder="Endereço ou cidade (ex.: Curitiba, PR)" />
+            <input type="text" id="placeAddress" class="extra-input" placeholder="EndereÃ§o ou cidade (ex.: Curitiba, PR)" />
             <button class="btn btn-sim" id="placeAddBtn">Salvar lugar</button>
           </div>
           <ul id="placesList" class="extra-list"></ul>
@@ -1869,13 +1928,13 @@
       <!-- BUCKET LIST DO CASAL -->
       <section class="extra-section bucket-section tab-panel" data-tab-section="sonhos">
         <div class="panel extra-card">
-          <h2>Nossa lista de sonhos ✨</h2>
+          <h2>Nossa lista de sonhos âœ¨</h2>
           <p class="small">
-            Coisas que vocês querem fazer juntos: viagens, cursos, planos pra casa...
+            Coisas que vocÃªs querem fazer juntos: viagens, cursos, planos pra casa...
           </p>
           <div class="extra-form">
             <input type="text" id="bucketInput" class="extra-input" placeholder="Ex.: viajar pra praia tal, morar juntos, adotar um gatinho..." />
-            <button class="btn btn-sim" id="bucketAddBtn">Adicionar à lista</button>
+            <button class="btn btn-sim" id="bucketAddBtn">Adicionar Ã  lista</button>
           </div>
           <p class="small" id="bucketProgress">Nenhum sonho marcado ainda.</p>
           <ul id="bucketList" class="extra-list extra-list-check"></ul>
@@ -1885,16 +1944,16 @@
       <!-- POTE DO AMOR -->
       <section class="extra-section lovejar-section tab-panel" data-tab-section="pote">
         <div class="panel extra-card">
-          <h2>Pote do amor 💌</h2>
+          <h2>Pote do amor ðŸ’Œ</h2>
           <p class="small">
-            Guardem bilhetes do tipo “Hoje eu te amo porque...”. Dá pra sortear um aleatoriamente.
+            Guardem bilhetes do tipo â€œHoje eu te amo porque...â€. DÃ¡ pra sortear um aleatoriamente.
           </p>
           <div class="extra-form">
             <textarea id="loveJarInput" class="extra-input extra-textarea" placeholder="Hoje eu te amo porque..."></textarea>
             <button class="btn btn-sim" id="loveJarAddBtn">Guardar bilhete</button>
           </div>
           <div class="lovejar-random">
-            <button class="btn btn-nao" id="loveJarRandomBtn">Sortear bilhete aleatório</button>
+            <button class="btn btn-nao" id="loveJarRandomBtn">Sortear bilhete aleatÃ³rio</button>
             <p class="small" id="loveJarRandomText">Nenhum bilhete sorteado ainda.</p>
           </div>
           <details class="lovejar-details">
@@ -1907,37 +1966,37 @@
       <!-- QUIZ DO CASAL -->
       <section class="extra-section quiz-section tab-panel" data-tab-section="quiz">
         <div class="panel extra-card">
-          <h2>Quiz do casal ❓</h2>
+          <h2>Quiz do casal â“</h2>
           <p class="small">
-            Um joguinho simples sobre a história de vocês. Vocês podem brincar juntos.
+            Um joguinho simples sobre a histÃ³ria de vocÃªs. VocÃªs podem brincar juntos.
           </p>
           <div id="quizContainer"></div>
           <p class="small" id="quizResult"></p>
         </div>
       </section>
 
-      <!-- VÍDEOS & DEPOIMENTOS -->
+      <!-- VÃDEOS & DEPOIMENTOS -->
       <section class="extra-section videos-section tab-panel" data-tab-section="videos">
         <div class="panel extra-card">
-          <h2>Vídeos & depoimentos 🎬</h2>
+          <h2>VÃ­deos & depoimentos ðŸŽ¬</h2>
           <p class="small">
-            Guardem links de vídeos especiais (YouTube, Drive, etc.) pra assistir quando der saudade.
+            Guardem links de vÃ­deos especiais (YouTube, Drive, etc.) pra assistir quando der saudade.
           </p>
           <div class="extra-form">
-            <input type="text" id="videoTitle" class="extra-input" placeholder="Título do vídeo" />
-            <input type="text" id="videoUrl" class="extra-input" placeholder="Link do vídeo (YouTube, Drive, etc.)" />
-            <button class="btn btn-sim" id="videoAddBtn">Adicionar vídeo</button>
+            <input type="text" id="videoTitle" class="extra-input" placeholder="TÃ­tulo do vÃ­deo" />
+            <input type="text" id="videoUrl" class="extra-input" placeholder="Link do vÃ­deo (YouTube, Drive, etc.)" />
+            <button class="btn btn-sim" id="videoAddBtn">Adicionar vÃ­deo</button>
           </div>
           <ul id="videosList" class="extra-list extra-list-links"></ul>
         </div>
       </section>
 
-      <!-- NOSSO CALENDÁRIO -->
+      <!-- NOSSO CALENDÃRIO -->
       <section class="extra-section calendar-section tab-panel" data-tab-section="agenda">
         <div class="panel extra-card">
-          <h2>Nosso calendário ❤️</h2>
+          <h2>Nosso calendÃ¡rio â¤ï¸</h2>
           <p class="small">
-            Datas importantes, combinados e rolês marcados. Vocês podem usar isso como base pra adicionar no calendário do celular.
+            Datas importantes, combinados e rolÃªs marcados. VocÃªs podem usar isso como base pra adicionar no calendÃ¡rio do celular.
           </p>
           <div class="extra-form calendar-form">
             <input type="date" id="eventDate" class="extra-input" />
@@ -1952,56 +2011,56 @@
       <!-- HUMOR & GRAFICO -->
       <section class="extra-section mood-section tab-panel" data-tab-section="humor">
         <div class="panel extra-card">
-          <h2>Histórico de humor do casal 📈</h2>
+          <h2>HistÃ³rico de humor do casal ðŸ“ˆ</h2>
           <p class="small">
-            Um gráfico simples usando os votos do “Nível de satisfação com o mozão”. Os dados ficam salvos nesse navegador.
+            Um grÃ¡fico simples usando os votos do â€œNÃ­vel de satisfaÃ§Ã£o com o mozÃ£oâ€. Os dados ficam salvos nesse navegador.
           </p>
           <canvas id="moodChart" width="400" height="220"></canvas>
           <p class="small" id="moodChartStatus"></p>
         </div>
       </section>
 
-      <!-- INSPIRAÇÕES & IDEIAS -->
+      <!-- INSPIRAÃ‡Ã•ES & IDEIAS -->
       <section class="extra-section ideas-section tab-panel" data-tab-section="ideias">
         <div class="panel extra-card">
-          <h2>Inspirações & ideias ✨</h2>
+          <h2>InspiraÃ§Ãµes & ideias âœ¨</h2>
           <p class="small">
-            Receitas, filmes, lugares pra visitar, ideias de presentes... tudo o que lembre vocês dois.
+            Receitas, filmes, lugares pra visitar, ideias de presentes... tudo o que lembre vocÃªs dois.
           </p>
           <div class="extra-form">
-            <input type="text" id="ideaText" class="extra-input" placeholder="Ex.: maratonar tal série, cozinhar tal receita, visitar tal lugar..." />
-            <button class="btn btn-sim" id="ideaAddBtn">Adicionar inspiração</button>
+            <input type="text" id="ideaText" class="extra-input" placeholder="Ex.: maratonar tal sÃ©rie, cozinhar tal receita, visitar tal lugar..." />
+            <button class="btn btn-sim" id="ideaAddBtn">Adicionar inspiraÃ§Ã£o</button>
           </div>
           <ul id="ideasList" class="extra-list"></ul>
         </div>
       </section>
 
-      <!-- NOTIFICAÇÕES -->
+      <!-- NOTIFICAÃ‡Ã•ES -->
       <section class="extra-section notif-section tab-panel" data-tab-section="notif">
         <div class="panel extra-card">
-          <h2>Lembretes & notificações 🔔</h2>
+          <h2>Lembretes & notificaÃ§Ãµes ðŸ””</h2>
           <p class="small">
-            Aqui vocês podem testar as notificações do navegador para o site. Funciona melhor quando o site está em HTTPS (por exemplo, no domínio oficial).
+            Aqui vocÃªs podem testar as notificaÃ§Ãµes do navegador para o site. Funciona melhor quando o site estÃ¡ em HTTPS (por exemplo, no domÃ­nio oficial).
           </p>
           <div class="extra-form">
-            <button class="btn btn-sim" id="notifRequestBtn">Ativar/confirmar notificações</button>
-            <button class="btn btn-nao" id="notifTestBtn">Enviar notificação de teste</button>
+            <button class="btn btn-sim" id="notifRequestBtn">Ativar/confirmar notificaÃ§Ãµes</button>
+            <button class="btn btn-nao" id="notifTestBtn">Enviar notificaÃ§Ã£o de teste</button>
           </div>
-          <p class="small" id="notifStatus">As notificações ainda não foram configuradas.</p>
+          <p class="small" id="notifStatus">As notificaÃ§Ãµes ainda nÃ£o foram configuradas.</p>
         </div>
       </section>
 
-      <!-- MÚSICA -->
+      <!-- MÃšSICA -->
       <section class="music-wrapper tab-panel" data-tab-section="musica">
         <div class="panel music-card">
-          <h2>Música do nosso amor 🎵</h2>
+          <h2>MÃºsica do nosso amor ðŸŽµ</h2>
           <p class="music-sub">
-            Vocês podem ouvir a música que está salva no site, ou a playlist inteira no Spotify.
+            VocÃªs podem ouvir a mÃºsica que estÃ¡ salva no site, ou a playlist inteira no Spotify.
           </p>
 
           <div class="music-section music-spotify-embed">
-            <h4>Playlist no Spotify (prévia)</h4>
-            <p class="small">Essa versão é o player embutido com prévia, funciona sem login.</p>
+            <h4>Playlist no Spotify (prÃ©via)</h4>
+            <p class="small">Essa versÃ£o Ã© o player embutido com prÃ©via, funciona sem login.</p>
             <iframe style="border-radius:12px"
               src="https://open.spotify.com/embed/playlist/3RitDlOniO6hRIQxmLWrMw?utm_source=generator"
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
@@ -2012,24 +2071,50 @@
           <div class="music-section" id="spotifyPremiumBlock">
             <h4>Ouvir a playlist inteira (Spotify Premium)</h4>
             <p class="small">
-              Se você ou a Ana entrarem com uma conta Premium, a playlist toca inteira aqui no site. 💚
+              Se vocÃª ou a Ana entrarem com uma conta Premium, a playlist toca inteira aqui no site. ðŸ’š
             </p>
             <div class="music-spotify-controls">
               <button class="btn btn-sim" id="spotifyLoginBtn">Entrar com Spotify</button>
               <button class="btn btn-nao" id="spotifyPlayBtn">Tocar playlist aqui</button>
             </div>
-            <p class="music-status" id="spotifyStatus">Ainda não conectado ao Spotify.</p>
+            <p class="music-status" id="spotifyStatus">Ainda nÃ£o conectado ao Spotify.</p>
 
             <details class="music-log-details">
-              <summary class="small">Ver detalhes técnicos (log)</summary>
+              <summary class="small">Ver detalhes tÃ©cnicos (log)</summary>
               <pre id="spotifyLog" class="music-log"></pre>
             </details>
           </div>
         </div>
       </section>
 
+      <!-- CHATGPT -->
+      <section class="extra-section chatgpt-section tab-panel" data-tab-section="chatgpt" id="chatgpt">
+        <div class="panel chatgpt-card">
+          <h2>ChatGPT do casal</h2>
+          <p class="small">
+            Use sua API key pessoal (fica salva sÃ³ no seu navegador) para pedir dicas, recados fofos ou ideias de presente.
+          </p>
+          <div class="chatgpt-key-row">
+            <input type="password" id="gptApiKey" class="extra-input" placeholder="Cole sua OpenAI API key (sk-...)" />
+            <button class="btn btn-sim" id="gptSaveKey">Salvar chave</button>
+          </div>
+          <div class="chatgpt-row" style="margin-top:8px;">
+            <textarea id="gptPrompt" class="extra-input" rows="3" placeholder="PeÃ§a uma declaraÃ§Ã£o, ideias de datas, mensagens fofas..."></textarea>
+          </div>
+          <div class="chatgpt-actions" style="margin-top:8px;">
+            <select id="gptModel" class="extra-input">
+              <option value="gpt-4o-mini">gpt-4o-mini (rÃ¡pido / barato)</option>
+              <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+            </select>
+            <button class="btn btn-sim" id="gptSendBtn">Enviar para o ChatGPT</button>
+            <span class="small" id="gptStatus">Nada Ã© salvo no servidor, sÃ³ neste navegador.</span>
+          </div>
+          <div class="chatgpt-messages" id="gptMessages" aria-live="polite"></div>
+        </div>
+      </section>
+
       <footer>
-        Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA.
+        Feito com â™¥ por Pablo â€” EU TE AMO SUPER HIPER MEGA.
       </footer>
     </div>
   </div>
@@ -2037,7 +2122,7 @@
   <!-- Overlay mensagem grande -->
   <div class="overlay" id="overlay">
     <div class="overlay-card">
-      <h2 id="overlayTitle">Eu te amo, Ana Clara ❤</h2>
+      <h2 id="overlayTitle">Eu te amo, Ana Clara â¤</h2>
       <p id="overlayText" class="small">Uma mensagem especial do Pablo.</p>
       <div style="margin-top:14px"><button class="btn btn-sim" id="closeOverlay">Fechar</button></div>
     </div>
@@ -2047,18 +2132,18 @@
   <div id="carta"></div>
   <div class="overlay" id="proposalOverlay">
     <div class="letter-card">
-      <div class="ring-icon">💍</div>
+      <div class="ring-icon">ðŸ’</div>
       <h2 class="letter-title">Minha Ana Clara, quer casar comigo?</h2>
       <div class="letter-body">
-        <p>Amor, a gente briga, discorda, se enrola na vida... mas em todas as versões da minha história, <strong>você</strong> está lá.</p>
-        <p>Mesmo nos dias difíceis, é com você que eu quero conversar, rir, dividir o café, o cansaço e os sonhos. Eu não me imagino em um futuro em que você não esteja do meu lado.</p>
-        <p>Eu te amo de um jeito que não cabe só em palavras, nem só num site cheio de corações caindo. Eu te amo no silêncio, nos detalhes, nas piadas inte
-as e até nas nossas teimosias.</p>
+        <p>Amor, a gente briga, discorda, se enrola na vida... mas em todas as versÃµes da minha histÃ³ria, <strong>vocÃª</strong> estÃ¡ lÃ¡.</p>
+        <p>Mesmo nos dias difÃ­ceis, Ã© com vocÃª que eu quero conversar, rir, dividir o cafÃ©, o cansaÃ§o e os sonhos. Eu nÃ£o me imagino em um futuro em que vocÃª nÃ£o esteja do meu lado.</p>
+        <p>Eu te amo de um jeito que nÃ£o cabe sÃ³ em palavras, nem sÃ³ num site cheio de coraÃ§Ãµes caindo. Eu te amo no silÃªncio, nos detalhes, nas piadas inte
+as e atÃ© nas nossas teimosias.</p>
         <p>Por isso, com todo o amor e todo o medo e toda a coragem do mundo, eu quero te perguntar de verdade:</p>
-        <p style="text-align:center; font-size:18px; margin-top:8px;"><strong>Você aceita viver pra sempre comigo?</strong></p>
-        <p style="margin-top:10px;">Quero caminhar ao seu lado, construir uma casa que tenha a nossa cara, nossos cheiros, nossas manias e muitos gatinhos (ou peixinhos, quem sabe 🐟). Quero envelhecer rindo das nossas histórias e lembrando de quando tudo começou.</p>
-        <p>Eu te amo, Ana Clara. Hoje, amanhã e depois. Para sempre seu,</p>
-        <p><strong>Pablo 💖</strong></p>
+        <p style="text-align:center; font-size:18px; margin-top:8px;"><strong>VocÃª aceita viver pra sempre comigo?</strong></p>
+        <p style="margin-top:10px;">Quero caminhar ao seu lado, construir uma casa que tenha a nossa cara, nossos cheiros, nossas manias e muitos gatinhos (ou peixinhos, quem sabe ðŸŸ). Quero envelhecer rindo das nossas histÃ³rias e lembrando de quando tudo comeÃ§ou.</p>
+        <p>Eu te amo, Ana Clara. Hoje, amanhÃ£ e depois. Para sempre seu,</p>
+        <p><strong>Pablo ðŸ’–</strong></p>
       </div>
       <div style="margin-top:16px; text-align:center;">
         <button class="btn btn-sim" id="closeProposal">Fechar essa carta (por enquanto)</button>
@@ -2069,8 +2154,8 @@ as e até nas nossas teimosias.</p>
   <!-- Overlay de galeria completa -->
   <div class="overlay" id="galleryOverlay">
     <div class="overlay-card">
-      <h2 style="margin-top:0;">Todas as nossas fotos 💕</h2>
-      <p class="small">Aqui aparece tudo, inclusive as que estão escondidas no "+N".</p>
+      <h2 style="margin-top:0;">Todas as nossas fotos ðŸ’•</h2>
+      <p class="small">Aqui aparece tudo, inclusive as que estÃ£o escondidas no "+N".</p>
       <div id="fullGallery"></div>
       <div style="margin-top:14px; text-align:right;">
         <button class="btn btn-nao" id="closeGalleryOverlay">Fechar</button>
@@ -2083,8 +2168,180 @@ as e até nas nossas teimosias.</p>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script src="assets/app.js?v=20251209"></script>
+  <script>
+    (function(){
+      const STORE_PREFIX = 'acLove_';
+      function saveLocal(key, value){
+        try{ localStorage.setItem(STORE_PREFIX + key, JSON.stringify(value)); }catch(e){}
+      }
+      function loadLocal(key, def){
+        try{
+          const raw = localStorage.getItem(STORE_PREFIX + key);
+          if(raw == null) return def;
+          return JSON.parse(raw);
+        }catch(e){
+          return def;
+        }
+      }
+
+      // Menu rapido (abas)
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const tabPanels = document.querySelectorAll('.tab-panel');
+      if(tabBtns.length && tabPanels.length){
+        const showTab = (key)=>{
+          tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === key));
+          tabPanels.forEach(panel => {
+            const match = key === 'tudo' || panel.dataset.tabSection === key;
+            panel.classList.toggle('tab-hidden', !match);
+          });
+        };
+        tabBtns.forEach(btn => btn.addEventListener('click', ()=> showTab(btn.dataset.tab)));
+        showTab('tudo');
+      }
+
+      // Retrospectiva (datas, horas e beijos)
+      (function(){
+        const elHoursTogether = document.getElementById('wrHoursTogether');
+        const elDaysTogether  = document.getElementById('wrDaysTogether');
+        const elDaysDating    = document.getElementById('wrDaysDating');
+        const elHoursYear     = document.getElementById('wrHoursYear');
+        const elKissesTotal   = document.getElementById('wrKissesTotal');
+        if(!elHoursTogether && !elDaysTogether && !elHoursYear && !elKissesTotal) return;
+        const MS_DAY = 86400000;
+        const firstDay  = new Date('2023-07-06T00:00:00-03:00');
+        const datingDay = new Date('2023-09-23T00:00:00-03:00');
+        const now       = new Date();
+        const fmt = (n) => (Math.max(0, Math.round(n)) || 0).toLocaleString('pt-BR');
+        const daysTogether = Math.max(0, Math.floor((now - firstDay)/MS_DAY));
+        const daysDating   = Math.max(0, Math.floor((now - datingDay)/MS_DAY));
+        const hoursTogether = Math.max(0, Math.round((now - firstDay)/3.6e6));
+        const startYear = new Date(now.getFullYear(), 0, 1);
+        const hoursYear = Math.max(0, Math.round((now - startYear)/3.6e6));
+        const daysYear  = Math.max(0, Math.floor((now - startYear)/MS_DAY));
+        const kissesTotal = daysTogether * 10;
+        const kissesYear  = daysYear * 10;
+        if(elHoursTogether) elHoursTogether.textContent = fmt(hoursTogether);
+        if(elDaysTogether)  elDaysTogether.textContent  = fmt(daysTogether);
+        if(elDaysDating)    elDaysDating.textContent    = fmt(daysDating);
+        if(elHoursYear)     elHoursYear.textContent     = fmt(hoursYear) + ' h';
+        if(elKissesTotal)   elKissesTotal.textContent   = fmt(kissesTotal);
+        const kissesYearEl = document.getElementById('wrKissesYear');
+        if(kissesYearEl) kissesYearEl.textContent = fmt(kissesYear);
+      })();
+
+      // ChatGPT (client-side, chave salva no navegador)
+      (function(){
+        const apiKeyInput = document.getElementById('gptApiKey');
+        const saveKeyBtn  = document.getElementById('gptSaveKey');
+        const promptInput = document.getElementById('gptPrompt');
+        const sendBtn     = document.getElementById('gptSendBtn');
+        const messagesEl  = document.getElementById('gptMessages');
+        const statusEl    = document.getElementById('gptStatus');
+        const modelSelect = document.getElementById('gptModel');
+        if(!apiKeyInput || !promptInput || !sendBtn || !messagesEl) return;
+
+        let chatHistory = loadLocal('chatgptHistory', []);
+        const storedKey = loadLocal('chatgptKey','');
+        if(storedKey) apiKeyInput.value = storedKey;
+
+        const setStatus = (msg)=>{ if(statusEl) statusEl.textContent = msg; };
+        const renderHistory = ()=>{
+          messagesEl.innerHTML = '';
+          chatHistory.slice(-10).forEach(item => {
+            const bubble = document.createElement('div');
+            bubble.className = 'chatgpt-bubble ' + (item.role === 'assistant' ? 'assistant' : 'user');
+            bubble.textContent = item.content;
+            messagesEl.appendChild(bubble);
+          });
+        };
+        const persistHistory = ()=>{
+          chatHistory = chatHistory.slice(-10);
+          saveLocal('chatgptHistory', chatHistory);
+        };
+        renderHistory();
+
+        const getApiKey = ()=>{
+          const typed = (apiKeyInput.value || '').trim();
+          if(typed){
+            saveLocal('chatgptKey', typed);
+            return typed;
+          }
+          return loadLocal('chatgptKey','') || '';
+        };
+
+        if(saveKeyBtn){
+          saveKeyBtn.addEventListener('click', ()=>{
+            const key = getApiKey();
+            setStatus(key ? 'Chave salva apenas neste navegador.' : 'Cole sua API key para usar o chat.');
+          });
+        }
+
+        async function sendMessage(){
+          const key = getApiKey();
+          const prompt = (promptInput.value || '').trim();
+          const model = (modelSelect && modelSelect.value) ? modelSelect.value : 'gpt-4o-mini';
+          if(!key){
+            setStatus('Cole sua API key da OpenAI (ela fica salva localmente).');
+            apiKeyInput.focus();
+            return;
+          }
+          if(!prompt){
+            setStatus('Escreve algo para enviar ao ChatGPT.');
+            promptInput.focus();
+            return;
+          }
+          sendBtn.disabled = true;
+          setStatus('Enviando para o ChatGPT...');
+          chatHistory.push({role:'user', content: prompt});
+          renderHistory();
+          try{
+            const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+              method:'POST',
+              headers:{
+                'Content-Type':'application/json',
+                'Authorization':'Bearer ' + key
+              },
+              body: JSON.stringify({
+                model: model,
+                messages:[
+                  {role:'system', content:'Voce e um assistente carinhoso do casal Pablo e Ana Clara.'},
+                  {role:'user', content: prompt}
+                ],
+                max_tokens: 220,
+                temperature: 0.8
+              })
+            });
+            if(!resp.ok){
+              const txt = await resp.text();
+              throw new Error('Erro ' + resp.status + ': ' + txt);
+            }
+            const data = await resp.json();
+            const answer = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'Sem resposta agora.';
+            chatHistory.push({role:'assistant', content: answer});
+            persistHistory();
+            renderHistory();
+            promptInput.value = '';
+            setStatus('Resposta recebida do ChatGPT.');
+          }catch(err){
+            setStatus('Nao deu pra falar com o ChatGPT: ' + (err && err.message ? err.message : err));
+          }finally{
+            sendBtn.disabled = false;
+          }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        promptInput.addEventListener('keydown', function(e){
+          if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+      })();
+    })();
+  </script>
 </body>
 </html>
+
 
 
 

@@ -774,6 +774,57 @@
     .tab-btn.active small{opacity:0.8;}
     .tab-hidden{display:none!important;}
 
+    /* Esconde a antiga central quebrada */
+    #central{display:none;}
+
+    /* ChatGPT */
+    .chatgpt-card{
+      background:linear-gradient(180deg,#0f172a,#101827);
+      color:#e2e8f0;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 14px 32px rgba(0,0,0,0.22);
+      border:1px solid rgba(255,255,255,0.06);
+    }
+    .chatgpt-card h2{margin-top:0; margin-bottom:4px;}
+    .chatgpt-key-row,
+    .chatgpt-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+    }
+    .chatgpt-key-row input,
+    .chatgpt-row textarea{
+      flex:1 1 220px;
+    }
+    .chatgpt-actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .chatgpt-messages{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:320px;
+      overflow:auto;
+    }
+    .chatgpt-bubble{
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.05);
+      white-space:pre-wrap;
+      line-height:1.4;
+    }
+    .chatgpt-bubble.assistant{
+      background:rgba(255,255,255,0.08);
+      border-color:rgba(255,255,255,0.1);
+    }
+
     /* Retrospectiva */
     .retro-section .retro-hero{
       background:linear-gradient(135deg,#111827,#0f172a);
@@ -1303,10 +1354,10 @@
             <li><a class="nav-btn" data-page="retrospectiva" href="/retrospectiva.html">Retrospectiva</a></li>
             <li><a class="nav-btn" data-page="mensagens" href="/mensagens.html">Mensagens</a></li>
             <li><a class="nav-btn" data-page="galeria" href="/galeria.html">Galeria</a></li>
+            <li><a class="nav-btn" data-page="chatgpt" href="#chatgpt">ChatGPT</a></li>
             <li class="has-sub">
               <button type="button">Outros v</button>
               <div class="dropdown">
-                <a href="/central.html" data-page="central">Central</a>
                 <a href="/contagem.html" data-page="contagem">Contagem</a>
                 <a href="/carta.html" data-page="carta">Carta</a>
                 <a href="/links.html" data-page="links">Links uteis</a>
@@ -1370,6 +1421,13 @@
                 <button class="btn btn-sim" id="hubLoginBtn">Entrar</button>
               </div>
               <div id="hubLoginStatus" class="small"></div>
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Beijos estimados</div>
+                <div class="love-wrapped-mini-number" id="wrKissesTotalCentral">--</div>
+                <div class="love-wrapped-mini-note">
+                  AproximaÇõÇœo fofa: ~10 beijos por dia desde 06/07/2023.
+                </div>
+              </div>
             </div>
             <div class="hub-box">
               <h3>Resumo rápido do mês 📅</h3>
@@ -1655,6 +1713,7 @@
           <button class="tab-btn" data-tab="ideias">Inspiracoes</button>
           <button class="tab-btn" data-tab="notif">Notificacoes</button>
           <button class="tab-btn" data-tab="musica">Musica</button>
+          <button class="tab-btn" data-tab="chatgpt">ChatGPT</button>
         </div>
       </div>
 
@@ -1786,6 +1845,13 @@
                 <div class="love-wrapped-mini-number" id="wrHoursYear">-- h</div>
                 <div class="love-wrapped-mini-note">
                   Só esse ano vocês já somaram esse tanto de horas sendo “Pablo + Ana”.
+                </div>
+              </div>
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Beijos estimados</div>
+                <div class="love-wrapped-mini-number" id="wrKissesTotal">--</div>
+                <div class="love-wrapped-mini-note">
+                  AproximaÇõÇœo fofa: ~10 beijos por dia desde 06/07/2023.
                 </div>
               </div>
             </div>
@@ -2028,6 +2094,32 @@
         </div>
       </section>
 
+      <!-- CHATGPT -->
+      <section class="extra-section chatgpt-section tab-panel" data-tab-section="chatgpt" id="chatgpt">
+        <div class="panel chatgpt-card">
+          <h2>ChatGPT do casal</h2>
+          <p class="small">
+            Use sua API key pessoal (fica salva sÇü no seu navegador) para pedir dicas, recados fofos ou idÇ¸ias de presente.
+          </p>
+          <div class="chatgpt-key-row">
+            <input type="password" id="gptApiKey" class="extra-input" placeholder="Cole sua OpenAI API key (sk-...)" />
+            <button class="btn btn-sim" id="gptSaveKey">Salvar chave</button>
+          </div>
+          <div class="chatgpt-row" style="margin-top:8px;">
+            <textarea id="gptPrompt" class="extra-input" rows="3" placeholder="Peçca uma declaraÇõÇœo, ideias de datas, mensagens fofas..."></textarea>
+          </div>
+          <div class="chatgpt-actions" style="margin-top:8px;">
+            <select id="gptModel" class="extra-input">
+              <option value="gpt-4o-mini">gpt-4o-mini (rÇ­pido / barato)</option>
+              <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+            </select>
+            <button class="btn btn-sim" id="gptSendBtn">Enviar para o ChatGPT</button>
+            <span class="small" id="gptStatus">Nada Ç¸ salvo no servidor, sÇü neste navegador.</span>
+          </div>
+          <div class="chatgpt-messages" id="gptMessages" aria-live="polite"></div>
+        </div>
+      </section>
+
       <footer>
         Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA.
       </footer>
@@ -2083,6 +2175,178 @@ as e até nas nossas teimosias.</p>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script src="assets/app.js?v=20251209"></script>
+  <script>
+    (function(){
+      const STORE_PREFIX = 'acLove_';
+      function saveLocal(key, value){
+        try{ localStorage.setItem(STORE_PREFIX + key, JSON.stringify(value)); }catch(e){}
+      }
+      function loadLocal(key, def){
+        try{
+          const raw = localStorage.getItem(STORE_PREFIX + key);
+          if(raw == null) return def;
+          return JSON.parse(raw);
+        }catch(e){
+          return def;
+        }
+      }
+
+      // Menu rapido (abas)
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const tabPanels = document.querySelectorAll('.tab-panel');
+      if(tabBtns.length && tabPanels.length){
+        const showTab = (key)=>{
+          tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === key));
+          tabPanels.forEach(panel => {
+            const match = key === 'tudo' || panel.dataset.tabSection === key;
+            panel.classList.toggle('tab-hidden', !match);
+          });
+        };
+        tabBtns.forEach(btn => btn.addEventListener('click', ()=> showTab(btn.dataset.tab)));
+        showTab('tudo');
+      }
+
+      // Retrospectiva (datas, horas e beijos)
+      (function(){
+        const elHoursTogether = document.getElementById('wrHoursTogether');
+        const elDaysTogether  = document.getElementById('wrDaysTogether');
+        const elDaysDating    = document.getElementById('wrDaysDating');
+        const elHoursYear     = document.getElementById('wrHoursYear');
+        const elKissesTotal   = document.getElementById('wrKissesTotal');
+        if(!elHoursTogether && !elDaysTogether && !elHoursYear && !elKissesTotal) return;
+        const MS_DAY = 86400000;
+        const firstDay  = new Date('2023-07-06T00:00:00-03:00');
+        const datingDay = new Date('2023-09-23T00:00:00-03:00');
+        const now       = new Date();
+        const fmt = (n) => (Math.max(0, Math.round(n)) || 0).toLocaleString('pt-BR');
+        const daysTogether = Math.max(0, Math.floor((now - firstDay)/MS_DAY));
+        const daysDating   = Math.max(0, Math.floor((now - datingDay)/MS_DAY));
+        const hoursTogether = Math.max(0, Math.round((now - firstDay)/3.6e6));
+        const startYear = new Date(now.getFullYear(), 0, 1);
+        const hoursYear = Math.max(0, Math.round((now - startYear)/3.6e6));
+        const daysYear  = Math.max(0, Math.floor((now - startYear)/MS_DAY));
+        const kissesTotal = daysTogether * 10;
+        const kissesYear  = daysYear * 10;
+        if(elHoursTogether) elHoursTogether.textContent = fmt(hoursTogether);
+        if(elDaysTogether)  elDaysTogether.textContent  = fmt(daysTogether);
+        if(elDaysDating)    elDaysDating.textContent    = fmt(daysDating);
+        if(elHoursYear)     elHoursYear.textContent     = fmt(hoursYear) + ' h';
+        if(elKissesTotal)   elKissesTotal.textContent   = fmt(kissesTotal);
+        const kissesYearEl = document.getElementById('wrKissesYear');
+        if(kissesYearEl) kissesYearEl.textContent = fmt(kissesYear);
+      })();
+
+      // ChatGPT (client-side, chave salva no navegador)
+      (function(){
+        const apiKeyInput = document.getElementById('gptApiKey');
+        const saveKeyBtn  = document.getElementById('gptSaveKey');
+        const promptInput = document.getElementById('gptPrompt');
+        const sendBtn     = document.getElementById('gptSendBtn');
+        const messagesEl  = document.getElementById('gptMessages');
+        const statusEl    = document.getElementById('gptStatus');
+        const modelSelect = document.getElementById('gptModel');
+        if(!apiKeyInput || !promptInput || !sendBtn || !messagesEl) return;
+
+        let chatHistory = loadLocal('chatgptHistory', []);
+        const storedKey = loadLocal('chatgptKey','');
+        if(storedKey) apiKeyInput.value = storedKey;
+
+        const setStatus = (msg)=>{ if(statusEl) statusEl.textContent = msg; };
+        const renderHistory = ()=>{
+          messagesEl.innerHTML = '';
+          chatHistory.slice(-10).forEach(item => {
+            const bubble = document.createElement('div');
+            bubble.className = 'chatgpt-bubble ' + (item.role === 'assistant' ? 'assistant' : 'user');
+            bubble.textContent = item.content;
+            messagesEl.appendChild(bubble);
+          });
+        };
+        const persistHistory = ()=>{
+          chatHistory = chatHistory.slice(-10);
+          saveLocal('chatgptHistory', chatHistory);
+        };
+        renderHistory();
+
+        const getApiKey = ()=>{
+          const typed = (apiKeyInput.value || '').trim();
+          if(typed){
+            saveLocal('chatgptKey', typed);
+            return typed;
+          }
+          return loadLocal('chatgptKey','') || '';
+        };
+
+        if(saveKeyBtn){
+          saveKeyBtn.addEventListener('click', ()=>{
+            const key = getApiKey();
+            setStatus(key ? 'Chave salva apenas neste navegador.' : 'Cole sua API key para usar o chat.');
+          });
+        }
+
+        async function sendMessage(){
+          const key = getApiKey();
+          const prompt = (promptInput.value || '').trim();
+          const model = (modelSelect && modelSelect.value) ? modelSelect.value : 'gpt-4o-mini';
+          if(!key){
+            setStatus('Cole sua API key da OpenAI (ela fica salva localmente).');
+            apiKeyInput.focus();
+            return;
+          }
+          if(!prompt){
+            setStatus('Escreve algo para enviar ao ChatGPT.');
+            promptInput.focus();
+            return;
+          }
+          sendBtn.disabled = true;
+          setStatus('Enviando para o ChatGPT...');
+          chatHistory.push({role:'user', content: prompt});
+          renderHistory();
+          try{
+            const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+              method:'POST',
+              headers:{
+                'Content-Type':'application/json',
+                'Authorization':'Bearer ' + key
+              },
+              body: JSON.stringify({
+                model: model,
+                messages:[
+                  {role:'system', content:'VocÇ¦ Ç¸ um assistente carinhoso do casal Pablo e Ana Clara.'},
+                  {role:'user', content: prompt}
+                ],
+                max_tokens: 220,
+                temperature: 0.8
+              })
+            });
+            if(!resp.ok){
+              const txt = await resp.text();
+              throw new Error('Erro ' + resp.status + ': ' + txt);
+            }
+            const data = await resp.json();
+            const answer = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'Sem resposta agora.';
+            chatHistory.push({role:'assistant', content: answer});
+            persistHistory();
+            renderHistory();
+            promptInput.value = '';
+            setStatus('Resposta recebida do ChatGPT.');
+          }catch(err){
+            console.warn('ChatGPT error', err);
+            setStatus('NÇœo deu pra falar com o ChatGPT: ' + (err && err.message ? err.message : err));
+          }finally{
+            sendBtn.disabled = false;
+          }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        promptInput.addEventListener('keydown', function(e){
+          if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+      })();
+    })();
+  </script>
 </body>
 </html>
 

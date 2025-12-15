@@ -2169,68 +2169,60 @@ as e atÃ© nas nossas teimosias.</p>
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script src="assets/app.js?v=20251209"></script>
   <script>
-    (function(){
-      const STORE_PREFIX = 'acLove_';
-      function saveLocal(key, value){
-        try{ localStorage.setItem(STORE_PREFIX + key, JSON.stringify(value)); }catch(e){}
-      }
-      function loadLocal(key, def){
+    document.addEventListener('DOMContentLoaded', function(){
+      const LS_PREFIX = 'acLove_';
+      const saveLocal = (k,v)=>{ try{ localStorage.setItem(LS_PREFIX + k, JSON.stringify(v)); }catch(e){} };
+      const loadLocal = (k,d)=>{
         try{
-          const raw = localStorage.getItem(STORE_PREFIX + key);
-          if(raw == null) return def;
-          return JSON.parse(raw);
-        }catch(e){
-          return def;
-        }
-      }
+          const raw = localStorage.getItem(LS_PREFIX + k);
+          return raw == null ? d : JSON.parse(raw);
+        }catch(e){ return d; }
+      };
 
-      // Menu rapido (abas)
-      const tabBtns = document.querySelectorAll('.tab-btn');
-      const tabPanels = document.querySelectorAll('.tab-panel');
-      if(tabBtns.length && tabPanels.length){
-        const showTab = (key)=>{
-          tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === key));
-          tabPanels.forEach(panel => {
-            const match = key === 'tudo' || panel.dataset.tabSection === key;
-            panel.classList.toggle('tab-hidden', !match);
-          });
+      // Menu rapido
+      try{
+        const tabs = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.tab-panel');
+        const show = (key)=>{
+          tabs.forEach(btn=> btn.classList.toggle('active', btn.dataset.tab === key));
+          panels.forEach(p=> p.classList.toggle('tab-hidden', !(key === 'tudo' || p.dataset.tabSection === key)));
         };
-        tabBtns.forEach(btn => btn.addEventListener('click', ()=> showTab(btn.dataset.tab)));
-        showTab('tudo');
-      }
+        tabs.forEach(btn=> btn.addEventListener('click', ()=> show(btn.dataset.tab)));
+        if(tabs.length) show('tudo');
+      }catch(e){}
 
-      // Retrospectiva (datas, horas e beijos)
-      (function(){
-        const elHoursTogether = document.getElementById('wrHoursTogether');
-        const elDaysTogether  = document.getElementById('wrDaysTogether');
-        const elDaysDating    = document.getElementById('wrDaysDating');
-        const elHoursYear     = document.getElementById('wrHoursYear');
-        const elKissesTotal   = document.getElementById('wrKissesTotal');
-        if(!elHoursTogether && !elDaysTogether && !elHoursYear && !elKissesTotal) return;
-        const MS_DAY = 86400000;
-        const firstDay  = new Date('2023-07-06T00:00:00-03:00');
-        const datingDay = new Date('2023-09-23T00:00:00-03:00');
-        const now       = new Date();
-        const fmt = (n) => (Math.max(0, Math.round(n)) || 0).toLocaleString('pt-BR');
-        const daysTogether = Math.max(0, Math.floor((now - firstDay)/MS_DAY));
-        const daysDating   = Math.max(0, Math.floor((now - datingDay)/MS_DAY));
-        const hoursTogether = Math.max(0, Math.round((now - firstDay)/3.6e6));
-        const startYear = new Date(now.getFullYear(), 0, 1);
-        const hoursYear = Math.max(0, Math.round((now - startYear)/3.6e6));
-        const daysYear  = Math.max(0, Math.floor((now - startYear)/MS_DAY));
-        const kissesTotal = daysTogether * 10;
-        const kissesYear  = daysYear * 10;
-        if(elHoursTogether) elHoursTogether.textContent = fmt(hoursTogether);
-        if(elDaysTogether)  elDaysTogether.textContent  = fmt(daysTogether);
-        if(elDaysDating)    elDaysDating.textContent    = fmt(daysDating);
-        if(elHoursYear)     elHoursYear.textContent     = fmt(hoursYear) + ' h';
-        if(elKissesTotal)   elKissesTotal.textContent   = fmt(kissesTotal);
-        const kissesYearEl = document.getElementById('wrKissesYear');
-        if(kissesYearEl) kissesYearEl.textContent = fmt(kissesYear);
-      })();
+      // Retrospectiva + beijos
+      try{
+        const elH = document.getElementById('wrHoursTogether');
+        const elD = document.getElementById('wrDaysTogether');
+        const elDN = document.getElementById('wrDaysDating');
+        const elHY = document.getElementById('wrHoursYear');
+        const elK = document.getElementById('wrKissesTotal');
+        if(elH || elD || elDN || elHY || elK){
+          const MS_DAY = 86400000;
+          const first = new Date('2023-07-06T00:00:00-03:00');
+          const dating = new Date('2023-09-23T00:00:00-03:00');
+          const now = new Date();
+          const fmt = n => (Math.max(0, Math.round(n)) || 0).toLocaleString('pt-BR');
+          const daysTogether = Math.max(0, Math.floor((now - first)/MS_DAY));
+          const daysDating = Math.max(0, Math.floor((now - dating)/MS_DAY));
+          const hoursTogether = Math.max(0, Math.round((now - first)/3.6e6));
+          const startYear = new Date(now.getFullYear(),0,1);
+          const hoursYear = Math.max(0, Math.round((now - startYear)/3.6e6));
+          const daysYear = Math.max(0, Math.floor((now - startYear)/MS_DAY));
+          const kissesTotal = daysTogether * 10;
+          const kissesYearEl = document.getElementById('wrKissesYear');
+          if(elH) elH.textContent = fmt(hoursTogether);
+          if(elD) elD.textContent = fmt(daysTogether);
+          if(elDN) elDN.textContent = fmt(daysDating);
+          if(elHY) elHY.textContent = fmt(hoursYear) + ' h';
+          if(elK) elK.textContent = fmt(kissesTotal);
+          if(kissesYearEl) kissesYearEl.textContent = fmt(daysYear*10);
+        }
+      }catch(e){}
 
-      // ChatGPT (client-side, chave salva no navegador)
-      (function(){
+      // ChatGPT simples (API key local)
+      try{
         const apiKeyInput = document.getElementById('gptApiKey');
         const saveKeyBtn  = document.getElementById('gptSaveKey');
         const promptInput = document.getElementById('gptPrompt');
@@ -2238,106 +2230,83 @@ as e atÃ© nas nossas teimosias.</p>
         const messagesEl  = document.getElementById('gptMessages');
         const statusEl    = document.getElementById('gptStatus');
         const modelSelect = document.getElementById('gptModel');
-        if(!apiKeyInput || !promptInput || !sendBtn || !messagesEl) return;
-
-        let chatHistory = loadLocal('chatgptHistory', []);
-        const storedKey = loadLocal('chatgptKey','');
-        if(storedKey) apiKeyInput.value = storedKey;
-
-        const setStatus = (msg)=>{ if(statusEl) statusEl.textContent = msg; };
-        const renderHistory = ()=>{
-          messagesEl.innerHTML = '';
-          chatHistory.slice(-10).forEach(item => {
-            const bubble = document.createElement('div');
-            bubble.className = 'chatgpt-bubble ' + (item.role === 'assistant' ? 'assistant' : 'user');
-            bubble.textContent = item.content;
-            messagesEl.appendChild(bubble);
-          });
-        };
-        const persistHistory = ()=>{
-          chatHistory = chatHistory.slice(-10);
-          saveLocal('chatgptHistory', chatHistory);
-        };
-        renderHistory();
-
-        const getApiKey = ()=>{
-          const typed = (apiKeyInput.value || '').trim();
-          if(typed){
-            saveLocal('chatgptKey', typed);
-            return typed;
-          }
-          return loadLocal('chatgptKey','') || '';
-        };
-
-        if(saveKeyBtn){
-          saveKeyBtn.addEventListener('click', ()=>{
-            const key = getApiKey();
-            setStatus(key ? 'Chave salva apenas neste navegador.' : 'Cole sua API key para usar o chat.');
-          });
-        }
-
-        async function sendMessage(){
-          const key = getApiKey();
-          const prompt = (promptInput.value || '').trim();
-          const model = (modelSelect && modelSelect.value) ? modelSelect.value : 'gpt-4o-mini';
-          if(!key){
-            setStatus('Cole sua API key da OpenAI (ela fica salva localmente).');
-            apiKeyInput.focus();
-            return;
-          }
-          if(!prompt){
-            setStatus('Escreve algo para enviar ao ChatGPT.');
-            promptInput.focus();
-            return;
-          }
-          sendBtn.disabled = true;
-          setStatus('Enviando para o ChatGPT...');
-          chatHistory.push({role:'user', content: prompt});
-          renderHistory();
-          try{
-            const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-              method:'POST',
-              headers:{
-                'Content-Type':'application/json',
-                'Authorization':'Bearer ' + key
-              },
-              body: JSON.stringify({
-                model: model,
-                messages:[
-                  {role:'system', content:'Voce e um assistente carinhoso do casal Pablo e Ana Clara.'},
-                  {role:'user', content: prompt}
-                ],
-                max_tokens: 220,
-                temperature: 0.8
-              })
+        if(apiKeyInput && promptInput && sendBtn && messagesEl){
+          let chatHistory = loadLocal('chatgptHistory', []);
+          const stored = loadLocal('chatgptKey','');
+          if(stored) apiKeyInput.value = stored;
+          const setStatus = msg => { if(statusEl) statusEl.textContent = msg; };
+          const render = ()=>{
+            messagesEl.innerHTML = '';
+            chatHistory.slice(-10).forEach(item=>{
+              const b = document.createElement('div');
+              b.className = 'chatgpt-bubble ' + (item.role === 'assistant' ? 'assistant' : 'user');
+              b.textContent = item.content;
+              messagesEl.appendChild(b);
             });
-            if(!resp.ok){
-              const txt = await resp.text();
-              throw new Error('Erro ' + resp.status + ': ' + txt);
+          };
+          render();
+          const getKey = ()=>{
+            const val = (apiKeyInput.value || '').trim();
+            if(val) saveLocal('chatgptKey', val);
+            return val || loadLocal('chatgptKey','') || '';
+          };
+          if(saveKeyBtn){
+            saveKeyBtn.addEventListener('click', ()=>{
+              setStatus(getKey() ? 'Chave salva neste navegador.' : 'Cole sua API key para usar o chat.');
+            });
+          }
+          async function sendMsg(){
+            const key = getKey();
+            const prompt = (promptInput.value || '').trim();
+            const model = (modelSelect && modelSelect.value) ? modelSelect.value : 'gpt-4o-mini';
+            if(!key){ setStatus('Cole sua API key da OpenAI.'); apiKeyInput.focus(); return; }
+            if(!prompt){ setStatus('Escreva algo para enviar.'); promptInput.focus(); return; }
+            sendBtn.disabled = true;
+            setStatus('Enviando para o ChatGPT...');
+            chatHistory.push({role:'user', content: prompt});
+            render();
+            try{
+              const resp = await fetch('https://api.openai.com/v1/chat/completions',{
+                method:'POST',
+                headers:{'Content-Type':'application/json','Authorization':'Bearer ' + key},
+                body: JSON.stringify({
+                  model,
+                  messages:[
+                    {role:'system', content:'Voce e um assistente carinhoso do casal Pablo e Ana Clara.'},
+                    {role:'user', content: prompt}
+                  ],
+                  max_tokens:220,
+                  temperature:0.8
+                })
+              });
+              if(!resp.ok){
+                const txt = await resp.text();
+                throw new Error('Erro ' + resp.status + ': ' + txt);
+              }
+              const data = await resp.json();
+              const answer = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'Sem resposta agora.';
+              chatHistory.push({role:'assistant', content: answer});
+              chatHistory = chatHistory.slice(-10);
+              saveLocal('chatgptHistory', chatHistory);
+              render();
+              promptInput.value = '';
+              setStatus('Resposta recebida do ChatGPT.');
+            }catch(err){
+              setStatus('Nao deu pra falar com o ChatGPT: ' + (err && err.message ? err.message : err));
+            }finally{
+              sendBtn.disabled = false;
             }
-            const data = await resp.json();
-            const answer = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'Sem resposta agora.';
-            chatHistory.push({role:'assistant', content: answer});
-            persistHistory();
-            renderHistory();
-            promptInput.value = '';
-            setStatus('Resposta recebida do ChatGPT.');
-          }catch(err){
-            setStatus('Nao deu pra falar com o ChatGPT: ' + (err && err.message ? err.message : err));
-          }finally{
-            sendBtn.disabled = false;
           }
+          sendBtn.addEventListener('click', sendMsg);
+          promptInput.addEventListener('keydown', e=>{
+            if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
+              e.preventDefault();
+              sendMsg();
+            }
+          });
         }
-
-        sendBtn.addEventListener('click', sendMessage);
-        promptInput.addEventListener('keydown', function(e){
-          if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
-            e.preventDefault();
-            sendMessage();
-          }
-        });
-      })();
-    })();
+      }catch(e){}
+    });
   </script>
 </body>
 </html>

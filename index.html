@@ -1276,6 +1276,7 @@
         </div>
       </header>
 
+      <!--
       <div class="hub-card" id="megaHub">
         <div class="hub-header">
           <h3 class="hub-title">Central secreta de vocês (com abas) ✨</h3>
@@ -1484,6 +1485,7 @@
           </div>
         </div>
       </div>
+      -->
 
       <div class="main-grid">
         <div class="left-col">
@@ -1551,7 +1553,7 @@
           <div class="panel countdown-panel" style="text-align:center">
             <h3>Contagem para nosso próximo encontro ⏳</h3>
             <p class="small">
-              Encontro em <strong>19/11/2025 às 18h</strong> (horário de Brasília).
+              Encontro em <strong>24/12/2025 às 06h30</strong> (horário de Brasília).
             </p>
             <div class="countdown-time" id="countdownTime">
               --d --h --m --s
@@ -1724,6 +1726,13 @@
                 <div class="love-wrapped-mini-number" id="wrHoursYear">-- h</div>
                 <div class="love-wrapped-mini-note">
                   Só esse ano vocês já somaram esse tanto de horas sendo “Pablo + Ana”.
+                </div>
+              </div>
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Beijinhos guardados</div>
+                <div class="love-wrapped-mini-number" id="wrKisses">--</div>
+                <div class="love-wrapped-mini-note">
+                  Considerando uns 10 beijinhos por dia juntos desde 06/07/2023.
                 </div>
               </div>
             </div>
@@ -2418,12 +2427,12 @@
       setTimeout(()=> t.remove(), 2100);
     }
 
-    /* Contagem regressiva 19/11/2025 18h */
+    /* Contagem regressiva 24/12/2025 06h30 */
     (function(){
       var countdownTimeEl = document.getElementById('countdownTime');
       var countdownMsgEl  = document.getElementById('countdownMsg');
       if(!countdownTimeEl || !countdownMsgEl) return;
-      var targetDate = new Date(2025, 10, 19, 18, 0, 0); // mês 10 = novembro
+      var targetDate = new Date(2025, 11, 24, 6, 30, 0); // mês 11 = dezembro
 
       function pad2(n){ return (n<10?'0':'') + n; }
 
@@ -4137,12 +4146,14 @@
     const elHoursYear     = document.getElementById('wrHoursYear');
     const elDaysTogether  = document.getElementById('wrDaysTogether');
     const elDaysDating    = document.getElementById('wrDaysDating');
+    const elKisses        = document.getElementById('wrKisses');
 
     if(!elHoursTogether) return;
 
     const together = diffInfo(togetherSince);
     const dating   = diffInfo(datingSince);
     const yearOnly = diffInfo(yearStart);
+    const kisses   = together.days * 10;
 
     elHoursTogether.textContent = together.hours.toLocaleString('pt-BR');
     elDaysTogether.textContent  = together.days.toLocaleString('pt-BR');
@@ -4151,6 +4162,9 @@
     }
     if(elHoursYear){
       elHoursYear.textContent = yearOnly.hours.toLocaleString('pt-BR') + ' h';
+    }
+    if(elKisses){
+      elKisses.textContent = kisses.toLocaleString('pt-BR');
     }
   }
 

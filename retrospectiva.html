@@ -1,0 +1,2126 @@
+<!doctype html>
+<html lang="pt-BR" data-page="retrospectiva">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Retrospectiva | Eu te amo Ana Clara</title>
+
+  <!-- Ícones para iOS/Android -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
+  <!-- Versão raiz para iOS (garante ícone na tela inicial) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-v2.png">
+  <!-- Versão em /images como fallback -->
+  <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Ana Clara ❤">
+  <!-- Manifesto PWA para ícone na tela inicial / app web -->
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#ff4da6">
+
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;800&family=Great+Vibes&display=swap" rel="stylesheet">
+  
+  <style>
+
+    :root{
+      --bg1:#ffccff;
+      --bg2:#ffd6b6;
+      --accent:#ff4da6;
+      --accent-2:#ff8fb2;
+      --card:#ffffffdd;
+      --glass: rgba(255,255,255,0.15);
+      --dark:#222;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Montserrat,system-ui,Arial;
+      -webkit-font-smoothing:antialiased;
+      background:
+        radial-gradient(circle at 10% 20%, #fff3f8 0%, transparent 15%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      overflow-x:hidden;
+      overflow-y:auto;
+      color:#333;
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-top: calc(16px + env(safe-area-inset-top));
+    }
+    .stage{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:48px 20px;
+    }
+    .card{
+      width:100%;
+      max-width:1020px;
+      background:var(--card);
+      border-radius:20px;
+      padding:28px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.12);
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.6);
+      backdrop-filter: blur(6px);
+    }
+    header{
+      display:flex;
+      gap:16px;
+      align-items:center;
+    }
+    .logo{
+      width:84px;
+      height:84px;
+      border-radius:20px;
+      background:linear-gradient(180deg,var(--accent),var(--accent-2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:800;
+      font-size:28px;
+      font-family: 'Great Vibes', cursive;
+      box-shadow:0 6px 20px rgba(255,77,166,0.18);
+      flex-shrink:0;
+    }
+    h1{margin:0; font-size:26px}
+    p.lead{margin:4px 0 0 0; opacity:0.9}
+
+    .main-grid{
+      display:grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap:20px;
+      margin-top:18px;
+    }
+    @media (max-width:900px){
+      .main-grid{grid-template-columns:1fr}
+      .right-col{order:-1}
+    }
+
+    .left-col{padding:12px}
+    .right-col{padding:12px}
+
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
+      border-radius:12px;
+      padding:14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    .range-wrap{display:flex; flex-direction:column; gap:8px}
+    .range-value{font-weight:700; font-size:18px; color:var(--accent)}
+    input[type=range]{width:100%; accent-color:var(--accent); height:36px}
+
+    .forgive{display:flex; gap:10px; margin-top:8px;}
+    .btn{
+      padding:10px 14px;
+      border-radius:10px;
+      border:0;
+      cursor:pointer;
+      font-weight:700;
+      touch-action:manipulation;
+      font-family:inherit;
+      font-size:14px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+    .btn:active{transform:scale(.97); box-shadow:none;}
+    .btn-sim{
+      background:linear-gradient(90deg,#ff9fc9,#ff4da6);
+      color:white;
+      box-shadow:0 4px 14px rgba(255,77,166,0.45);
+    }
+    .btn-nao{
+      background:linear-gradient(90deg,#ffd6d6,#ffc9ff);
+      color:#333;
+    }
+
+    .gallery{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .thumb-wrapper{
+      position:relative;
+      display:inline-block;
+    }
+    .thumb{
+      width:74px;
+      height:74px;
+      border-radius:8px;
+      object-fit:cover;
+      border:3px solid white;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08);
+      cursor:pointer;
+      display:block;
+    }
+    /* Navegação topo profissional */
+    .top-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:#fff;box-shadow:0 10px 28px rgba(0,0,0,0.08);gap:14px;flex-wrap:wrap;position:relative;z-index:80;margin-bottom:10px;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-logo-chip{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#ff9fc9,#ff4da6);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;box-shadow:0 8px 18px rgba(255,77,166,0.25);}
+    .nav-links{list-style:none;display:flex;gap:12px;margin:0;padding:0;flex-wrap:wrap;}
+    .nav-links a,.nav-links button{border:0;background:transparent;font-weight:700;font-family:inherit;cursor:pointer;color:#111;text-decoration:none;padding:10px 12px;border-radius:10px;transition:background .15s ease,color .15s ease;}
+    .nav-links a:hover,.nav-links button:hover{background:#f3f4f6;color:#0f172a;}
+    .nav-links .active{background:#0f172a;color:#fff;box-shadow:0 8px 18px rgba(15,23,42,0.18);}
+    .nav-links .has-sub{position:relative;}
+    .nav-links .dropdown{position:absolute;top:105%;left:0;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,0.08);padding:8px 0;display:none;min-width:180px;z-index:50;}
+    .nav-links .has-sub:hover .dropdown{display:block;}
+    .nav-links .dropdown a{display:block;padding:8px 14px;color:#111;}
+    .nav-links .dropdown a:hover{background:#f8fafc;}
+    .nav-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .nav-search{padding:9px 12px;border-radius:12px;border:1px solid #e5e7eb;background:#f8fafc;min-width:160px;font-family:inherit;}
+    .login-top-btn{border:0;background:linear-gradient(120deg,#0f172a,#111827);color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(15,23,42,0.2);}
+    /* Hero carrossel topo */
+    .hero-carousel{position:relative;overflow:hidden;border-radius:12px;}
+    .hero-carousel img{display:block;width:100%;border-radius:12px;object-fit:contain;max-height:460px;background:#f8fafc;}
+    .hero-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.85);border:0;border-radius:999px;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.15);}
+    .hero-nav:hover{background:#fff;}
+    .hero-prev{left:10px;}
+    .hero-next{right:10px;}
+    .thumb-remove{
+      position:absolute;
+      top:2px;
+      right:2px;
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.75);
+      color:#fff;
+      border:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      cursor:pointer;
+    }
+  .thumb-remove:hover{background:rgba(0,0,0,0.95);}
+
+  .thumb-extra{
+      width:74px;
+      height:74px;
+      border-radius:8px;
+      border:3px dashed rgba(255,77,166,0.4);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:15px;
+      color:var(--accent);
+      background:rgba(255,255,255,0.9);
+      cursor:pointer;
+      box-shadow:0 6px 18px rgba(0,0,0,0.04);
+    }
+
+    .message-box{
+      margin-top:12px;
+      border-radius:12px;
+      padding:12px;
+      background:var(--glass);
+    }
+    .message-box textarea{
+      width:100%;
+      min-height:120px;
+      border-radius:8px;
+      padding:12px;
+      border:0;
+      resize:vertical;
+      font-size:15px;
+      font-family:inherit;
+    }
+    .big-love{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .action-row{
+      display:flex;
+      gap:10px;
+      margin-top:12px;
+      flex-wrap:wrap;
+    }
+
+    footer{
+      margin-top:18px;
+      text-align:center;
+      opacity:0.8;
+      font-size:12px;
+    }
+
+    .hearts-layer{
+      pointer-events:none;
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+    }
+    .heart{
+      position:absolute;
+      transform:translateY(-120%);
+      will-change:transform,opacity;
+      font-size:22px;
+      opacity:0.9;
+    }
+
+    .burst{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+    .burst .bheart{
+      position:absolute;
+      font-size:20px;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:16px;
+      background:rgba(0,0,0,0.25);
+    }
+    .overlay.show{display:flex}
+
+    .overlay-card{
+      background:linear-gradient(180deg,#fff,#ffeef8);
+      border-radius:18px;
+      padding:28px;
+      max-width:720px;
+      width:100%;
+      text-align:center;
+      box-shadow:0 16px 40px rgba(0,0,0,0.2);
+    }
+    .overlay-card h2{
+      font-family:'Great Vibes',cursive;
+      font-size:48px;
+      margin:0;
+    }
+    .small{font-size:13px; opacity:0.85}
+
+    .letter-card{
+      background:#fffdf8;
+      border-radius:20px;
+      padding:26px 22px 22px;
+      max-width:780px;
+      width:100%;
+      max-height:90vh;
+      overflow-y:auto;
+      box-shadow:0 18px 40px rgba(0,0,0,0.28);
+      border:1px solid #f5e1c3;
+      position:relative;
+    }
+    .letter-card:before{
+      content:"";
+      position:absolute;
+      inset:12px;
+      border-radius:14px;
+      border:1px dashed rgba(0,0,0,0.08);
+      pointer-events:none;
+    }
+    .ring-icon{font-size:42px; margin-bottom:8px;}
+    .letter-title{
+      font-family:'Great Vibes',cursive;
+      font-size:40px;
+      margin:0 0 8px;
+      text-align:center;
+    }
+    .letter-body{
+      text-align:left;
+      font-size:15px;
+      line-height:1.6;
+      margin-top:8px;
+    }
+    .letter-body strong{color:var(--accent)}
+    .footer-hearts{
+      display:flex;
+      gap:6px;
+      justify-content:center;
+      margin-top:10px;
+    }
+
+    @keyframes fall{
+      to{transform:translateY(120vh) rotate(360deg); opacity:0.05}
+    }
+
+    /* Hero/carrossel */
+    #heroImg{transition:opacity .6s ease;}
+    #heroImg.fade-out{opacity:0;}
+    #heroImg.fade-in{opacity:1;}
+
+    /* Painel de satisfação */
+    .satisfaction-wrapper{
+      margin-top:24px;
+      display:flex;
+      justify-content:center;
+    }
+    .satisfaction-card{
+      max-width:520px;
+      width:100%;
+      background:rgba(255,255,255,0.96);
+      border-radius:18px;
+      padding:18px 16px 18px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.12);
+      border:1px solid rgba(255,255,255,0.8);
+      position:relative;
+      overflow:hidden;
+    }
+    .satisfaction-card h2{margin:0 0 4px; font-size:20px;}
+    .sat-sub{margin:0 0 10px; font-size:13px; opacity:0.8;}
+    .who-are-you{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      margin-bottom:6px;
+      flex-wrap:wrap;
+    }
+    .sat-user-btn{
+      border:0;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:13px;
+      cursor:pointer;
+      background:#ffe4f4;
+      color:#b10061;
+      font-weight:600;
+    }
+    .sat-user-btn.active{
+      background:linear-gradient(90deg,#ff9fc9,#ff4da6);
+      color:#fff;
+    }
+    .sat-current{margin:0 0 8px; font-size:12px; opacity:0.8;}
+    .sat-board{
+      border-radius:12px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.06);
+      overflow:hidden;
+    }
+    .sat-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:8px 10px;
+      font-size:15px;
+      cursor:pointer;
+    }
+    .sat-row:nth-child(odd){background:#fff9fd;}
+    .sat-row:nth-child(even){background:#fff;}
+    .sat-row:hover{background:#ffe9f7;}
+    .sat-label{flex:1;}
+    .sat-markers{
+      display:flex;
+      gap:6px;
+      min-width:80px;
+      justify-content:flex-end;
+    }
+    .sat-marker{
+      min-width:40px;
+      height:32px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:15px;
+      color:#fff;
+      font-weight:700;
+      box-shadow:0 4px 10px rgba(0,0,0,0.18);
+      padding:0 8px;
+      background:linear-gradient(135deg,#4f46e5,#6366f1);
+    }
+    .sat-marker-ana{
+      background:linear-gradient(135deg,#ec4899,#f97316);
+    }
+    .sat-tip{margin-top:10px; font-size:11px; opacity:0.75;}
+    .jail-extra textarea{
+      width:100%;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.12);
+      padding:8px;
+      font-size:13px;
+      resize:vertical;
+      font-family:inherit;
+    }
+    .jail-anim{
+      position:absolute;
+      inset:0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      pointer-events:none;
+      z-index:40;
+    }
+    .jail-bars{
+      width:82%;
+      height:70%;
+      border-radius:16px;
+      border:4px solid rgba(0,0,0,0.85);
+      display:flex;
+      justify-content:space-around;
+      align-items:stretch;
+      background:rgba(0,0,0,0.08);
+      overflow:hidden;
+      animation:jailClose 700ms ease-out forwards;
+    }
+    .jail-bars span{
+      flex:1;
+      margin:0 4px;
+      background:rgba(0,0,0,0.82);
+      border-radius:999px;
+      transform:translateY(-120%);
+      animation:barDrop 700ms ease-out forwards;
+    }
+    @keyframes jailClose{
+      from{opacity:0; transform:scale(1.1);}
+      to{opacity:1; transform:scale(1);}
+    }
+    @keyframes barDrop{
+      from{transform:translateY(-120%);}
+      to{transform:translateY(0);}
+    }
+
+    /* Contagem regressiva */
+    .countdown-panel .countdown-time{
+      font-size:26px;
+      font-weight:800;
+      color:var(--accent);
+      letter-spacing:1px;
+      margin:10px 0 4px;
+    }
+    .countdown-panel .countdown-time span{
+      display:inline-block;
+      min-width:52px;
+    }
+    .countdown-panel .countdown-msg{
+      font-size:13px;
+      opacity:0.85;
+    }
+
+    /* Enquetes */
+    .polls-wrapper{
+      margin-top:20px;
+      display:flex;
+      justify-content:center;
+    }
+    .poll-card{
+      max-width:520px;
+      width:100%;
+    }
+    .poll-card h2{margin:0 0 6px; font-size:20px;}
+    .poll-sub{margin:0 0 10px; font-size:12px; opacity:0.8;}
+    .poll-block{
+      margin-top:10px;
+      padding-top:8px;
+      border-top:1px dashed rgba(0,0,0,0.08);
+    }
+    .poll-title{
+      font-weight:600;
+      margin-bottom:4px;
+      font-size:15px;
+    }
+    .poll-options{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:4px;
+    }
+    .poll-btn{
+      flex:1 1 100px;
+    }
+    .poll-btn.selected{
+      box-shadow:0 0 0 2px rgba(255,77,166,0.6);
+      transform:translateY(-1px);
+    }
+    .menu-textarea{
+      width:100%;
+      min-height:70px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.12);
+      padding:8px;
+      font-size:14px;
+      resize:vertical;
+      font-family:inherit;
+    }
+
+    /* Mural de recados */
+    .mural-wrapper{
+      margin-top:22px;
+      display:flex;
+      justify-content:center;
+    }
+    .mural-card{
+      max-width:520px;
+      width:100%;
+    }
+    .mural-form{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:8px;
+      margin-bottom:10px;
+    }
+    .mural-input{
+      flex:1 1 200px;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.15);
+      font-family:inherit;
+      font-size:14px;
+    }
+    .mural-checkbox{
+      display:flex;
+      align-items:center;
+      gap:4px;
+      font-size:12px;
+    }
+    .mural-list{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:220px;
+      overflow-y:auto;
+    }
+    .mural-item{
+      background:rgba(255,255,255,0.95);
+      border-radius:10px;
+      padding:8px 10px;
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+      border:1px solid rgba(0,0,0,0.04);
+    }
+    .mural-text-wrap{flex:1;}
+    .mural-text{
+      font-size:14px;
+      margin:0;
+    }
+    .mural-meta{
+      font-size:11px;
+      opacity:0.8;
+      margin-top:2px;
+    }
+    .mural-task .mural-text::before{
+      content:"✔ ";
+      color:#16a34a;
+      font-weight:600;
+    }
+    .mural-text.done{
+      text-decoration:line-through;
+      opacity:0.6;
+    }
+    .mural-actions{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .btn-mini{
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:600;
+      cursor:pointer;
+      border:0;
+      font-family:inherit;
+    }
+    .btn-mini-primary{
+      background:#bbf7d0;
+      color:#14532d;
+    }
+    .btn-mini-danger{
+      background:#fee2e2;
+      color:#7f1d1d;
+    }
+
+    /* Música */
+    .music-wrapper{
+      margin-top:22px;
+      display:flex;
+      justify-content:center;
+    }
+    .music-card{
+      max-width:520px;
+      width:100%;
+    }
+    .music-sub{margin:0 0 10px; font-size:12px; opacity:0.85;}
+    .music-section{
+      margin-top:10px;
+      padding-top:8px;
+      border-top:1px dashed rgba(0,0,0,0.08);
+    }
+    .music-section h4{
+      margin:0 0 4px;
+      font-size:14px;
+    }
+    .music-audio{
+      width:100%;
+    }
+    .music-spotify-embed iframe{
+      border-radius:12px;
+      border:0;
+      width:100%;
+      height:80px;
+    }
+    .music-spotify-controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:6px;
+    }
+    .music-status{
+      font-size:12px;
+      margin-top:4px;
+      opacity:0.85;
+    }
+    .music-log-details{
+      margin-top:6px;
+      font-size:11px;
+    }
+    .music-log{
+      font-size:11px;
+      background:#020617;
+      color:#e5e7eb;
+      padding:8px;
+      border-radius:8px;
+      max-height:130px;
+      overflow-y:auto;
+      white-space:pre-wrap;
+    }
+
+    /* Abas principais */
+    .tabs-hub{
+      margin-top:26px;
+      background:#0f172a;
+      border-radius:18px;
+      padding:12px 12px 8px;
+      box-shadow:0 16px 38px rgba(15,23,42,0.25);
+      border:1px solid rgba(255,255,255,0.08);
+      color:#e2e8f0;
+    }
+    .tabs-title{
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:0.4px;
+      opacity:0.8;
+      margin:0 0 6px 4px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .tabs-title span{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      background:linear-gradient(120deg,#ff9fc9,#ff4da6);
+      color:#0f172a;
+      font-weight:800;
+      font-size:12px;
+    }
+    .tabs-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      overflow-x:auto;
+      padding-bottom:6px;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(255,255,255,0.25) transparent;
+    }
+    .tabs-row::-webkit-scrollbar{height:6px;}
+    .tabs-row::-webkit-scrollbar-thumb{
+      background:rgba(255,255,255,0.25);
+      border-radius:99px;
+    }
+    .tab-btn{
+      border:0;
+      background:rgba(255,255,255,0.06);
+      color:#e2e8f0;
+      padding:12px 14px;
+      border-radius:999px;
+      font-weight:800;
+      letter-spacing:0.1px;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,0.2);
+      transition:transform .12s ease, box-shadow .12s ease, background .18s ease, color .18s ease;
+      white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .tab-btn small{
+      font-size:11px;
+      opacity:0.7;
+      font-weight:700;
+    }
+    .tab-btn:hover{transform:translateY(-2px);}
+    .tab-btn.active{
+      background:#f8fafc;
+      color:#0f172a;
+      box-shadow:0 10px 26px rgba(255,77,166,0.35);
+    }
+    .tab-btn.active small{opacity:0.8;}
+    .tab-hidden{display:none!important;}
+
+    /* Retrospectiva */
+    .retro-section .retro-hero{
+      background:linear-gradient(135deg,#111827,#0f172a);
+      color:#f8fafc;
+      border-radius:16px;
+      padding:18px 16px;
+      display:grid;
+      grid-template-columns:1.4fr 1fr;
+      gap:14px;
+      box-shadow:0 12px 32px rgba(0,0,0,0.22);
+      border:1px solid rgba(255,255,255,0.08);
+      position:relative;
+      overflow:hidden;
+    }
+    .retro-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.08);
+      font-size:12px;
+      font-weight:700;
+      width:max-content;
+    }
+    .retro-hero h3{
+      margin:6px 0 4px;
+      font-size:24px;
+      letter-spacing:0.2px;
+    }
+    .retro-hero p{margin:0; opacity:0.88;}
+    .retro-cta{
+      display:flex;
+      align-items:flex-end;
+      justify-content:flex-end;
+    }
+    .retro-cta button{
+      border:0;
+      background:linear-gradient(135deg,#ff9fc9,#ff4da6);
+      color:#0f172a;
+      font-weight:900;
+      padding:12px 16px;
+      border-radius:14px;
+      cursor:pointer;
+      box-shadow:0 12px 30px rgba(255,77,166,0.35);
+      font-size:14px;
+      letter-spacing:0.2px;
+    }
+    .retro-grid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:10px;
+    }
+    .retro-card{
+      background:#0b1222;
+      color:#e2e8f0;
+      border-radius:12px;
+      padding:12px;
+      box-shadow:0 10px 24px rgba(0,0,0,0.2);
+      border:1px solid rgba(255,255,255,0.06);
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .retro-card strong{font-size:15px;}
+    .retro-card small{opacity:0.8;}
+    .retro-accent{
+      color:#ff9fc9;
+      font-weight:800;
+    }
+    .retro-subline{
+      margin-top:4px;
+      font-size:12px;
+      opacity:0.75;
+    }
+    .retro-canvas{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:radial-gradient(circle at 18% 30%, rgba(255,77,166,0.18), transparent 30%),
+                 radial-gradient(circle at 78% 70%, rgba(255,143,178,0.16), transparent 34%);
+    }
+
+    /* Overlay galeria cheia */
+    #galleryOverlay .overlay-card{
+      max-width:860px;
+      text-align:left;
+    }
+    #fullGallery{
+      margin-top:10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    @media (max-width:900px){
+      .stage{
+        align-items:flex-start;
+        padding:24px 12px 32px;
+      }
+    }
+    @media (max-width:420px){
+      .card{padding:18px; border-radius:16px}
+      header{gap:12px}
+      .logo{width:70px;height:70px;font-size:24px}
+      h1{font-size:20px}
+      .overlay-card{padding:20px}
+      .overlay-card h2{font-size:34px}
+      .letter-card{padding:20px 16px}
+      .letter-title{font-size:32px}
+
+      .main-grid{grid-template-columns:1fr}
+      .right-col{order:2}
+      .left-col{order:1}
+
+      .forgive{flex-direction:column}
+      .forgive .btn{width:100%; padding:12px; font-size:16px}
+      .action-row{flex-direction:column}
+      .action-row .btn{width:100%}
+
+      .thumb,
+      .thumb-extra{width:64px;height:64px}
+      .message-box textarea{min-height:100px}
+
+      .heart{font-size:26px}
+      .satisfaction-card{padding:14px 12px 16px;}
+      .satisfaction-card h2{font-size:17px;}
+      .sat-row{padding:8px 8px; font-size:14px;}
+    }
+    @media (max-width:360px){
+      .logo{width:60px;height:60px;font-size:20px}
+      h1{font-size:18px}
+      .overlay-card h2{font-size:28px}
+      .thumb,
+      .thumb-extra{width:56px;height:56px}
+    }
+    @media (hover:none){
+      .btn{padding:14px 16px; border-radius:12px}
+      input[type=range]{height:44px}
+    }
+    @media (max-width:700px){
+      .overlay{
+        align-items:flex-start;
+        justify-content:center;
+        overflow-y:auto;
+      }
+      .letter-card,
+      .overlay-card{
+        margin-top:40px;
+        margin-bottom:40px;
+      }
+    }
+
+    /* Hub compacto com abas e hambúrguer */
+    .hub-card{
+      margin-top:22px;
+      border:1px solid rgba(0,0,0,0.05);
+      border-radius:16px;
+      background:linear-gradient(180deg, #fff, #fff5fb);
+      box-shadow:0 12px 26px rgba(0,0,0,0.08);
+      overflow:hidden;
+    }
+    .hub-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 14px;
+      gap:10px;
+      border-bottom:1px solid rgba(0,0,0,0.04);
+      background:linear-gradient(90deg,rgba(255,77,166,0.08),rgba(255,143,178,0.12));
+    }
+    .hub-title{margin:0; font-size:16px; font-weight:800; color:#b10061;}
+    .hub-nav-btn{
+      border:0;
+      background:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      box-shadow:0 6px 12px rgba(0,0,0,0.06);
+      cursor:pointer;
+    }
+    .hub-menu{display:none; padding:12px; border-bottom:1px solid rgba(0,0,0,0.04); background:#fff;}
+    .hub-menu.show{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px;}
+    .hub-menu button{
+      border:0;
+      padding:10px 12px;
+      background:#fff6fb;
+      border-radius:12px;
+      font-weight:700;
+      color:#a00063;
+      cursor:pointer;
+      box-shadow:0 4px 10px rgba(0,0,0,0.05);
+    }
+    .hub-menu button.active{
+      background:linear-gradient(90deg,#ff9fc9,#ff4da6);
+      color:#fff;
+    }
+    .hub-section{display:none; padding:14px; background:#fff;}
+    .hub-section.active{display:block;}
+    .hub-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px;}
+    .hub-box{
+      padding:12px;
+      border-radius:12px;
+      background:#fff8ff;
+      border:1px solid rgba(0,0,0,0.04);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .hub-box h3{margin-top:0; margin-bottom:4px;}
+    .hub-box small{opacity:0.8;}
+    .input-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+    .input-row input, .input-row select, .input-row textarea{flex:1; padding:10px; border-radius:10px; border:1px solid rgba(0,0,0,0.08); font-family:inherit;}
+    .tag{display:inline-flex; padding:4px 8px; border-radius:999px; font-size:11px; background:#ffe3f3; color:#a00063; margin-right:6px;}
+    .list{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px;}
+    .list li{background:#fff; padding:10px; border-radius:10px; border:1px solid rgba(0,0,0,0.05);}
+    .badge{display:inline-flex; padding:4px 8px; border-radius:999px; font-size:12px; background:#e0f2fe; color:#0b4f71;}
+    .pill{display:inline-flex; padding:4px 8px; border-radius:999px; font-size:12px; background:#dcfce7; color:#166534;}
+    .locked{opacity:0.65;}
+    .wheel{width:100%; height:180px; background:conic-gradient(#ff9fc9 0 25%, #ffe6f4 25% 50%, #ffd6b6 50% 75%, #c4f1f5 75% 100%); border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#b10061;}
+    .progress{height:10px; border-radius:999px; background:rgba(0,0,0,0.05); overflow:hidden;}
+    .progress span{display:block; height:100%; background:linear-gradient(90deg,#ff9fc9,#ff4da6);}
+    .chart-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px;}
+  
+    /* Seções extras (nossa história, mapa, bucket list etc.) */
+    .extra-section{
+      margin-top:24px;
+    }
+    .extra-card h2{
+      margin-top:0;
+      font-size:20px;
+    }
+    .extra-card .small{
+      font-size:13px;
+      opacity:0.85;
+    }
+    .extra-form{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .extra-input{
+      width:100%;
+      border-radius:8px;
+      border:1px solid rgba(0,0,0,0.08);
+      padding:8px 10px;
+      font-family:inherit;
+      font-size:14px;
+    }
+    .extra-textarea{
+      min-height:70px;
+      resize:vertical;
+    }
+    .extra-list{
+      list-style:none;
+      padding:0;
+      margin:10px 0 0;
+      max-height:280px;
+      overflow-y:auto;
+    }
+    .extra-list li{
+      border-radius:10px;
+      padding:8px 10px;
+      background:rgba(255,255,255,0.9);
+      box-shadow:0 2px 6px rgba(0,0,0,0.04);
+      font-size:14px;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      margin-bottom:6px;
+    }
+    .extra-list li .extra-meta{
+      font-size:11px;
+      opacity:0.7;
+    }
+    .extra-list-check li{
+      flex-direction:row;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .extra-list-check label{
+      flex:1;
+      display:flex;
+      gap:6px;
+      align-items:flex-start;
+      font-size:14px;
+    }
+    .extra-list-check input[type=checkbox]{
+      margin-top:3px;
+    }
+    .extra-list-links a{
+      word-break:break-all;
+      font-size:13px;
+    }
+    .calendar-form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows:auto auto;
+      gap:6px;
+    }
+    .calendar-form #eventTitle{
+      grid-column:1 / span 2;
+    }
+    .calendar-form #eventAddBtn{
+      grid-column:1 / span 2;
+    }
+    .lovejar-random{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .lovejar-details{
+      margin-top:8px;
+    }
+    .lovejar-details summary{
+      cursor:pointer;
+    }
+    .quiz-question{
+      margin-top:10px;
+      padding:10px;
+      border-radius:10px;
+      background:rgba(255,255,255,0.9);
+      box-shadow:0 2px 6px rgba(0,0,0,0.04);
+    }
+    .quiz-options{
+      margin-top:6px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .quiz-option-btn{
+      border-radius:8px;
+      border:1px solid rgba(0,0,0,0.06);
+      padding:6px 8px;
+      text-align:left;
+      cursor:pointer;
+      background:#fff;
+      font-size:14px;
+    }
+    .quiz-option-btn.selected-correct{
+      background:#e6ffe6;
+      border-color:#8cd98c;
+    }
+    .quiz-option-btn.selected-wrong{
+      background:#ffe6e6;
+      border-color:#ff9999;
+    }
+    .mood-section canvas{
+      margin-top:10px;
+      width:100%;
+      max-width:100%;
+      background:#fff;
+      border-radius:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    }
+    .extra-card .btn{
+      align-self:flex-start;
+    }
+    @media (max-width:700px){
+      .calendar-form{
+        grid-template-columns:1fr;
+      }
+      .calendar-form #eventTitle,
+      .calendar-form #eventAddBtn{
+        grid-column:auto;
+      }
+    }
+
+    /* ==== RETROSPECTIVA TIPO SPOTIFY WRAPPED ==== */
+    .love-wrapped-section{
+      margin-top:40px;
+    }
+    .love-wrapped-card{
+      background: radial-gradient(circle at top left,#ff9fc9,#ff4da6 35%,#1b1b2f 75%);
+      border-radius:24px;
+      padding:26px 28px;
+      color:#fff;
+      box-shadow:0 18px 40px rgba(0,0,0,0.32);
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .love-wrapped-tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      background:rgba(0,0,0,0.35);
+    }
+    .love-wrapped-tag-dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:#fffb;
+    }
+    .love-wrapped-title{
+      font-size:26px;
+      margin:0;
+    }
+    .love-wrapped-sub{
+      font-size:14px;
+      max-width:420px;
+      opacity:.9;
+    }
+    .love-wrapped-main-metric{
+      margin-top:8px;
+    }
+    .love-wrapped-label{
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.85;
+    }
+    .love-wrapped-number{
+      font-size:38px;
+      font-weight:800;
+      line-height:1.1;
+      margin-top:4px;
+    }
+    .love-wrapped-number span{
+      display:inline-block;
+    }
+    .love-wrapped-unit{
+      font-size:18px;
+      opacity:.85;
+      margin-left:4px;
+    }
+    .love-wrapped-note{
+      font-size:13px;
+      opacity:.9;
+      max-width:380px;
+    }
+    .love-wrapped-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:14px;
+      margin-top:12px;
+    }
+    .love-wrapped-mini{
+      background:rgba(0,0,0,0.22);
+      border-radius:18px;
+      padding:10px 12px;
+      font-size:13px;
+    }
+    .love-wrapped-mini-label{
+      font-size:11px;
+      opacity:.85;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .love-wrapped-mini-number{
+      font-size:18px;
+      font-weight:700;
+      margin-top:4px;
+    }
+    .love-wrapped-mini-note{
+      font-size:11px;
+      opacity:.85;
+      margin-top:3px;
+    }
+    .love-wrapped-secondary{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+      margin-top:10px;
+    }
+    .love-wrapped-secondary-card{
+      background:#111321;
+      border-radius:18px;
+      padding:12px 14px;
+      color:#fff;
+      font-size:13px;
+      box-shadow:0 8px 22px rgba(0,0,0,0.4);
+    }
+    .love-wrapped-secondary-title{
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.9;
+    }
+    .love-wrapped-secondary-number{
+      font-size:22px;
+      font-weight:700;
+      margin-top:4px;
+    }
+    .love-wrapped-secondary-note{
+      font-size:11px;
+      opacity:.85;
+      margin-top:4px;
+    }
+    @media (max-width:800px){
+      .love-wrapped-card{
+        padding:20px 18px;
+        border-radius:20px;
+      }
+      .love-wrapped-title{
+        font-size:22px;
+      }
+      .love-wrapped-grid{
+        grid-template-columns:1fr;
+      }
+      .love-wrapped-secondary{
+        grid-template-columns:1fr;
+      }
+    }
+
+
+</style>
+</head>
+<body class="theme-pink">
+  <div class="stage">
+    <div class="card" id="card">
+      <div class="hearts-layer" id="heartsLayer"></div>
+
+      <nav class="top-nav" id="menuPrincipal">
+        <div class="nav-left">
+          <div class="nav-logo-chip">AC</div>
+          <ul class="nav-links">
+            <li><a class="nav-btn" data-page="painel" href="/painel.html">Painel</a></li>
+            <li><a class="nav-btn" data-page="retrospectiva" href="/retrospectiva.html">Retrospectiva</a></li>
+            <li><a class="nav-btn" data-page="mensagens" href="/mensagens.html">Mensagens</a></li>
+            <li><a class="nav-btn" data-page="galeria" href="/galeria.html">Galeria</a></li>
+            <li class="has-sub">
+              <button type="button">Outros v</button>
+              <div class="dropdown">
+                <a href="/central.html" data-page="central">Central</a>
+                <a href="/contagem.html" data-page="contagem">Contagem</a>
+                <a href="/carta.html" data-page="carta">Carta</a>
+                <a href="/links.html" data-page="links">Links uteis</a>
+              </div>
+            </li>
+            <li><a class="nav-btn" data-page="login" href="/login.html">Login</a></li>
+          </ul>
+        </div>
+        <div class="nav-actions">
+          <input class="nav-search" type="search" placeholder="Buscar">
+          <button class="login-top-btn" type="button" onclick="document.getElementById('login')?.scrollIntoView({behavior:'smooth'});">Ir para login</button>
+        </div>
+      </nav>
+
+      <!-- Hero/Galeria no topo -->
+      <section id="galeria" style="margin-top:6px; margin-bottom:14px">
+        <div class="hero-carousel">
+          <button class="hero-nav hero-prev" id="heroPrev" aria-label="Foto anterior">&lt;</button>
+          <img id="heroImg" src="images/wedding.jpg" alt="foto destaque">
+          <button class="hero-nav hero-next" id="heroNext" aria-label="Proxima foto">&gt;</button>
+        </div>
+      </section>
+
+      <header style="margin-top:8px">
+        <div class="logo">❤</div>
+        <div>
+          <h1>Eu te amo, Ana Clara</h1>
+          <p class="lead">Um site só pra você — com muito amor, carinho, músicas e corações 💖</p>
+        </div>
+      </header>
+
+      <div id="login"></div>
+      <section id="central">
+      <div class="hub-card" id="megaHub">
+        <div class="hub-header">
+          <h3 class="hub-title">Central do casal (com abas) ✨</h3>
+          <button class="hub-nav-btn" id="hubToggle">☰ Abrir menu</button>
+        </div>
+        <div class="hub-menu" id="hubMenu">
+          <button data-target="hub-login" class="active">Login / Perfis</button>
+          <button data-target="hub-chat">Bilhetes & Time-capsule</button>
+          <button data-target="hub-fun">Roleta & Cupons</button>
+          <button data-target="hub-viagem">Planner da viagem</button>
+          <button data-target="hub-achievements">Achievements & Timeline</button>
+          <button data-target="hub-stats">Resumo & PWA</button>
+        </div>
+
+        <div class="hub-section active" id="hub-login">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Login leve com PIN 🔒</h3>
+              <small>Escolha quem é você e digite o PIN fofinho de 4 dígitos.</small>
+              <div class="input-row">
+                <select id="hubUser">
+                  <option value="pablo">Pablo</option>
+                  <option value="ana">Ana</option>
+                </select>
+                <input id="hubPin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN (ex.: 1234)">
+              </div>
+              <div class="input-row">
+                <button class="btn btn-sim" id="hubLoginBtn">Entrar</button>
+              </div>
+              <div id="hubLoginStatus" class="small"></div>
+            </div>
+            <div class="hub-box">
+              <h3>Resumo rápido do mês 📅</h3>
+              <small>Mostra tudo que rolou usando os registros do site.</small>
+              <div class="input-row">
+                <input id="hubResumoMes" type="month">
+                <button class="btn btn-sim" id="hubResumoBtn">Calcular</button>
+              </div>
+              <div id="hubResumoDados" class="small"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-chat">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Bilhetes em tempo real 💌</h3>
+              <small>Filtre por categoria e veja se há novidade.</small>
+              <div class="input-row">
+                <select id="msgAuthor">
+                  <option value="pablo">Pablo</option>
+                  <option value="ana">Ana</option>
+                </select>
+                <select id="msgType">
+                  <option value="fofura">Fofura</option>
+                  <option value="segredo">Segredo</option>
+                  <option value="safadeza">Safadeza</option>
+                </select>
+              </div>
+              <div class="input-row">
+                <input id="msgText" type="text" placeholder="Escreva um recado" />
+                <button class="btn btn-sim" id="sendMsgBtn">Enviar</button>
+              </div>
+              <div class="input-row">
+                <select id="msgFilter">
+                  <option value="todos">Todos</option>
+                  <option value="fofura">Só fofos</option>
+                  <option value="segredo">Só segredos</option>
+                  <option value="safadeza">Só safadeza</option>
+                </select>
+                <span class="badge" id="msgUnread">0 novos</span>
+              </div>
+              <ul class="list" id="msgList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Cartas para o futuro ⏳</h3>
+              <small>Escolha a data de abertura e deixe o futuro cuidar.</small>
+              <div class="input-row">
+                <input id="capsTitle" type="text" placeholder="Título da carta">
+                <input id="capsFrom" type="text" placeholder="De">
+                <input id="capsTo" type="text" placeholder="Para">
+              </div>
+              <div class="input-row">
+                <textarea id="capsText" placeholder="Escreva a carta" rows="3"></textarea>
+              </div>
+              <div class="input-row">
+                <input id="capsDate" type="date">
+                <button class="btn btn-sim" id="capsSaveBtn">Guardar</button>
+              </div>
+              <ul class="list" id="capsList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-fun">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Roleta do amor 🎡</h3>
+              <small>Cadastre atividades e gire.</small>
+              <div class="input-row">
+                <input id="wheelItem" type="text" placeholder="Nova atividade (massagem, filme...)" />
+                <select id="wheelMode">
+                  <option value="amor">Mimo</option>
+                  <option value="castigo">Castigo</option>
+                </select>
+                <button class="btn btn-sim" id="wheelAddBtn">Adicionar</button>
+              </div>
+              <div class="wheel" id="wheelResult">Clique em girar</div>
+              <div class="input-row">
+                <button class="btn btn-sim" id="wheelSpinBtn">Girar roleta</button>
+                <button class="btn btn-nao" id="wheelClearBtn">Limpar opções</button>
+              </div>
+              <ul class="list" id="wheelList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Cupons do amor 🎟️</h3>
+              <small>Registre cupons e marque quando usar.</small>
+              <div class="input-row">
+                <input id="couponText" type="text" placeholder="Vale um abraço longo" />
+                <button class="btn btn-sim" id="couponAddBtn">Criar cupom</button>
+              </div>
+              <div class="input-row">
+                <span class="badge" id="couponStats">0 cupons</span>
+              </div>
+              <ul class="list" id="couponList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-viagem">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Meta de viagem ✈️</h3>
+              <small>Quanto falta para a viagem dos sonhos.</small>
+              <div class="input-row">
+                <input id="goalValue" type="number" min="0" step="50" placeholder="Meta em R$">
+                <button class="btn btn-sim" id="goalSaveBtn">Salvar meta</button>
+              </div>
+              <div class="input-row">
+                <input id="goalWho" type="text" placeholder="Quem contribuiu?">
+                <input id="goalAmount" type="number" min="0" step="10" placeholder="Valor" />
+                <button class="btn btn-nao" id="goalAddBtn">Registrar contribuição</button>
+              </div>
+              <div class="progress"><span id="goalProgress" style="width:0%"></span></div>
+              <div id="goalStatus" class="small"></div>
+              <ul class="list" id="goalList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Roteiro & Mapa 🗺️</h3>
+              <small>Planeje etapas como capítulos de viagem.</small>
+              <div class="input-row">
+                <input id="routePlace" type="text" placeholder="Lugar / data" />
+                <input id="routeBudget" type="text" placeholder="Orçamento estimado" />
+                <button class="btn btn-sim" id="routeAddBtn">Adicionar</button>
+              </div>
+              <ul class="list" id="routeList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-achievements">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Achievements do casal 🏆</h3>
+              <small>Desbloqueia conforme vocês usam o site.</small>
+              <ul class="list" id="achList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Timeline em capítulos 📖</h3>
+              <div class="input-row">
+                <input id="chapterTitle" type="text" placeholder="Título do capítulo">
+                <input id="chapterCat" type="text" placeholder="Categoria (encontro, viagem...)" />
+              </div>
+              <div class="input-row">
+                <textarea id="chapterText" rows="3" placeholder="Mini crônica"></textarea>
+              </div>
+              <button class="btn btn-sim" id="chapterAddBtn">Salvar capítulo</button>
+              <ul class="list" id="chapterList"></ul>
+            </div>
+            <div class="hub-box">
+              <h3>Diário compartilhado 📓</h3>
+              <div class="input-row">
+                <input id="diaryDate" type="date">
+                <textarea id="diaryText" rows="2" placeholder="Texto do dia"></textarea>
+              </div>
+              <button class="btn btn-sim" id="diarySaveBtn">Registrar</button>
+              <ul class="list" id="diaryList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-section" id="hub-stats">
+          <div class="hub-grid">
+            <div class="hub-box">
+              <h3>Painel de dados ❤️‍🔥</h3>
+              <div class="chart-row" id="statsCards"></div>
+              <canvas id="statsCanvas" width="320" height="180" style="width:100%; margin-top:8px; background:#fff; border-radius:8px;"></canvas>
+            </div>
+            <div class="hub-box">
+              <h3>Modo offline & push 🔔</h3>
+              <p class="small">Registramos um Service Worker pra cachear e preparar push pelo Firebase mais tarde.</p>
+              <button class="btn btn-sim" id="pwaRegisterBtn">Ativar modo offline</button>
+              <div id="pwaStatus" class="small"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </section>
+
+      <div class="main-grid">
+        <div class="left-col">
+          <div class="panel">
+            <h3>Quanto você ama o Pablo?</h3>
+            <div class="range-wrap">
+              <div style="display:flex; align-items:center; justify-content:space-between">
+                <div class="range-value">Nível: <span id="loveVal">10</span>/10</div>
+                <div class="small">Deslize para escolher</div>
+              </div>
+              <input id="loveRange" type="range" min="0" max="10" step="1" value="10">
+              <small class="small">Dica: ele merece 10 sempre 😉</small>
+            </div>
+
+            <hr style="margin:12px 0">
+
+            <h3>Perdoa o Pablo?</h3>
+            <div class="forgive">
+              <button class="btn btn-sim" id="btnSim">SIM</button>
+              <button class="btn btn-nao" id="btnNao">NÃO</button>
+            </div>
+
+            <div style="margin-top:12px">
+              <label class="small">Fotos nossas:</label>
+              <div class="gallery" id="gallery"></div>
+              <small class="small" style="display:block; margin-top:4px;">
+                Vocês podem adicionar fotos direto do celular. Elas ficam salvas e aparecem em todos os dispositivos 💖
+              </small>
+              <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <input id="fileInput" type="file" accept="image/*" multiple style="flex:1 1 180px;">
+                <button class="btn btn-sim" id="savePhotosBtn" style="flex:0 0 auto;">Salvar fotos</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel message-box" id="mensagens">
+            <div class="big-love">
+              <strong>Mensagem do Pablo pra você</strong>
+              <div class="footer-hearts">❤ ❤ ❤</div>
+            </div>
+            <textarea id="loveMsg">Ana Clara, cada batida do meu coração lembra seu nome. Você é minha companheirinha, meu sorriso e meu porto seguro. Eu te amo mais do que palavras conseguem dizer. Sempre seu, Pablo.</textarea>
+            <div class="action-row">
+              <button class="btn btn-sim" id="showMsg">Mostrar em grande</button>
+              <button class="btn btn-nao" id="surprise">Surpresa (corações)</button>
+              <button class="btn btn-sim" id="proposalBtn">Clique aqui para descobrir 💌</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="right-col">
+          
+
+          <div style="height:14px"></div>
+
+          <!-- Contagem regressiva para o encontro -->
+          <div class="panel countdown-panel" id="contagem" style="text-align:center">
+            <h3>Contagem para 24/12/2025 05:00</h3>
+            <p class="small">
+              Encontro em <strong>24/12/2025 as 05h</strong> (horario de Brasilia).
+            </p>
+            <div class="countdown-time" id="countdownTime">
+              --d --h --m --s
+            </div>
+            <p class="small countdown-msg" id="countdownMsg">
+              Carregando contagem...
+            </p>
+          </div>
+
+          <div style="height:14px"></div>
+
+          <div class="panel" style="text-align:center">
+            <h3>Brilhos & Corações</h3>
+            <p class="small">Corações caem na página quando você visita ou quando algo especial acontece.</p>
+            <div style="margin-top:8px">
+              <button class="btn btn-sim" id="popupLove">Mostrar Amor</button>
+            </div>
+          </div>
+          <div class="panel" id="links">
+            <h3>Links uteis</h3>
+            <p class="small">Guarde links de referencia (Drive, YouTube, docs) para abrir rapido.</p>
+            <ul class="small">
+              <li>Adicione aqui seus links favoritos para o casal.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Painel de satisfação -->
+      <div class="tabs-hub">
+        <p class="tabs-title"><span>*</span>Menu rapido</p>
+        <div class="tabs-row" id="tabButtons">
+          <button class="tab-btn active" data-tab="tudo">Tudo</button>
+          <button class="tab-btn" data-tab="painel">Painel</button>
+          <button class="tab-btn" data-tab="enquetes">Enquetes</button>
+          <button class="tab-btn" data-tab="retrospectiva">Retrospectiva</button>
+          <button class="tab-btn" data-tab="mural">Mural</button>
+          <button class="tab-btn" data-tab="historia">Historia</button>
+          <button class="tab-btn" data-tab="lugares">Lugares</button>
+          <button class="tab-btn" data-tab="sonhos">Sonhos</button>
+          <button class="tab-btn" data-tab="pote">Pote do amor</button>
+          <button class="tab-btn" data-tab="quiz">Quiz</button>
+          <button class="tab-btn" data-tab="videos">Videos</button>
+          <button class="tab-btn" data-tab="agenda">Calendario</button>
+          <button class="tab-btn" data-tab="humor">Humor</button>
+          <button class="tab-btn" data-tab="ideias">Inspiracoes</button>
+          <button class="tab-btn" data-tab="notif">Notificacoes</button>
+          <button class="tab-btn" data-tab="musica">Musica</button>
+        </div>
+      </div>
+
+      <section class="satisfaction-wrapper tab-panel" data-tab-section="painel" id="painel">
+        <div class="satisfaction-card">
+          <h2>Nível de satisfação com o mozão 😏</h2>
+          <p class="sat-sub">
+            Escolha quem você é e clique em um nível. Cada voto mexe o marcador da outra pessoa.
+          </p>
+
+          <div class="who-are-you">
+            <span>Eu sou:</span>
+            <button class="sat-user-btn" data-user="pablo">Pablo (namorado)</button>
+            <button class="sat-user-btn" data-user="ana">Ana Clara (namorada)</button>
+          </div>
+          <p class="sat-current">
+            Você está logado como: <strong id="satCurrentUser">ninguém</strong>
+          </p>
+
+          <div class="sat-board">
+            <div class="sat-row" data-level="perfect">
+              <span class="sat-label">Amorzinho perfeito(a) 💘</span>
+              <div class="sat-markers"></div>
+            </div>
+            <div class="sat-row" data-level="good">
+              <span class="sat-label">Muito bonzinho(a) ⭐</span>
+              <div class="sat-markers"></div>
+            </div>
+            <div class="sat-row" data-level="chill">
+              <span class="sat-label">De boa / Chill 😎</span>
+              <div class="sat-markers"></div>
+            </div>
+            <div class="sat-row" data-level="ice">
+              <span class="sat-label">Em gelo fino 🧊</span>
+              <div class="sat-markers"></div>
+            </div>
+            <div class="sat-row" data-level="jail">
+              <span class="sat-label">Cadeia (ai, ai, ai) ⛓️</span>
+              <div class="sat-markers"></div>
+            </div>
+          </div>
+
+          <!-- Marcadores -->
+          <div class="sat-marker sat-marker-pablo" data-user="pablo">P 💘</div>
+          <div class="sat-marker sat-marker-ana" data-user="ana">A 💘</div>
+
+          <p class="sat-tip">
+            Quando você entra como Ana, mexe o P (avaliando o Pablo). Quando entra como Pablo, mexe o A (avaliando a Ana).
+          </p>
+
+          <div class="jail-extra" id="jailExtra" style="display:none; margin-top:10px;">
+            <p id="jailLabel" class="sat-sub" style="margin-bottom:6px;"></p>
+            <textarea id="jailText" rows="3" placeholder="Escreva aqui o que a pessoa precisa fazer para sair da cadeia..."></textarea>
+            <button class="btn btn-nao" id="jailSaveBtn" style="margin-top:6px; width:100%;">Salvar plano para sair da cadeia</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ENQUETES -->
+      <section class="polls-wrapper tab-panel" data-tab-section="enquetes">
+        <div class="panel poll-card">
+          <h2>Enquetes do dia 💭</h2>
+          <p class="poll-sub">As respostas ficam salvas pra vocês dois verem, em qualquer dispositivo.</p>
+
+          <div class="poll-block" id="pollSexo">
+            <div class="poll-title">Sexo hoje: sim ou não? 😏</div>
+            <div class="poll-options">
+              <button class="btn btn-sim poll-btn" data-poll="sexo" data-value="sim">Sim 😈</button>
+              <button class="btn btn-nao poll-btn" data-poll="sexo" data-value="nao">Não 🙅‍♀️</button>
+            </div>
+            <p class="small" id="pollSexoStatus" style="margin-top:6px;">Ainda sem resposta hoje.</p>
+          </div>
+
+          <div class="poll-block" id="pollMenu">
+            <div class="poll-title">Cardápio do dia 🍽️</div>
+            <textarea id="menuInput" class="menu-textarea" placeholder="Ex.: noite do macarrão, pedir sushi, ver filme com pipoca..."></textarea>
+            <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-sim" id="menuSaveBtn">Salvar cardápio</button>
+            </div>
+            <p class="small" id="menuStatus" style="margin-top:6px;">Sem sugestão ainda. Escrevam algo gostoso pra hoje 😋</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- RETROSPECTIVA -->
+      <section class="extra-section retro-section tab-panel" data-tab-section="retrospectiva" id="retrospectiva">
+        <div class="love-wrapped-section">
+          <div class="panel love-wrapped-card">
+            <div class="love-wrapped-tag">
+              <span class="love-wrapped-tag-dot"></span>
+              <span>Retrospectiva do casal • 2025</span>
+            </div>
+
+            <h2 class="love-wrapped-title">Sua retrospectiva 2025 💕</h2>
+            <p class="love-wrapped-sub">
+              Um Wrapped versão relacionamento: em vez de horas de música, aqui são as
+              <strong>horas que vocês passaram juntos</strong> desde o primeiro encontro.
+            </p>
+
+            <div class="love-wrapped-main-metric">
+              <div class="love-wrapped-label">Horas juntos desde 06/07/2023</div>
+              <div class="love-wrapped-number">
+                <span id="wrHoursTogether">--</span><span class="love-wrapped-unit">h</span>
+              </div>
+              <p class="love-wrapped-note">
+                É como se uma playlist tivesse dado play lá em julho de 2023 e nunca tivesse parado.
+              </p>
+            </div>
+
+            <div class="love-wrapped-grid">
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Dias juntos</div>
+                <div class="love-wrapped-mini-number" id="wrDaysTogether">--</div>
+                <div class="love-wrapped-mini-note">
+                  Desde 06/07/2023 contando cada “oi”, cada rolê e cada cochilo na call.
+                </div>
+              </div>
+
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Dias de namoro</div>
+                <div class="love-wrapped-mini-number" id="wrDaysDating">--</div>
+                <div class="love-wrapped-mini-note">
+                  Oficialmente namorando desde 23/09/2023. Spoiler: deu muito certo.
+                </div>
+              </div>
+
+              <div class="love-wrapped-mini">
+                <div class="love-wrapped-mini-label">Horas só em 2025</div>
+                <div class="love-wrapped-mini-number" id="wrHoursYear">-- h</div>
+                <div class="love-wrapped-mini-note">
+                  Só esse ano vocês já somaram esse tanto de horas sendo “Pablo + Ana”.
+                </div>
+              </div>
+            </div>
+
+            <div class="love-wrapped-secondary">
+              <div class="love-wrapped-secondary-card">
+                <div class="love-wrapped-secondary-title">Top artista do seu ano</div>
+                <div class="love-wrapped-secondary-number">Ana Clara 👑</div>
+                <div class="love-wrapped-secondary-note">
+                  Presença confirmada em 100% das melhores memórias da playlist “Vida do Pablo”.
+                </div>
+              </div>
+
+              <div class="love-wrapped-secondary-card">
+                <div class="love-wrapped-secondary-title">Gênero mais tocado</div>
+                <div class="love-wrapped-secondary-number">Amorzinho intenso</div>
+                <div class="love-wrapped-secondary-note">
+                  Com uma pitada de drama, muito carinho e algumas horas extras de saudade.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MURAL DE RECADOS -->
+      <section class="mural-wrapper tab-panel" data-tab-section="mural">
+        <div class="panel mural-card">
+          <h2>Muralzinho de recados ✍️</h2>
+          <p class="small">
+            Deixem lembretes, missões ou recados fofos um pro outro. Tudo fica salvo pra vocês dois.
+          </p>
+
+          <div class="mural-form">
+            <input id="muralText" class="mural-input" placeholder="Ex.: comprar chocolate, noite do filme, mensagem fofa..." />
+            <label class="mural-checkbox">
+              <input type="checkbox" id="muralIsTask" />
+              missão
+            </label>
+            <button class="btn btn-sim" id="muralAddBtn">Adicionar</button>
+          </div>
+
+          <ul id="muralList" class="mural-list"></ul>
+        </div>
+      </section>
+
+
+      <!-- NOSSA HISTÓRIA -->
+      <section class="extra-section timeline-section tab-panel" data-tab-section="historia">
+        <div class="panel extra-card">
+          <h2>Nossa história de amor 🗓️</h2>
+          <p class="small">
+            Uma linha do tempo com os momentos mais importantes. Vocês podem ir adicionando aos poucos.
+          </p>
+          <div class="extra-form">
+            <input type="date" id="timelineDate" class="extra-input" />
+            <input type="text" id="timelineTitle" class="extra-input" placeholder="Título do momento (ex.: primeiro encontro)" />
+            <textarea id="timelineDesc" class="extra-input extra-textarea" placeholder="Detalhes fofos, memórias, sensações..."></textarea>
+            <button class="btn btn-sim" id="timelineAddBtn">Adicionar à linha do tempo</button>
+          </div>
+          <ul id="timelineList" class="extra-list"></ul>
+        </div>
+      </section>
+
+      <!-- MAPA / LUGARES ESPECIAIS -->
+      <section class="extra-section places-section tab-panel" data-tab-section="lugares">
+        <div class="panel extra-card">
+          <h2>Mapa de memórias 🌍</h2>
+          <p class="small">
+            Guardem os lugares especiais de vocês. Cada item abre o lugar no Google Maps.
+          </p>
+          <div class="extra-form">
+            <input type="text" id="placeName" class="extra-input" placeholder="Nome do lugar (ex.: nosso restaurante favorito)" />
+            <input type="text" id="placeAddress" class="extra-input" placeholder="Endereço ou cidade (ex.: Curitiba, PR)" />
+            <button class="btn btn-sim" id="placeAddBtn">Salvar lugar</button>
+          </div>
+          <ul id="placesList" class="extra-list"></ul>
+        </div>
+      </section>
+
+      <!-- BUCKET LIST DO CASAL -->
+      <section class="extra-section bucket-section tab-panel" data-tab-section="sonhos">
+        <div class="panel extra-card">
+          <h2>Nossa lista de sonhos ✨</h2>
+          <p class="small">
+            Coisas que vocês querem fazer juntos: viagens, cursos, planos pra casa...
+          </p>
+          <div class="extra-form">
+            <input type="text" id="bucketInput" class="extra-input" placeholder="Ex.: viajar pra praia tal, morar juntos, adotar um gatinho..." />
+            <button class="btn btn-sim" id="bucketAddBtn">Adicionar à lista</button>
+          </div>
+          <p class="small" id="bucketProgress">Nenhum sonho marcado ainda.</p>
+          <ul id="bucketList" class="extra-list extra-list-check"></ul>
+        </div>
+      </section>
+
+      <!-- POTE DO AMOR -->
+      <section class="extra-section lovejar-section tab-panel" data-tab-section="pote">
+        <div class="panel extra-card">
+          <h2>Pote do amor 💌</h2>
+          <p class="small">
+            Guardem bilhetes do tipo “Hoje eu te amo porque...”. Dá pra sortear um aleatoriamente.
+          </p>
+          <div class="extra-form">
+            <textarea id="loveJarInput" class="extra-input extra-textarea" placeholder="Hoje eu te amo porque..."></textarea>
+            <button class="btn btn-sim" id="loveJarAddBtn">Guardar bilhete</button>
+          </div>
+          <div class="lovejar-random">
+            <button class="btn btn-nao" id="loveJarRandomBtn">Sortear bilhete aleatório</button>
+            <p class="small" id="loveJarRandomText">Nenhum bilhete sorteado ainda.</p>
+          </div>
+          <details class="lovejar-details">
+            <summary class="small">Ver todos os bilhetes</summary>
+            <ul id="loveJarList" class="extra-list"></ul>
+          </details>
+        </div>
+      </section>
+
+      <!-- QUIZ DO CASAL -->
+      <section class="extra-section quiz-section tab-panel" data-tab-section="quiz">
+        <div class="panel extra-card">
+          <h2>Quiz do casal ❓</h2>
+          <p class="small">
+            Um joguinho simples sobre a história de vocês. Vocês podem brincar juntos.
+          </p>
+          <div id="quizContainer"></div>
+          <p class="small" id="quizResult"></p>
+        </div>
+      </section>
+
+      <!-- VÍDEOS & DEPOIMENTOS -->
+      <section class="extra-section videos-section tab-panel" data-tab-section="videos">
+        <div class="panel extra-card">
+          <h2>Vídeos & depoimentos 🎬</h2>
+          <p class="small">
+            Guardem links de vídeos especiais (YouTube, Drive, etc.) pra assistir quando der saudade.
+          </p>
+          <div class="extra-form">
+            <input type="text" id="videoTitle" class="extra-input" placeholder="Título do vídeo" />
+            <input type="text" id="videoUrl" class="extra-input" placeholder="Link do vídeo (YouTube, Drive, etc.)" />
+            <button class="btn btn-sim" id="videoAddBtn">Adicionar vídeo</button>
+          </div>
+          <ul id="videosList" class="extra-list extra-list-links"></ul>
+        </div>
+      </section>
+
+      <!-- NOSSO CALENDÁRIO -->
+      <section class="extra-section calendar-section tab-panel" data-tab-section="agenda">
+        <div class="panel extra-card">
+          <h2>Nosso calendário ❤️</h2>
+          <p class="small">
+            Datas importantes, combinados e rolês marcados. Vocês podem usar isso como base pra adicionar no calendário do celular.
+          </p>
+          <div class="extra-form calendar-form">
+            <input type="date" id="eventDate" class="extra-input" />
+            <input type="time" id="eventTime" class="extra-input" />
+            <input type="text" id="eventTitle" class="extra-input" placeholder="Ex.: jantar especial, viagem, cinema..." />
+            <button class="btn btn-sim" id="eventAddBtn">Salvar evento</button>
+          </div>
+          <ul id="eventsList" class="extra-list extra-list-events"></ul>
+        </div>
+      </section>
+
+      <!-- HUMOR & GRAFICO -->
+      <section class="extra-section mood-section tab-panel" data-tab-section="humor">
+        <div class="panel extra-card">
+          <h2>Histórico de humor do casal 📈</h2>
+          <p class="small">
+            Um gráfico simples usando os votos do “Nível de satisfação com o mozão”. Os dados ficam salvos nesse navegador.
+          </p>
+          <canvas id="moodChart" width="400" height="220"></canvas>
+          <p class="small" id="moodChartStatus"></p>
+        </div>
+      </section>
+
+      <!-- INSPIRAÇÕES & IDEIAS -->
+      <section class="extra-section ideas-section tab-panel" data-tab-section="ideias">
+        <div class="panel extra-card">
+          <h2>Inspirações & ideias ✨</h2>
+          <p class="small">
+            Receitas, filmes, lugares pra visitar, ideias de presentes... tudo o que lembre vocês dois.
+          </p>
+          <div class="extra-form">
+            <input type="text" id="ideaText" class="extra-input" placeholder="Ex.: maratonar tal série, cozinhar tal receita, visitar tal lugar..." />
+            <button class="btn btn-sim" id="ideaAddBtn">Adicionar inspiração</button>
+          </div>
+          <ul id="ideasList" class="extra-list"></ul>
+        </div>
+      </section>
+
+      <!-- NOTIFICAÇÕES -->
+      <section class="extra-section notif-section tab-panel" data-tab-section="notif">
+        <div class="panel extra-card">
+          <h2>Lembretes & notificações 🔔</h2>
+          <p class="small">
+            Aqui vocês podem testar as notificações do navegador para o site. Funciona melhor quando o site está em HTTPS (por exemplo, no domínio oficial).
+          </p>
+          <div class="extra-form">
+            <button class="btn btn-sim" id="notifRequestBtn">Ativar/confirmar notificações</button>
+            <button class="btn btn-nao" id="notifTestBtn">Enviar notificação de teste</button>
+          </div>
+          <p class="small" id="notifStatus">As notificações ainda não foram configuradas.</p>
+        </div>
+      </section>
+
+      <!-- MÚSICA -->
+      <section class="music-wrapper tab-panel" data-tab-section="musica">
+        <div class="panel music-card">
+          <h2>Música do nosso amor 🎵</h2>
+          <p class="music-sub">
+            Vocês podem ouvir a música que está salva no site, ou a playlist inteira no Spotify.
+          </p>
+
+          <div class="music-section music-spotify-embed">
+            <h4>Playlist no Spotify (prévia)</h4>
+            <p class="small">Essa versão é o player embutido com prévia, funciona sem login.</p>
+            <iframe style="border-radius:12px"
+              src="https://open.spotify.com/embed/playlist/3RitDlOniO6hRIQxmLWrMw?utm_source=generator"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy">
+            </iframe>
+          </div>
+
+          <div class="music-section" id="spotifyPremiumBlock">
+            <h4>Ouvir a playlist inteira (Spotify Premium)</h4>
+            <p class="small">
+              Se você ou a Ana entrarem com uma conta Premium, a playlist toca inteira aqui no site. 💚
+            </p>
+            <div class="music-spotify-controls">
+              <button class="btn btn-sim" id="spotifyLoginBtn">Entrar com Spotify</button>
+              <button class="btn btn-nao" id="spotifyPlayBtn">Tocar playlist aqui</button>
+            </div>
+            <p class="music-status" id="spotifyStatus">Ainda não conectado ao Spotify.</p>
+
+            <details class="music-log-details">
+              <summary class="small">Ver detalhes técnicos (log)</summary>
+              <pre id="spotifyLog" class="music-log"></pre>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Feito com ♥ por Pablo — EU TE AMO SUPER HIPER MEGA.
+      </footer>
+    </div>
+  </div>
+
+  <!-- Overlay mensagem grande -->
+  <div class="overlay" id="overlay">
+    <div class="overlay-card">
+      <h2 id="overlayTitle">Eu te amo, Ana Clara ❤</h2>
+      <p id="overlayText" class="small">Uma mensagem especial do Pablo.</p>
+      <div style="margin-top:14px"><button class="btn btn-sim" id="closeOverlay">Fechar</button></div>
+    </div>
+  </div>
+
+  <!-- Overlay da carta de pedido de casamento -->
+  <div id="carta"></div>
+  <div class="overlay" id="proposalOverlay">
+    <div class="letter-card">
+      <div class="ring-icon">💍</div>
+      <h2 class="letter-title">Minha Ana Clara, quer casar comigo?</h2>
+      <div class="letter-body">
+        <p>Amor, a gente briga, discorda, se enrola na vida... mas em todas as versões da minha história, <strong>você</strong> está lá.</p>
+        <p>Mesmo nos dias difíceis, é com você que eu quero conversar, rir, dividir o café, o cansaço e os sonhos. Eu não me imagino em um futuro em que você não esteja do meu lado.</p>
+        <p>Eu te amo de um jeito que não cabe só em palavras, nem só num site cheio de corações caindo. Eu te amo no silêncio, nos detalhes, nas piadas inte
+as e até nas nossas teimosias.</p>
+        <p>Por isso, com todo o amor e todo o medo e toda a coragem do mundo, eu quero te perguntar de verdade:</p>
+        <p style="text-align:center; font-size:18px; margin-top:8px;"><strong>Você aceita viver pra sempre comigo?</strong></p>
+        <p style="margin-top:10px;">Quero caminhar ao seu lado, construir uma casa que tenha a nossa cara, nossos cheiros, nossas manias e muitos gatinhos (ou peixinhos, quem sabe 🐟). Quero envelhecer rindo das nossas histórias e lembrando de quando tudo começou.</p>
+        <p>Eu te amo, Ana Clara. Hoje, amanhã e depois. Para sempre seu,</p>
+        <p><strong>Pablo 💖</strong></p>
+      </div>
+      <div style="margin-top:16px; text-align:center;">
+        <button class="btn btn-sim" id="closeProposal">Fechar essa carta (por enquanto)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay de galeria completa -->
+  <div class="overlay" id="galleryOverlay">
+    <div class="overlay-card">
+      <h2 style="margin-top:0;">Todas as nossas fotos 💕</h2>
+      <p class="small">Aqui aparece tudo, inclusive as que estão escondidas no "+N".</p>
+      <div id="fullGallery"></div>
+      <div style="margin-top:14px; text-align:right;">
+        <button class="btn btn-nao" id="closeGalleryOverlay">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+  <script src="assets/app.js?v=20251209"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

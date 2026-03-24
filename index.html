@@ -1660,15 +1660,6 @@
           <h2>Enquetes do dia 💭</h2>
           <p class="poll-sub">As respostas ficam salvas pra vocês dois verem, em qualquer dispositivo.</p>
 
-          <div class="poll-block" id="pollSexo">
-            <div class="poll-title">Sexo hoje: sim ou não? 😏</div>
-            <div class="poll-options">
-              <button class="btn btn-sim poll-btn" data-poll="sexo" data-value="sim">Sim 😈</button>
-              <button class="btn btn-nao poll-btn" data-poll="sexo" data-value="nao">Não 🙅‍♀️</button>
-            </div>
-            <p class="small" id="pollSexoStatus" style="margin-top:6px;">Ainda sem resposta hoje.</p>
-          </div>
-
           <div class="poll-block" id="pollMenu">
             <div class="poll-title">Cardápio do dia 🍽️</div>
             <textarea id="menuInput" class="menu-textarea" placeholder="Ex.: noite do macarrão, pedir sushi, ver filme com pipoca..."></textarea>
@@ -2643,48 +2634,6 @@
         }
       });
     }
-
-    /* ENQUETE "SEXO HOJE" */
-    const pollSexoBtns = document.querySelectorAll('.poll-btn[data-poll="sexo"]');
-    const pollSexoStatus = document.getElementById('pollSexoStatus');
-
-    function setSexoUI(choice){
-      pollSexoBtns.forEach(btn => {
-        btn.classList.toggle('selected', btn.getAttribute('data-value') === choice);
-      });
-      if(choice === 'sim'){
-        pollSexoStatus.textContent = 'Última resposta: Sim 😈';
-      }else if(choice === 'nao'){
-        pollSexoStatus.textContent = 'Última resposta: Não 🙅‍♀️';
-      }else{
-        pollSexoStatus.textContent = 'Ainda sem resposta hoje.';
-      }
-    }
-
-    pollSexoBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const choice = btn.getAttribute('data-value');
-        setSexoUI(choice);
-        if(db){
-          firebase.database().ref('polls/' + coupleId + '/sexoHoje').set({
-            value: choice,
-            updatedAt: Date.now()
-          }).catch(err => console.warn('Erro ao salvar enquete sexoHoje:', err));
-        }
-      });
-    });
-
-    if(db){
-      firebase.database().ref('polls/' + coupleId + '/sexoHoje').on('value', snap => {
-        const data = snap.val();
-        if(!data || !data.value){
-          setSexoUI(null);
-          return;
-        }
-        setSexoUI(data.value);
-      });
-    }
-
     /* CARDÁPIO DO DIA */
     const menuInput  = document.getElementById('menuInput');
     const menuSaveBtn = document.getElementById('menuSaveBtn');

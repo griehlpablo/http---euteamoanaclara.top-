@@ -11,6 +11,7 @@ import Painel from './pages/Painel';
 import Mural from './pages/Mural';
 import Genealogia from './pages/Genealogia';
 import Humor from './pages/Humor';
+import Links from './pages/Links';
 
 function App() {
   return (
@@ -29,6 +30,17 @@ function App() {
           <Route path="/mural" element={<Mural />} />
           <Route path="/genealogia" element={<Genealogia />} />
           <Route path="/humor" element={<Humor />} />
+          <Route path="/links" element={<Links />} />
+          
+          {/* Páginas em construção para não quebrar o roteamento */}
+          <Route path="/agenda" element={<div className="text-center mt-20 font-serif text-2xl">Calendário em construção...</div>} />
+          <Route path="/videos" element={<div className="text-center mt-20 font-serif text-2xl">Vídeos em construção...</div>} />
+          <Route path="/musica" element={<div className="text-center mt-20 font-serif text-2xl">Música em construção...</div>} />
+          <Route path="/sonhos" element={<div className="text-center mt-20 font-serif text-2xl">Sonhos em construção...</div>} />
+          <Route path="/pote" element={<div className="text-center mt-20 font-serif text-2xl">Pote do Amor em construção...</div>} />
+          <Route path="/quiz" element={<div className="text-center mt-20 font-serif text-2xl">Quiz em construção...</div>} />
+          <Route path="/notif" element={<div className="text-center mt-20 font-serif text-2xl">Notificações em construção...</div>} />
+          <Route path="/chatgpt" element={<div className="text-center mt-20 font-serif text-2xl">ChatGPT em construção...</div>} />
         </Routes>
       </main>
     </Router>

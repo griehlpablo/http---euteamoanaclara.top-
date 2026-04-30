@@ -1,5 +1,9 @@
+import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import HeartRain from './components/HeartRain';
+
+// Importação das Páginas (Certifique-se de que os arquivos existem em src/pages/)
 import Home from './pages/Home';
 import Central from './pages/Central';
 import Contagem from './pages/Contagem';
@@ -12,14 +16,19 @@ import Mural from './pages/Mural';
 import Genealogia from './pages/Genealogia';
 import Humor from './pages/Humor';
 import Links from './pages/Links';
-import AssistenteCasal from './pages/AssistenteCasal'; // Importando o Cupido
+import AssistenteCasal from './pages/AssistenteCasal';
 
 export default function App() {
   return (
-    <div className="bg-gradient-to-br from-rose-50 to-rose-100 min-h-screen text-slate-700 antialiased overflow-x-hidden font-sans">
+    // O container principal define o gradiente de fundo e a fonte
+    <div className="bg-gradient-to-br from-rose-50 to-rose-100 min-h-screen text-slate-700 antialiased overflow-x-hidden font-sans relative">
+      {/* A Chuva de Corações fica aqui para aparecer em todas as telas */}
+      <HeartRain />
+      
       <Router>
         <Navbar />
-        <main className="pt-28 pb-12 px-4 max-w-5xl mx-auto">
+        {/* Padding-top (pt-24) garante que o conteúdo não fique escondido sob a Navbar fixa */}
+        <main className="pt-24 pb-12 px-4 max-w-5xl mx-auto relative z-10">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/central" element={<Central />} />
@@ -35,14 +44,8 @@ export default function App() {
             <Route path="/links" element={<Links />} />
             <Route path="/assistente" element={<AssistenteCasal />} />
             
-            {/* Páginas Pendentes */}
-            <Route path="/agenda" element={<div className="text-center mt-20 font-serif text-2xl text-slate-700">Nosso Calendário em construção... 📅</div>} />
-            <Route path="/videos" element={<div className="text-center mt-20 font-serif text-2xl text-slate-700">Vídeos em construção... 🎥</div>} />
-            <Route path="/musica" element={<div className="text-center mt-20 font-serif text-2xl text-slate-700">Nossa Música em construção... 🎵</div>} />
-            <Route path="/sonhos" element={<div className="text-center mt-20 font-serif text-2xl text-slate-700">Lista de Sonhos em construção... ✨</div>} />
-            <Route path="/pote" element={<div className="text-center mt-20 font-serif text-2xl text-slate-700">Pote do Amor em construção... 🎁</div>} />
-            <Route path="/quiz" element={<div className="text-center mt-20 font-serif text-2xl text-slate-700">Quiz do Casal em construção... ❓</div>} />
-            <Route path="/notif" element={<div className="text-center mt-20 font-serif text-2xl text-slate-700">Notificações em construção... 🔔</div>} />
+            {/* Fallback para rotas não encontradas */}
+            <Route path="*" element={<div className="text-center mt-20 font-serif text-2xl text-slate-700">Página em construção... 🚧</div>} />
           </Routes>
         </main>
       </Router>

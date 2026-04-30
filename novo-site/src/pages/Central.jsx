@@ -1,57 +1,48 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Clock, Image, Mail, MessageCircleHeart, ArrowLeft, 
+  Clock, ImageIcon, Mail, MessageCircleHeart, ArrowLeft, 
   TrendingUp, GitMerge, Link as LinkIcon, Sparkles, 
   SmilePlus, CalendarHeart, Film, Music, CheckSquare, 
-  HelpCircle, Gift, BellRing, Bot
+  Gift, HelpCircle, Bot 
 } from 'lucide-react';
 
+const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
+
 const cards = [
-  { path: "/contagem", icon: Clock, title: "O Nosso Tempo", desc: "A contagem oficial." },
-  { path: "/carta", icon: Mail, title: "Palavras para Ti", desc: "Tudo aquilo que sinto e guardo." },
-  { path: "/galeria", icon: Image, title: "Nossas Memórias", desc: "Nossos melhores momentos." },
-  { path: "/mensagens", icon: MessageCircleHeart, title: "Mural & Recados", desc: "Deixem lembretes e missões." },
-  { path: "/retrospectiva", icon: Sparkles, title: "Retrospectiva", desc: "Nosso Spotify Wrapped." },
-  { path: "/painel", icon: SmilePlus, title: "Satisfação", desc: "Nível de satisfação com o mozão." },
-  { path: "/humor", icon: TrendingUp, title: "Humor", desc: "Histórico de humor do casal." },
-  { path: "/genealogia", icon: GitMerge, title: "Dossiê Genealógico", desc: "Nossas origens e antepassados." },
-  { path: "/links", icon: LinkIcon, title: "Links Úteis", desc: "Referências rápidas para nós." },
-  { path: "/agenda", icon: CalendarHeart, title: "Nosso Calendário", desc: "Datas e combinados." },
-  { path: "/videos", icon: Film, title: "Vídeos", desc: "Momentos gravados." },
-  { path: "/musica", icon: Music, title: "Nossa Música", desc: "A trilha sonora do nosso amor." },
-  { path: "/sonhos", icon: CheckSquare, title: "Lista de Sonhos", desc: "Nossa Bucket List." },
-  { path: "/pote", icon: Gift, title: "Pote do Amor", desc: "Sorteie um motivo para amar." },
-  { path: "/quiz", icon: HelpCircle, title: "Quiz do Casal", desc: "O quanto nos conhecemos?" },
-  { path: "/notif", icon: BellRing, title: "Notificações", desc: "Lembretes e avisos." },
-  { path: "/chatgpt", icon: Bot, title: "ChatGPT", desc: "Nosso assistente pessoal." },
+  { path: "/contagem", icon: Clock, title: "O Nosso Tempo", desc: "Contagem oficial desde o início." },
+  { path: "/carta", icon: Mail, title: "Carta de Amor", desc: "Palavras vindas do coração." },
+  { path: "/galeria", icon: ImageIcon, title: "Memórias", desc: "Os nossos melhores momentos." },
+  { path: "/assistente", icon: Sparkles, title: "Cupido Virtual ✨", desc: "IA para dicas de encontros." },
+  { path: "/retrospectiva", icon: TrendingUp, title: "Retrospectiva", desc: "A nossa história em números." },
+  { path: "/painel", icon: SmilePlus, title: "Satisfação", desc: "Como estamos hoje?" },
+  { path: "/mural", icon: MessageCircleHeart, title: "Mural", desc: "Recados e missões diárias." },
+  { path: "/genealogia", icon: GitMerge, title: "Genealogia", desc: "As nossas raízes Kovalek." },
+  { path: "/links", icon: LinkIcon, title: "Links Úteis", desc: "Acessos rápidos importantes." },
 ];
 
 export default function Central() {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative z-10 pt-6">
       <div className="text-center mb-12">
-        <h2 className="font-serif text-4xl font-bold mb-3 text-gray-800">O Nosso Espaço</h2>
-        <p className="text-slate-500">Tudo o que construímos, guardado aqui com amor.</p>
+        <h2 className="font-serif text-4xl font-bold text-gray-800 mb-2">O Nosso Espaço</h2>
+        <p className="text-slate-500 text-sm">Tudo o que construímos, guardado com amor.</p>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {cards.map((card, index) => (
-          <motion.div key={card.path} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-            <Link to={card.path} className="block glass-panel p-6 rounded-3xl text-left hover:-translate-y-2 transition-transform duration-300 group h-full border border-transparent hover:border-brand-light">
-              <div className="bg-brand-light w-10 h-10 rounded-xl flex items-center justify-center mb-4 text-brand-dark group-hover:scale-110 transition-transform">
-                <card.icon className="w-5 h-5" />
-              </div>
-              <h3 className="font-serif text-xl font-bold mb-2 text-slate-800">{card.title}</h3>
-              <p className="text-slate-500 text-xs mb-4">{card.desc}</p>
-            </Link>
-          </motion.div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-2">
+        {cards.map((card, i) => (
+          <Link key={i} to={card.path} className={`${glassClasses} p-6 rounded-[2.5rem] hover:-translate-y-2 transition-transform block border border-transparent hover:border-rose-200 group`}>
+            <div className="bg-rose-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 text-rose-500 group-hover:scale-110 transition-transform group-hover:bg-rose-100">
+              <card.icon className="w-7 h-7" />
+            </div>
+            <h3 className="font-serif text-xl font-bold text-slate-800 mb-1">{card.title}</h3>
+            <p className="text-slate-400 text-[11px] leading-relaxed">{card.desc}</p>
+          </Link>
         ))}
       </div>
-      
       <div className="mt-12 text-center">
-        <Link to="/" className="text-slate-500 hover:text-brand transition-colors inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> Voltar ao início
+        <Link to="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors text-xs font-bold uppercase tracking-widest bg-white/40 px-6 py-3 rounded-full backdrop-blur-sm">
+          <ArrowLeft className="w-4 h-4" /> Voltar ao Início
         </Link>
       </div>
     </motion.div>

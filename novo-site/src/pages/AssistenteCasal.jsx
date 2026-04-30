@@ -7,12 +7,11 @@ const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow
 
 // --- SERVIÇO DE INTEGRAÇÃO COM A API DO GEMINI ---
 const callGeminiAPI = async (prompt) => {
-  // Sua chave de API inserida diretamente
   const apiKey = "AIzaSyCrfHGV87_6iNkMFpXNuAEWdMsWwDMsXU4"; 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  // Alterado para gemini-1.5-flash (mais estável)
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   
-  // Instrução que dá a personalidade ao seu Cupido Virtual[cite: 3]
-  const systemInstruction = "Você é o 'Cupido Virtual ✨', um assistente de inteligência artificial criado pelo Pablo exclusivamente para ajudar a Ana Clara, sua namorada. Seja sempre romântico, gentil, use emojis fofos e ajude com ideias de encontros, recomendações de filmes para casal ou receitas românticas. Você conhece a história deles: ficaram a primeira vez em 06/07/2023 e começaram a namorar oficialmente em 23/09/2023[cite: 11]. Seja conciso e focado no amor deles.";
+  const systemInstruction = "Você é o 'Cupido Virtual ✨', o assistente romântico do Pablo e da Ana Clara. Pablo criou este site para ela. Seja fofo, use muitos emojis e lembre a Ana do quanto o Pablo a ama. História: ficaram em 06/07/2023 e namoram desde 23/09/2023.";
 
   const payload = {
     contents: [{ parts: [{ text: prompt }] }],
@@ -26,12 +25,17 @@ const callGeminiAPI = async (prompt) => {
       body: JSON.stringify(payload)
     });
     
-    if (!response.ok) throw new Error(`Erro: ${response.status}`);
-    
     const data = await response.json();
+
+    if (!response.ok) {
+      // Isso vai imprimir o erro real no seu console (F12)
+      console.error("Erro detalhado da API:", data);
+      throw new Error(`Erro: ${response.status}`);
+    }
+    
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "Opa, me perdi nos pensamentos de amor. Pode repetir? 💖";
   } catch (error) {
-    console.error("Erro na API:", error);
+    console.error("Erro na comunicação:", error);
     return "Desculpe, Ana. Minha conexão com o coração do Pablo falhou agora. Tente novamente mais tarde! 💔";
   }
 };

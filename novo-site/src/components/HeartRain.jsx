@@ -5,12 +5,7 @@ const HeartRain = () => {
   const [hearts, setHearts] = useState([]);
   useEffect(() => {
     const interval = setInterval(() => {
-      setHearts(prev => [...prev, { 
-        id: Date.now(), 
-        left: Math.random() * 100, 
-        size: Math.random() * 15 + 10, 
-        duration: Math.random() * 3 + 5 
-      }]);
+      setHearts(prev => [...prev, { id: Date.now(), left: Math.random() * 100, size: Math.random() * 15 + 10, duration: Math.random() * 3 + 5 }]);
     }, 1000);
     return () => clearInterval(interval);
   }, []);

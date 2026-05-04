@@ -11,8 +11,8 @@ const callGeminiAPI = async (historicoMensagens, novoPrompt) => {
   const apiKey = chaveInvertida.split('').reverse().join('');
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`;
   
-  // INSTRUÇÃO ATUALIZADA: Agora o bot sabe reconhecer todos os sinônimos e gírias!
-  const systemInstruction = "Instruções: Você é o assistente virtual criado pelo desenvolvedor Pablo Griehl para ajudar a namorada dele, Ana Clara. Seu tom deve ser prestativo, inteligente e gentil, com um leve toque romântico. Dê respostas curtas e práticas. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. NÃO REPITA sugestões se já tiver sugerido na conversa. REGRA CRÍTICA: Se a Ana Clara usar qualquer expressão pedindo para você notificar o namorado (ex: 'fala pro pablo', 'pede pro pablo', 'avisa o pablo', 'manda pro pablo', 'fala po pablo', etc.), você DEVE aceitar o pedido, confirmar a ela que vai enviar a mensagem e OBRIGATORIAMENTE incluir a tag secreta [AVISAR_PABLO] no final da sua resposta.";
+  // INSTRUÇÃO ATUALIZADA: Exceção para receitas serem completas e detalhadas!
+  const systemInstruction = "Instruções: Você é o assistente virtual criado pelo desenvolvedor Pablo Griehl para ajudar a namorada dele, Ana Clara. Seu tom deve ser prestativo, inteligente e gentil, com um leve toque romântico. Dê respostas curtas e práticas, EXCETO quando ela pedir uma receita, um roteiro ou detalhes específicos, nestes casos forneça o passo a passo completo e detalhado. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. NÃO REPITA sugestões se já tiver sugerido na conversa. REGRA CRÍTICA: Se a Ana Clara usar qualquer expressão pedindo para você notificar o namorado (ex: 'fala pro pablo', 'pede pro pablo', 'avisa o pablo', 'manda pro pablo', 'envie pro pablo', etc.), você DEVE aceitar o pedido, confirmar a ela que vai enviar a mensagem e OBRIGATORIAMENTE incluir a tag secreta [AVISAR_PABLO] no final da sua resposta.";
 
   const formattedHistory = historicoMensagens
     .filter(msg => msg.text !== "Olá, Ana Clara! 💕 Como posso ajudar o casal hoje?")
@@ -138,23 +138,21 @@ export default function AssistenteCasal() {
     // INTERCEPTADOR DE EMAIL
     // ==========================================
     if (botResponse.includes('[AVISAR_PABLO]')) {
-      // 1. Remove a tag secreta
       botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
 
-      // 2. Dispara o EmailJS
       try {
         await emailjs.send(
           'service_m4p5rzl',   
           'template_nz2c3cf',  
           {
-            to_name: 'Pablo',
-            message: `Alerta do Cupido Virtual!\n\nA Ana Clara pediu o seguinte: "${prompt}"\n\nEu respondi: "${botResponse}"`
+            mensagem_ana: prompt,         // Variável nova
+            resposta_cupido: botResponse  // Variável nova
           },
           '_vmorr0K9MFFhLsoz'    
         );
-        console.log('Email disparado com sucesso para o Pablo!');
+        console.log('Email disparado com sucesso!');
       } catch (error) {
-        console.error('Falha ao enviar email pelo EmailJS:', error);
+        console.error('Falha ao enviar email:', error);
       }
     }
     // ==========================================

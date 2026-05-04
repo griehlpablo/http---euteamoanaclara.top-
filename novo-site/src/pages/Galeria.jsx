@@ -10,14 +10,16 @@ export default function Galeria() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    // Busca as fotos do caminho que você já usa no Realtime Database
-    const galleryRef = ref(rtdb, 'gallery/pablo-ana');
+    // Ajustado de 'galery' para 'gallery' com dois Ls
+    const galleryRef = ref(rtdb, 'gallery/pablo-ana'); 
+    
     onValue(galleryRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Converte o objeto do Firebase em um array
         const listaFotos = Object.values(data);
-        setFotos(listaFotos.reverse()); // Fotos mais recentes primeiro
+        setFotos(listaFotos.reverse());
+      } else {
+        console.log("Caminho não encontrado no RTDB: gallery/pablo-ana");
       }
     });
   }, []);

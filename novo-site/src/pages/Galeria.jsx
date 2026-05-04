@@ -11,8 +11,8 @@ export default function Galeria() {
 
   useEffect(() => {
     // Busca as fotos do caminho que você já usa no Realtime Database
-    const galeryRef = ref(rtdb, 'galery/pablo-ana');
-    onValue(galeryRef, (snapshot) => {
+    const galleryRef = ref(rtdb, 'gallery/pablo-ana');
+    onValue(galleryRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         // Converte o objeto do Firebase em um array

@@ -11,13 +11,25 @@ export default function Galeria() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const galleryRef = ref(rtdb, 'gallery/pablo-ana'); // Caminho corrigido com 2 'L's
+    const galleryRef = ref(rtdb, 'gallery/pablo-ana');
     onValue(galleryRef, (snapshot) => {
       const data = snapshot.val();
+      
+      // Griehl, olha esse log no seu F12 (Console) para ver a estrutura real!
+      console.log("DEBUG GRIEHL - Estrutura vinda do Firebase:", data);
+
       if (data) {
-        // Garantindo que pegamos a URL, seja o dado uma string ou um objeto
         const listaBruta = Object.values(data);
-        const listaTratada = listaBruta.map(item => typeof item === 'object' ? item.url : item);
+        
+        // Função defensiva: busca a string da URL mesmo se for objeto aninhado
+        const listaTratada = listaBruta.map(item => {
+          if (typeof item === 'string') return item;
+          if (item && typeof item === 'object') {
+            // Tenta achar a chave .url ou o primeiro valor que seja uma string http
+            return item.url || item.image || Object.values(item).find(v => typeof v === 'string' && v.startsWith('http'));
+          }
+          return null;
+        }).filter(url => url !== null); // Remove qualquer coisa que não seja URL
         
         setFotos(listaTratada.reverse());
       }
@@ -26,6 +38,7 @@ export default function Galeria() {
   }, []);
 
   const openModal = (index) => {
+    if (!fotos[index]) return;
     setCurrentIndex(index);
     setSelectedImg(fotos[index]);
   };
@@ -66,15 +79,14 @@ export default function Galeria() {
             <div 
               key={index}
               onClick={() => openModal(index)}
-              className="group relative aspect-square overflow-hidden rounded-2xl bg-white shadow-lg cursor-pointer border-4 border-white transition-all hover:border-rose-200"
+              className="group relative aspect-square overflow-hidden rounded-2xl bg-white shadow-lg cursor-pointer border-4 border-white transition-all hover:border-rose-200 z-10"
             >
               <img 
                 src={url} 
                 alt={`Momento ${index}`} 
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                onError={(e) => { e.target.src = "https://via.placeholder.com/400?text=Erro+ao+Carregar"; }}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 pointer-events-none"
               />
-              <div className="absolute inset-0 bg-rose-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="absolute inset-0 bg-rose-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                 <Maximize2 className="text-white" size={32} />
               </div>
             </div>
@@ -82,40 +94,37 @@ export default function Galeria() {
         </div>
       )}
 
-      {/* Modal de Carrossel Aprimorado */}
+      {/* Modal - Note o z-[9999] para garantir que o 'X' apareça */}
       {selectedImg && (
-        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
           
-          {/* BOTÃO FECHAR (X) - Agora com fundo para ser visível */}
+          {/* BOTÃO FECHAR - Agora fixo e gigante no topo direito */}
           <button 
-            onClick={() => setSelectedImg(null)}
-            className="absolute top-6 right-6 z-[1000] bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-all border border-white/20"
-            title="Fechar"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedImg(null);
+            }}
+            className="absolute top-10 right-10 z-[10000] bg-rose-600 text-white p-4 rounded-full shadow-2xl hover:bg-rose-700 transition-all border-2 border-white/20"
           >
-            <X size={32} />
+            <X size={40} strokeWidth={3} />
           </button>
 
-          {/* Navegação Esquerda */}
-          <button onClick={prevImg} className="absolute left-4 z-[1000] p-2 text-white/50 hover:text-white transition-colors bg-black/20 rounded-full">
-            <ChevronLeft size={40} />
+          {/* Navegação */}
+          <button onClick={prevImg} className="absolute left-6 z-[10000] p-3 text-white/70 hover:text-white bg-white/10 rounded-full backdrop-blur-md">
+            <ChevronLeft size={48} />
           </button>
 
-          {/* Imagem em Tela Cheia */}
-          <div className="max-w-5xl w-full h-full flex items-center justify-center select-none">
-            <img 
-              src={selectedImg} 
-              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-in zoom-in duration-300"
-              alt="Visualização"
-            />
-          </div>
+          <img 
+            src={selectedImg} 
+            className="max-w-full max-h-[90vh] object-contain shadow-2xl select-none"
+            alt="Foto expandida"
+          />
 
-          {/* Navegação Direita */}
-          <button onClick={nextImg} className="absolute right-4 z-[1000] p-2 text-white/50 hover:text-white transition-colors bg-black/20 rounded-full">
-            <ChevronRight size={40} />
+          <button onClick={nextImg} className="absolute right-6 z-[10000] p-3 text-white/70 hover:text-white bg-white/10 rounded-full backdrop-blur-md">
+            <ChevronRight size={48} />
           </button>
 
-          {/* Contador */}
-          <div className="absolute bottom-10 bg-black/40 px-4 py-1 rounded-full text-white/80 text-sm font-medium">
+          <div className="absolute bottom-10 bg-white/20 backdrop-blur-md px-6 py-2 rounded-full text-white font-bold">
             {currentIndex + 1} / {fotos.length}
           </div>
         </div>

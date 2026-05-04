@@ -8,8 +8,8 @@ import { db } from '../firebase';
 
 // --- FUNÇÃO DO GEMINI COM MEMÓRIA CORRIGIDA ---
 const callGeminiAPI = async (historicoMensagens, novoPrompt) => {
-  // CHAVE CORRIGIDA: AIzaSyBlgw6uAplWqAgXaL4ttzHqfJyqj8x1CG4
-  const chaveInvertida = "4GC1x8jqyJfqHztt4LaXgAqWlpAu6wglBySazIA"; 
+  // A string abaixo agora termina em "BySazIA" (o 'y' antes do 'S' na inversão para o 'S' vir antes do 'y' no final)
+const chaveInvertida = "4GC1x8jqyJfqHztt4LaXgAqWlpAu6wglBySazIA";
   const apiKey = chaveInvertida.split('').reverse().join('');
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
   

@@ -5,10 +5,10 @@ import { Send, Loader2, Bot, ArrowLeft } from 'lucide-react';
 
 const callGeminiAPI = async (prompt) => {
   const apiKey = "AIzaSyCrfHGV87_6iNkMFpXNuAEWdMsWwDMsXU4"; 
-  // VOLTAMOS PARA v1beta AQUI (única versão que tem o modelo 1.5-flash)
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  // CORREÇÃO FINAL: Usando o modelo gemini-2.5-flash que está ativo e atualizado!
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
   
-  // Personalidade injetada diretamente no texto (não dá erro 400)
+  // Personalidade injetada diretamente no texto (à prova de erros)
   const context = "Instrução de Personalidade: Você é o 'Cupido Virtual ✨', o assistente romântico do Pablo e da Ana Clara. Pablo criou este site para ela. Seja carinhoso, use emojis, sugira encontros e receitas. Relembre a Ana do quanto ela é amada. História: primeiro beijo em 06/07/2023, namoro começou em 23/09/2023. Responda à seguinte mensagem da Ana Clara: ";
 
   const payload = {

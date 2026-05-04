@@ -1,8 +1,9 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore"; // Para o banco de dados (Histórico do Chat)
-import { getStorage } from "firebase/storage";     // Para salvar os arquivos (Fotos/Anexos)
+import { getFirestore } from "firebase/firestore"; 
+import { getStorage } from "firebase/storage";     
+import { getDatabase } from "firebase/database"; // 1. Adicione este import para a Galeria!
 
 const firebaseConfig = {
   apiKey: "AIzaSyDS1YA0FRvCIryjreFVzRMZyaHhYtm-pUU",
@@ -19,6 +20,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const analytics = getAnalytics(app);
 
-// Exporta o Firestore e o Storage para usarmos em outras partes do site
+// Exporta os serviços para o projeto
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const rtdb = getDatabase(app); // 2. Adicione esta exportação!

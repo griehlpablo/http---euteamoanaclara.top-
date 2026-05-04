@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Send, Loader2, Bot, ArrowLeft } from 'lucide-react';
+import { Send, Bot, ArrowLeft } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import emailjs from '@emailjs/browser';
 
 const callGeminiAPI = async (prompt) => {
   // TRUQUE NINJA DEFINITIVO: Chave invertida para ofuscar o código no GitHub
   const chaveInvertida = "A-WE-OJqtqPZcJzGYfdOqfj0Rn8-9fa_DySazIA"; 
   
-  // O JavaScript "desinverte" a chave apenas quando o site abre no navegador
+  // O JavaScript "desinverte" a chave apenas no navegador
   const apiKey = chaveInvertida.split('').reverse().join('');
   
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
   
-  // Personalidade ajustada: útil, prático, sem exageros românticos
   const context = "Instruções: Você é o assistente virtual criado pelo Pablo para ajudar a namorada dele, Ana Clara. Seu tom deve ser prestativo, inteligente e gentil, com um leve toque romântico, mas absolutamente SEM ser meloso, grudento ou poético demais. Dê respostas curtas, práticas e vá direto ao ponto. Ajude com ideias reais de encontros, filmes ou receitas. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. Responda à seguinte mensagem da Ana Clara de forma natural, amigável e concisa: ";
 
   const payload = {
@@ -50,6 +50,25 @@ export default function AssistenteCasal() {
 
   useEffect(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
 
+  // Função que envia o email silencioso para o Pablo
+  const notificarPablo = (mensagemDaAna) => {
+    const templateParams = {
+      mensagem_ana: mensagemDaAna,
+    };
+
+    emailjs.send(
+      'service_m4p5rzl',     // Seu Service ID
+      'template_nz2c3cf',    // Seu Template ID
+      templateParams,
+      '_vmorr0K9MFFhLsoz'    // Sua Public Key
+    )
+    .then((response) => {
+      console.log('Notificação enviada ao Pablo com sucesso!', response.status, response.text);
+    }, (error) => {
+      console.log('Falha ao notificar...', error);
+    });
+  };
+
   const handleSend = async (textToProcess) => {
     const prompt = textToProcess || input;
     if (!prompt.trim() || isLoading) return;
@@ -57,6 +76,12 @@ export default function AssistenteCasal() {
     setMessages(prev => [...prev, { role: 'user', text: prompt }]);
     setInput("");
     setIsLoading(true);
+
+    // GATILHO DO EMAIL: Se a mensagem tiver essas palavras, o email é disparado!
+    const textoMinusculo = prompt.toLowerCase();
+    if (textoMinusculo.includes('avisa') || textoMinusculo.includes('avisar') || textoMinusculo.includes('chama o pablo')) {
+      notificarPablo(prompt);
+    }
 
     const botResponse = await callGeminiAPI(prompt);
     
@@ -71,7 +96,8 @@ export default function AssistenteCasal() {
       </div>
 
       <div className="bg-white/60 backdrop-blur-lg border border-white/50 shadow-xl flex-1 overflow-hidden flex flex-col rounded-[2rem] p-4">
-        {/* Área de Mensagens */}
+        
+        {/* ÁREA DE MENSAGENS ATUALIZADA (Sem asteriscos, com Markdown) */}
         <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 custom-scrollbar font-sans">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -80,7 +106,13 @@ export default function AssistenteCasal() {
                 ? 'bg-rose-500 text-white rounded-br-none shadow-md' 
                 : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none shadow-sm'
               }`}>
-                {m.text}
+                {m.role === 'user' ? (
+                  m.text
+                ) : (
+                  <div className="prose prose-sm prose-rose max-w-none prose-p:leading-relaxed prose-p:my-1 prose-strong:text-rose-700">
+                    <ReactMarkdown>{m.text}</ReactMarkdown>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -88,7 +120,7 @@ export default function AssistenteCasal() {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Botões de Atalho (Otimizados para toque no celular) */}
+        {/* Botões de Atalho */}
         <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
           <button 
             onClick={() => handleSend("Me dê uma ideia de jantar romântico para fazermos em casa.")} 
@@ -103,10 +135,10 @@ export default function AssistenteCasal() {
             Filme 🎬
           </button>
           <button 
-            onClick={() => handleSend("Escreva um poema curto dizendo o quanto o Pablo ama a Ana Clara.")} 
+            onClick={() => handleSend("Escreva um bilhete curto dizendo o quanto o Pablo ama a Ana Clara.")} 
             className="whitespace-nowrap text-xs bg-rose-50 text-rose-600 border border-rose-200 px-4 py-2 rounded-full font-bold active:scale-95 transition-all"
           >
-            Poema 💌
+            Bilhetinho 💌
           </button>
         </div>
 

@@ -10,27 +10,46 @@ export default function Galeria() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // O "Cão Farejador" de URLs (Função recursiva)
+  const findImageLink = (data) => {
+    // Se já for a string direta
+    if (typeof data === 'string') {
+      if (data.startsWith('http') || data.startsWith('data:image')) return data;
+      return null;
+    }
+    
+    // Se for um objeto, vasculha as chaves
+    if (data && typeof data === 'object') {
+      if (typeof data.url === 'string') return data.url;
+      if (typeof data.image === 'string') return data.image;
+      if (typeof data.imageUrl === 'string') return data.imageUrl;
+      if (typeof data.link === 'string') return data.link;
+
+      // Cava mais fundo nas subpastas do objeto
+      for (let key in data) {
+        const found = findImageLink(data[key]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
     const galleryRef = ref(rtdb, 'gallery/pablo-ana');
     onValue(galleryRef, (snapshot) => {
       const data = snapshot.val();
       
-      // Griehl, olha esse log no seu F12 (Console) para ver a estrutura real!
-      console.log("DEBUG GRIEHL - Estrutura vinda do Firebase:", data);
+      console.log("1. DEBUG GRIEHL - Direto do Banco:", data);
 
       if (data) {
         const listaBruta = Object.values(data);
         
-        // Função defensiva: busca a string da URL mesmo se for objeto aninhado
-        const listaTratada = listaBruta.map(item => {
-          if (typeof item === 'string') return item;
-          if (item && typeof item === 'object') {
-            // Tenta achar a chave .url ou o primeiro valor que seja uma string http
-            return item.url || item.image || Object.values(item).find(v => typeof v === 'string' && v.startsWith('http'));
-          }
-          return null;
-        }).filter(url => url !== null); // Remove qualquer coisa que não seja URL
+        // Passa o farejador e limpa quem não tem link válido
+        const listaTratada = listaBruta
+          .map(item => findImageLink(item))
+          .filter(url => typeof url === 'string' && url.length > 10); 
         
+        console.log("2. DEBUG GRIEHL - URLs Sobreviventes:", listaTratada);
         setFotos(listaTratada.reverse());
       }
       setLoading(false);
@@ -94,11 +113,11 @@ export default function Galeria() {
         </div>
       )}
 
-      {/* Modal - Note o z-[9999] para garantir que o 'X' apareça */}
+      {/* Modal */}
       {selectedImg && (
         <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
           
-          {/* BOTÃO FECHAR - Agora fixo e gigante no topo direito */}
+          {/* BOTÃO FECHAR */}
           <button 
             onClick={(e) => {
               e.stopPropagation();
@@ -109,7 +128,7 @@ export default function Galeria() {
             <X size={40} strokeWidth={3} />
           </button>
 
-          {/* Navegação */}
+          {/* Navegação Esquerda */}
           <button onClick={prevImg} className="absolute left-6 z-[10000] p-3 text-white/70 hover:text-white bg-white/10 rounded-full backdrop-blur-md">
             <ChevronLeft size={48} />
           </button>
@@ -120,10 +139,12 @@ export default function Galeria() {
             alt="Foto expandida"
           />
 
+          {/* Navegação Direita */}
           <button onClick={nextImg} className="absolute right-6 z-[10000] p-3 text-white/70 hover:text-white bg-white/10 rounded-full backdrop-blur-md">
             <ChevronRight size={48} />
           </button>
 
+          {/* Contador */}
           <div className="absolute bottom-10 bg-white/20 backdrop-blur-md px-6 py-2 rounded-full text-white font-bold">
             {currentIndex + 1} / {fotos.length}
           </div>

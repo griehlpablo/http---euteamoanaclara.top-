@@ -2,16 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, Bot, ArrowLeft, Plus, Trash2, MessageSquare } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import emailjs from '@emailjs/browser'; 
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase'; 
 
 const callGeminiAPI = async (historicoMensagens, novoPrompt) => {
   const chaveInvertida = "QTuVoVZNCzC4i7gRA0sha6SBVXAMRJ0MBySazIA"; 
   const apiKey = chaveInvertida.split('').reverse().join('');
-  
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`;
   
-  const systemInstruction = "Instruções: Você é o assistente virtual criado pelo desenvolvedor Pablo Griehl para ajudar a namorada dele, Ana Clara. Seu tom deve ser prestativo, inteligente e gentil, com um leve toque romântico. Dê respostas curtas e práticas. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. NÃO REPITA sugestões se já tiver sugerido na conversa.";
+  // INSTRUÇÃO ATUALIZADA: Agora o bot sabe reconhecer todos os sinônimos e gírias!
+  const systemInstruction = "Instruções: Você é o assistente virtual criado pelo desenvolvedor Pablo Griehl para ajudar a namorada dele, Ana Clara. Seu tom deve ser prestativo, inteligente e gentil, com um leve toque romântico. Dê respostas curtas e práticas. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. NÃO REPITA sugestões se já tiver sugerido na conversa. REGRA CRÍTICA: Se a Ana Clara usar qualquer expressão pedindo para você notificar o namorado (ex: 'fala pro pablo', 'pede pro pablo', 'avisa o pablo', 'manda pro pablo', 'fala po pablo', etc.), você DEVE aceitar o pedido, confirmar a ela que vai enviar a mensagem e OBRIGATORIAMENTE incluir a tag secreta [AVISAR_PABLO] no final da sua resposta.";
 
   const formattedHistory = historicoMensagens
     .filter(msg => msg.text !== "Olá, Ana Clara! 💕 Como posso ajudar o casal hoje?")
@@ -54,17 +55,13 @@ export default function AssistenteCasal() {
   const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Rolagem automática
   useEffect(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
 
-  // Carregar a lista de chats do Firebase
   useEffect(() => {
     const q = query(collection(db, "chats"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chatsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setChats(chatsData);
-      
-      // Se tiver chats mas nenhum ativo, seleciona o primeiro
       if (chatsData.length > 0 && !activeChatId) {
         setActiveChatId(chatsData[0].id);
       }
@@ -72,13 +69,11 @@ export default function AssistenteCasal() {
     return () => unsubscribe();
   }, [activeChatId]);
 
-  // Carregar as mensagens APENAS do chat ativo
   useEffect(() => {
     if (!activeChatId) {
       setMessages([]);
       return;
     }
-
     const q = query(collection(db, "chats", activeChatId, "mensagens"), orderBy("createdAt", "asc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgsFirebase = snapshot.docs.map(doc => doc.data());
@@ -106,17 +101,14 @@ export default function AssistenteCasal() {
   const deletarChatAtivo = async () => {
     if (!activeChatId || !window.confirm("Quer mesmo apagar essa conversa inteira? 🧹")) return;
     try {
-      // 1. Apagar as mensagens da subcoleção
       const q = query(collection(db, "chats", activeChatId, "mensagens"));
       const querySnapshot = await getDocs(q);
       const promessasDeletarMsgs = querySnapshot.docs.map((documento) => 
         deleteDoc(doc(db, "chats", activeChatId, "mensagens", documento.id))
       );
       await Promise.all(promessasDeletarMsgs);
-
-      // 2. Apagar o documento principal do chat
       await deleteDoc(doc(db, "chats", activeChatId));
-      setActiveChatId(null); // Reseta o chat ativo
+      setActiveChatId(null);
     } catch (error) {
       console.error("Erro ao limpar chat:", error);
     }
@@ -126,7 +118,6 @@ export default function AssistenteCasal() {
     const prompt = textToProcess || input;
     if (!prompt.trim() || isLoading || !activeChatId) return;
 
-    // Se for a primeira mensagem real do usuário, atualiza o título do chat
     if (messages.length <= 1) {
       const titulo = prompt.length > 25 ? prompt.substring(0, 25) + "..." : prompt;
       await updateDoc(doc(db, "chats", activeChatId), { title: titulo });
@@ -141,7 +132,32 @@ export default function AssistenteCasal() {
     setInput("");
     setIsLoading(true);
 
-    const botResponse = await callGeminiAPI(messages, prompt);
+    let botResponse = await callGeminiAPI(messages, prompt);
+
+    // ==========================================
+    // INTERCEPTADOR DE EMAIL
+    // ==========================================
+    if (botResponse.includes('[AVISAR_PABLO]')) {
+      // 1. Remove a tag secreta
+      botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
+
+      // 2. Dispara o EmailJS
+      try {
+        await emailjs.send(
+          'service_m4p5rzl',   
+          'template_nz2c3cf',  
+          {
+            to_name: 'Pablo',
+            message: `Alerta do Cupido Virtual!\n\nA Ana Clara pediu o seguinte: "${prompt}"\n\nEu respondi: "${botResponse}"`
+          },
+          '_vmorr0K9MFFhLsoz'    
+        );
+        console.log('Email disparado com sucesso para o Pablo!');
+      } catch (error) {
+        console.error('Falha ao enviar email pelo EmailJS:', error);
+      }
+    }
+    // ==========================================
     
     await addDoc(collection(db, "chats", activeChatId, "mensagens"), {
       role: 'assistant',
@@ -154,23 +170,14 @@ export default function AssistenteCasal() {
 
   return (
     <div className="max-w-4xl mx-auto h-[85vh] flex flex-col md:flex-row gap-4 pt-4 px-2 relative z-10">
-      
-      {/* MENU LATERAL (SIDEBAR) */}
       <div className="w-full md:w-64 bg-white/60 backdrop-blur-lg border border-white/50 shadow-xl rounded-[2rem] p-4 flex flex-col h-48 md:h-full flex-shrink-0">
-        <button 
-          onClick={criarNovoChat}
-          className="w-full bg-rose-500 text-white p-3 rounded-xl hover:bg-rose-600 transition-all font-bold flex items-center justify-center gap-2 mb-4"
-        >
+        <button onClick={criarNovoChat} className="w-full bg-rose-500 text-white p-3 rounded-xl hover:bg-rose-600 transition-all font-bold flex items-center justify-center gap-2 mb-4">
           <Plus size={20} /> Nova Conversa
         </button>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
           {chats.map(chat => (
-            <button
-              key={chat.id}
-              onClick={() => setActiveChatId(chat.id)}
-              className={`w-full text-left p-3 rounded-xl flex items-center gap-2 text-sm transition-all truncate ${activeChatId === chat.id ? 'bg-rose-100 text-rose-700 font-bold border border-rose-200' : 'text-slate-600 hover:bg-white/50'}`}
-            >
+            <button key={chat.id} onClick={() => setActiveChatId(chat.id)} className={`w-full text-left p-3 rounded-xl flex items-center gap-2 text-sm transition-all truncate ${activeChatId === chat.id ? 'bg-rose-100 text-rose-700 font-bold border border-rose-200' : 'text-slate-600 hover:bg-white/50'}`}>
               <MessageSquare size={16} className="flex-shrink-0" />
               <span className="truncate">{chat.title}</span>
             </button>
@@ -182,7 +189,6 @@ export default function AssistenteCasal() {
         </Link>
       </div>
 
-      {/* ÁREA DO CHAT PRINCIPAL */}
       <div className="bg-white/60 backdrop-blur-lg border border-white/50 shadow-xl flex-1 overflow-hidden flex flex-col rounded-[2rem] p-4">
         <div className="flex items-center justify-between mb-4 px-2 border-b border-rose-100/50 pb-2">
           <div className="flex items-center gap-2 font-bold text-rose-600 font-serif text-2xl">
@@ -215,13 +221,7 @@ export default function AssistenteCasal() {
 
             <div className="flex gap-2 bg-white/40 p-2 rounded-2xl border border-rose-100 items-center">
               <button onClick={() => alert("Galeria na próxima atualização! 📸")} className="text-rose-400 p-2 rounded-full hover:bg-rose-100 transition-all"><Plus size={24} /></button>
-              <input 
-                value={input} 
-                onChange={e => setInput(e.target.value)} 
-                onKeyDown={e => e.key === 'Enter' && handleSend()} 
-                placeholder="Fale com o Cupido..." 
-                className="flex-1 bg-transparent border-none px-2 py-2 text-sm focus:outline-none" 
-              />
+              <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder="Fale com o Cupido..." className="flex-1 bg-transparent border-none px-2 py-2 text-sm focus:outline-none" />
               <button onClick={() => handleSend()} disabled={isLoading || !input.trim()} className="bg-rose-500 text-white p-3 rounded-xl hover:bg-rose-600 disabled:opacity-50 transition-all"><Send size={20} /></button>
             </div>
           </>
@@ -232,7 +232,6 @@ export default function AssistenteCasal() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

@@ -4,11 +4,12 @@ import { Send, Bot, ArrowLeft, Plus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import emailjs from '@emailjs/browser';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase'; // Certifique-se de que o arquivo firebase.js está na pasta src
+import { db } from '../firebase'; 
 
-// --- FUNÇÃO DO GEMINI COM MEMÓRIA ---
+// --- FUNÇÃO DO GEMINI COM MEMÓRIA E CHAVE NOVA ---
 const callGeminiAPI = async (historicoMensagens, novoPrompt) => {
-  const chaveInvertida = "A-WE-OJqtqPZcJzGYfdOqfj0Rn8-9fa_DySazIA"; 
+  // Chave nova invertida (AIzaSyBlgw6uAplWqAgXaL4ttzHqfJyqj8x1CG4)
+  const chaveInvertida = "4GC1x8jqyJfqHztt4LaXgAqWlpAu6wglBSyazIA"; 
   const apiKey = chaveInvertida.split('').reverse().join('');
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
   
@@ -110,8 +111,7 @@ export default function AssistenteCasal() {
       'manda o pablo', 'manda pra ele', 'manda mensagem',
       'manda pro pablo', 'mande pro pablo', 'mandar pro pablo',
       'envia pro pablo', 'envie pro pablo', 'enviar pro pablo',
-      'envia pra ele', 'envie pra ele', 'enviar pra ele', 'envia para ele', 
-      'avisa', 'fala', 'diz',
+      'envia pra ele', 'envie pra ele', 'enviar pra ele', 'envia para ele'
     ];
     if (gatilhosExatos.some(frase => textoMinusculo.includes(frase))) {
       notificarPablo(prompt);

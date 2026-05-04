@@ -77,9 +77,23 @@ export default function AssistenteCasal() {
     setInput("");
     setIsLoading(true);
 
-    // GATILHO DO EMAIL: Se a mensagem tiver essas palavras, o email é disparado!
+    // GATILHO DO EMAIL: Inteligência para pegar a ação + o sujeito (Pablo ou "ele")
     const textoMinusculo = prompt.toLowerCase();
-    if (textoMinusculo.includes('avisa') || textoMinusculo.includes('avisar') || textoMinusculo.includes('chama o pablo')) {
+    
+    const gatilhosExatos = [
+      'avisa o pablo', 'avise o pablo', 'avisar o pablo',
+      'avisa ele', 'avise ele', 'avisar ele', 'avisa lá',
+      'chama o pablo', 'chame o pablo', 'chama ele', 'chame ele',
+      'pede pro pablo', 'peça pro pablo', 'pede pra ele', 'peça pra ele',
+      'fala pro pablo', 'fale pro pablo', 'fala pra ele', 'fale pra ele',
+      'diz pro pablo', 'diga pro pablo', 'diz pra ele', 'diga pra ele',
+      'manda o pablo', 'manda pra ele', 'manda mensagem'
+    ];
+
+    const querAvisar = gatilhosExatos.some(frase => textoMinusculo.includes(frase));
+    
+    // Se a Ana usou qualquer uma dessas combinações, dispara o email instantaneamente!
+    if (querAvisar) {
       notificarPablo(prompt);
     }
 

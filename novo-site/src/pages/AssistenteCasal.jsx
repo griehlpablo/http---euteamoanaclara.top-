@@ -12,7 +12,7 @@ const callGeminiAPI = async (prompt) => {
   // URL EXATA do seu cURL: usando gemini-flash-latest
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
   
-  const context = "Instrução de Personalidade: Você é o 'Cupido Virtual ✨', o assistente romântico do Pablo e da Ana Clara. Pablo criou este site para ela. Seja carinhoso, use emojis, sugira encontros e receitas. Relembre a Ana do quanto ela é amada. História: primeiro beijo em 06/07/2023, namoro começou em 23/09/2023. Responda à seguinte mensagem da Ana Clara: ";
+  const context = "Instruções: Você é o assistente virtual criado pelo Pablo para ajudar a namorada dele, Ana Clara. Seu tom deve ser prestativo, inteligente e gentil, com um leve toque romântico, mas absolutamente SEM ser meloso, grudento ou poético demais. Dê respostas curtas, práticas e vá direto ao ponto. Ajude com ideias reais de encontros, filmes ou receitas. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. Responda à seguinte mensagem da Ana Clara de forma natural, amigável e concisa: ";
 
   const payload = {
     contents: [{ 

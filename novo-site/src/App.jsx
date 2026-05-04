@@ -7,6 +7,7 @@ import Central from './pages/Central';
 import Contagem from './pages/Contagem';
 import AssistenteCasal from './pages/AssistenteCasal';
 import Genealogia from './pages/Genealogia';
+import Galeria from './pages/Galeria'; // 1. Importando a nova página de Galeria
 
 export default function App() {
   return (
@@ -21,6 +22,8 @@ export default function App() {
             <Route path="/contagem" element={<Contagem />} />
             <Route path="/assistente" element={<AssistenteCasal />} />
             <Route path="/genealogia" element={<Genealogia />} />
+            {/* 2. Rota da Galeria adicionada para resolver o erro de navegação */}
+            <Route path="/galeria" element={<Galeria />} /> 
           </Routes>
         </main>
       </Router>

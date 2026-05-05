@@ -5,11 +5,13 @@ import { ArrowLeft, BookOpen, MapPin, History, FileText, Globe, Footprints, User
 // ==========================================
 // COMPONENTE DO CARTÃO DA ÁRVORE
 // ==========================================
-const MembroCard = ({ nome, datas, foto, doc, papel }) => (
+// Adicionei a propriedade 'posicaoFoto' (o padrão é object-center se você não preencher)
+const MembroCard = ({ nome, datas, foto, doc, papel, posicaoFoto = "object-center" }) => (
   <div className="flex flex-col items-center relative z-10 w-32 md:w-40 group">
     <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border-4 border-rose-100 shadow-md overflow-hidden flex items-center justify-center relative z-10 transition-transform group-hover:scale-110">
       {foto ? (
-        <img src={foto} alt={nome} className="w-full h-full object-cover" />
+        /* Aqui a mágica acontece: o CSS agora aceita a posição personalizada */
+        <img src={foto} alt={nome} className={`w-full h-full object-cover ${posicaoFoto}`} />
       ) : (
         <User size={32} className="text-slate-300" />
       )}
@@ -93,19 +95,18 @@ export default function Genealogia() {
                 <div className="w-px h-full bg-slate-300 absolute left-[62%]"></div>
                 <div className="w-px h-full bg-slate-300 absolute left-[88%]"></div>
                 
-                {/* Linhas horizontais unindo os casais */}
                 <div className="absolute top-8 left-[12%] right-[38%] h-px bg-slate-300"></div>
                 <div className="absolute top-8 left-[62%] right-[88%] h-px bg-slate-300"></div>
                 
-                {/* Linhas descendo para os Bisavós */}
                 <div className="w-px h-8 bg-slate-300 absolute top-8 left-[25%]"></div>
                 <div className="w-px h-8 bg-slate-300 absolute top-8 left-[75%]"></div>
               </div>
 
               {/* LINHA 2: BISAVÓS */}
               <div className="flex justify-around w-[80%] relative mt-8">
-                <MembroCard nome="Paulo Kovalek" datas="1900-1967" foto="/images/paulokovalek.jpg" papel="Bisavô" />
-                <MembroCard nome="Anastacia Gelinski" datas="1912-1981" foto="/images/anastasiazielinski.png" papel="Bisavó" />
+                {/* Adicionado posicaoFoto="object-top" para focar no rosto */}
+                <MembroCard nome="Paulo Kovalek" datas="1900-1967" foto="/images/paulokovalek.jpg" papel="Bisavô" posicaoFoto="object-top" />
+                <MembroCard nome="Anastacia Gelinski" datas="1912-1981" foto="/images/anastasiazielinski.png" papel="Bisavó" posicaoFoto="object-top" />
                 <MembroCard nome="Theodoro Felipe" datas="1906-1991" doc="/docs/batismotheodorus.pdf" papel="Bisavô" />
                 <MembroCard nome="Maria Veresiuk" datas="1906-1977" doc="/docs/batismomaria.pdf" papel="Bisavó" />
               </div>
@@ -117,19 +118,19 @@ export default function Genealogia() {
                 <div className="w-px h-full bg-slate-300 absolute left-[55%]"></div>
                 <div className="w-px h-full bg-slate-300 absolute left-[85%]"></div>
                 
-                {/* Linhas horizontais unindo os casais */}
                 <div className="absolute top-8 left-[15%] right-[45%] h-px bg-slate-300"></div>
                 <div className="absolute top-8 left-[55%] right-[85%] h-px bg-slate-300"></div>
                 
-                {/* Linhas descendo para os Avós */}
                 <div className="w-px h-8 bg-slate-300 absolute top-8 left-[30%]"></div>
                 <div className="w-px h-8 bg-slate-300 absolute top-8 left-[70%]"></div>
               </div>
 
               {/* LINHA 3: AVÓS */}
               <div className="flex justify-around w-[60%] relative mt-8">
-                <MembroCard nome="Justina Kovalek" datas="1942-2015" foto="/images/justinakovalek.png" papel="Avó" />
-                <MembroCard nome="Eleutério Felipe" datas="Nasc: 1945" foto="/images/EleuterioFelipe.jpeg" papel="Avô" />
+                <MembroCard nome="Justina Kovalek" datas="1942-2015" foto="/images/justinakovalek.png" papel="Avó" posicaoFoto="object-top" />
+                
+                {/* Adicionado posicaoFoto="object-top" para salvar a cabeça do Eleutério! */}
+                <MembroCard nome="Eleutério Felipe" datas="Nasc: 1945" foto="/images/EleuterioFelipe.jpeg" papel="Avô" posicaoFoto="object-top" />
               </div>
 
               {/* CONECTORES LINHA 3 PARA 4 */}
@@ -158,7 +159,8 @@ export default function Genealogia() {
 
               {/* LINHA 5: ANA CLARA */}
               <div className="flex justify-center w-full relative mt-8 mb-4">
-                <MembroCard nome="Ana Clara Kovalek" datas="Nasc: 2005" foto="/images/ana_e_eu_zoo.jpg" papel="Geração Atual" />
+                {/* Você pode ajustar a da Ana Clara também se precisar */}
+                <MembroCard nome="Ana Clara Kovalek" datas="Nasc: 2005" foto="/images/ana_e_eu_zoo.jpg" papel="Geração Atual" posicaoFoto="object-top" />
               </div>
 
             </div>

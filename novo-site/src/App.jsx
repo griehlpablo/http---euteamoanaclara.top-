@@ -11,6 +11,7 @@ import Galeria from './pages/Galeria';
 import Retrospectiva from './pages/Retrospectiva'; 
 // Importando a nova página de Satisfação
 import Satisfacao from './pages/Satisfacao';
+import Humor from './pages/Humor';
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/retrospectiva" element={<Retrospectiva />} />
             {/* Rota do Termômetro do Amor (Satisfação) adicionada aqui 👇 */}
             <Route path="/satisfacao" element={<Satisfacao />} />
+            <Route path="/humor" element={<Humor />} />
           </Routes>
         </main>
       </Router>

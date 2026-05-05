@@ -5,7 +5,7 @@ import {
   Clock, ImageIcon, Mail, MessageCircleHeart, ArrowLeft, 
   TrendingUp, GitMerge, Link as LinkIcon, Sparkles, 
   SmilePlus, CalendarHeart, Film, Music, CheckSquare, 
-  Gift, HelpCircle, Bot 
+  Gift, HelpCircle, Bot, Activity 
 } from 'lucide-react';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -16,7 +16,10 @@ const cards = [
   { path: "/galeria", icon: ImageIcon, title: "Memórias", desc: "Os nossos melhores momentos." },
   { path: "/assistente", icon: Sparkles, title: "Cupido Virtual ✨", desc: "IA para dicas de encontros." },
   { path: "/retrospectiva", icon: TrendingUp, title: "Retrospectiva", desc: "A nossa história em números." },
-  { path: "/painel", icon: SmilePlus, title: "Satisfação", desc: "Como estamos hoje?" },
+  // Caminho da Satisfação corrigido
+  { path: "/satisfacao", icon: SmilePlus, title: "Satisfação", desc: "Como estamos hoje?" },
+  // Novo botão para o Humor adicionado
+  { path: "/humor", icon: Activity, title: "Radar de Humor", desc: "Manual de sobrevivência diário." },
   { path: "/mural", icon: MessageCircleHeart, title: "Mural", desc: "Recados e missões diárias." },
   { path: "/genealogia", icon: GitMerge, title: "Genealogia", desc: "As nossas raízes Kovalek." },
   { path: "/links", icon: LinkIcon, title: "Links Úteis", desc: "Acessos rápidos importantes." },

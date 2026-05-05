@@ -1,19 +1,25 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, ArrowRight, X, Sparkles } from 'lucide-react';
+import { Heart, ArrowRight, X, Sparkles, Play, Pause, Disc } from 'lucide-react';
+import ReactPlayer from 'react-player'; // Correção: importando o pacote principal para não quebrar o Vite
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
 
 const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false); 
 
   const handleLoveChange = (e) => {
     setLoveValue(e.target.value);
     if (e.target.value < 10) {
-      setTimeout(() => setLoveValue(10), 1000); // Força o 10/10
+      setTimeout(() => setLoveValue(10), 1000); 
     }
+  };
+
+  const togglePlay = () => {
+    setIsPlaying(!isPlaying);
   };
 
   return (
@@ -45,7 +51,6 @@ const Home = () => {
         
         {/* CARD 2: A NOVA FASE */}
         <div className={`${glassClasses} p-6 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden`}>
-          {/* Detalhe visual na borda superior */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-rose-600"></div>
           
           <Sparkles className="text-rose-400 mb-2" size={28} />
@@ -55,24 +60,46 @@ const Home = () => {
           </p>
         </div>
 
-        {/* CARD 3: NOSSA TRILHA SONORA (YOUTUBE) */}
-        <div className={`${glassClasses} p-4 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center`}>
+        {/* CARD 3: NOSSA TRILHA SONORA (CUSTOM PLAYER) */}
+        <div className={`${glassClasses} p-4 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center`}>
           <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
           
-          <div className="w-full relative rounded-xl overflow-hidden shadow-md" style={{ paddingTop: '56.25%' }}>
-            <iframe 
-              className="absolute top-0 left-0 w-full h-full"
-              src="https://www.youtube.com/embed/videoseries?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj" 
-              title="Nossa Playlist" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen
-            ></iframe>
+          {/* O "COSMÉTICO" (Interface Bonitinha) */}
+          <div className="flex items-center gap-4 bg-white/80 p-3 md:p-4 rounded-2xl w-full max-w-md shadow-sm border border-slate-100">
+            {/* Disco girando quando dá Play */}
+            <div className={`w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-rose-400 shadow-md ${isPlaying ? 'animate-[spin_4s_linear_infinite]' : ''}`}>
+               <Disc size={24} />
+            </div>
+            
+            <div className="flex-1 text-left">
+               <p className="font-bold text-slate-800 text-sm">Playlist "iA"</p>
+               <p className="text-xs text-slate-500 font-medium">Pablo & Ana Clara</p>
+            </div>
+            
+            <button 
+              onClick={togglePlay} 
+              className="w-12 h-12 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors shadow-md cursor-pointer hover:scale-105"
+            >
+               {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-1" />}
+            </button>
           </div>
-          
-          <p className="text-xs text-slate-500 mt-3 italic text-center">
-            Dê o play para ouvir nossa playlist completa sem sair do app! ❤️
-          </p>
+
+          {/* O MOTOR DO YOUTUBE (Escondido) */}
+          <div className="hidden">
+            <ReactPlayer
+              url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
+              playing={isPlaying}
+              width="0"
+              height="0"
+              volume={0.8}
+              config={{
+                youtube: {
+                  playerVars: { showinfo: 0, controls: 0 }
+                }
+              }}
+            />
+          </div>
+
         </div>
 
       </div>

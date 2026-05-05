@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Activity, Heart, Flame, Battery, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Activity, Heart, Flame, Battery, ShieldAlert, CheckCircle2, BellRing } from 'lucide-react';
 import { ref, onValue, set } from 'firebase/database';
 import { rtdb } from '../firebase';
+import OneSignal from 'react-onesignal';
 
 export default function Humor() {
   const [currentUser, setCurrentUser] = useState(localStorage.getItem('satCurrentUser') || null);
@@ -53,6 +54,36 @@ export default function Humor() {
     const newMood = { ...myMood, [eixo]: Number(valor) };
     setMyMood(newMood);
     set(ref(rtdb, `radar/${currentUser}`), newMood);
+  };
+
+  // ==========================================
+  // FUNÇÃO MÁGICA DA NOTIFICAÇÃO DO ONESIGNAL
+  // ==========================================
+  const dispararNotificacaoRadar = async () => {
+    const APP_ID = "5d8db7f8-b110-42af-a94d-96655cccd6ff"; 
+    const REST_API_KEY = "os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q"; 
+    
+    const body = {
+      app_id: APP_ID,
+      target_channel: "push",
+      filters: [{ field: "tag", key: "usuario", relation: "=", value: targetUser }],
+      headings: { en: "Radar de Humor Atualizado 📡", pt: "Radar de Humor Atualizado 📡" },
+      contents: { 
+        en: `${myName} acabou de configurar o humor do dia. Acesse para ver o manual de sobrevivência!`, 
+        pt: `${myName} acabou de configurar o humor do dia. Acesse para ver o manual de sobrevivência!` 
+      }
+    };
+
+    try {
+      await fetch("https://api.onesignal.com/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Basic ${REST_API_KEY}` },
+        body: JSON.stringify(body)
+      });
+      alert(`Aviso enviado para ${targetName}!`);
+    } catch (error) {
+      console.error("Erro ao enviar notificação", error);
+    }
   };
 
   // ==========================================
@@ -126,7 +157,7 @@ export default function Humor() {
   const IconeManual = manual.icone;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 pb-20">
+    <div className="min-h-screen bg-slate-50 p-4 pb-20 relative z-50">
       
       {/* HEADER */}
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-8 pt-4">
@@ -144,15 +175,21 @@ export default function Humor() {
         {/* QUEM É VOCÊ? */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Quem está usando agora?</p>
-          <div className="flex gap-4 w-full max-w-sm bg-slate-100 p-1.5 rounded-2xl">
+          <div className="flex gap-4 w-full max-w-sm bg-slate-100 p-1.5 rounded-2xl relative z-50">
             <button 
-              onClick={() => setCurrentUser('pablo')}
+              onClick={() => {
+                setCurrentUser('pablo');
+                if(OneSignal.User) OneSignal.User.addTag('usuario', 'pablo');
+              }}
               className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${currentUser === 'pablo' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
             >
               Pablo
             </button>
             <button 
-              onClick={() => setCurrentUser('ana')}
+              onClick={() => {
+                setCurrentUser('ana');
+                if(OneSignal.User) OneSignal.User.addTag('usuario', 'ana');
+              }}
               className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${currentUser === 'ana' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
             >
               Ana
@@ -166,7 +203,7 @@ export default function Humor() {
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4">
               <h2 className="text-xl font-bold text-slate-800 mb-6 text-center">Como VOCÊ está hoje, {myName}?</h2>
               
-              <div className="space-y-8">
+              <div className="space-y-8 relative z-50">
                 {/* Eixo Carência */}
                 <div>
                   <div className="flex justify-between text-sm font-bold mb-3">
@@ -212,6 +249,15 @@ export default function Humor() {
                   <div className="text-center mt-2 text-xs font-bold text-slate-400">Nível: {myMood.energia}/5</div>
                 </div>
               </div>
+
+              {/* BOTÃO PARA DISPARAR A NOTIFICAÇÃO QUANDO QUISER */}
+              <button 
+                onClick={dispararNotificacaoRadar}
+                className="w-full mt-8 py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer relative z-50"
+              >
+                <BellRing size={20} className="animate-pulse" />
+                Avisar {targetName} do meu Humor
+              </button>
             </div>
 
             {/* PAINEL 2: MANUAL DE SOBREVIVÊNCIA DO PARCEIRO */}

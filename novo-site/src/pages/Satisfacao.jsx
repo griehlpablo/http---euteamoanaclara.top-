@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Heart, Star, Coffee, Snowflake, Lock, TrendingUp, User, PenSquare } from 'lucide-react';
 import { ref, onValue, set, push } from 'firebase/database';
 import { rtdb } from '../firebase';
+import OneSignal from 'react-onesignal';
 
 // Dicionário de Níveis com Estilos Premium
 const LEVELS = {
@@ -50,9 +51,43 @@ export default function Satisfacao() {
     });
   }, []);
 
+  // ==========================================
+  // FUNÇÃO MÁGICA DA NOTIFICAÇÃO DO ONESIGNAL
+  // ==========================================
+  const enviarNotificacaoProAmor = async (nivelLabel, mensagemExtra = "") => {
+    const APP_ID = "5d8db7f8-b110-42af-a94d-96655cccd6ff"; 
+    const REST_API_KEY = "os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q"; 
+    
+    const alvo = currentUser === 'pablo' ? 'ana' : 'pablo';
+    const meuNome = currentUser === 'pablo' ? 'Pablo' : 'Ana Clara';
+    const msg = mensagemExtra || `${meuNome} atualizou o nível de satisfação para: ${nivelLabel}`;
+
+    const body = {
+      app_id: APP_ID,
+      target_channel: "push",
+      filters: [{ field: "tag", key: "usuario", relation: "=", value: alvo }],
+      headings: { en: "Termômetro do Amor 🌡️", pt: "Termômetro do Amor 🌡️" },
+      contents: { en: msg, pt: msg }
+    };
+
+    try {
+      await fetch("https://api.onesignal.com/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Basic ${REST_API_KEY}` },
+        body: JSON.stringify(body)
+      });
+    } catch (error) {
+      console.error("Erro ao enviar notificação", error);
+    }
+  };
+
   // Lógica de Votação
   const handleVote = (levelKey) => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      alert("Ei! Selecione primeiro lá em cima se você é o Pablo ou a Ana Clara!");
+      return;
+    }
+    
     const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
 
     // 1. Atualiza o status atual do alvo
@@ -66,12 +101,20 @@ export default function Satisfacao() {
       timestamp: Date.now()
     };
     push(ref(rtdb, 'satisfaction/pablo-ana/history'), newEntry);
+
+    // 3. Dispara a notificação após votar
+    enviarNotificacaoProAmor(LEVELS[levelKey].label);
   };
 
   // Salvar a missão da cadeia
   const saveJailNote = () => {
+    if (!jailInput.trim()) return;
     const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
     set(ref(rtdb, `satisfaction/pablo-ana/current/notes/${targetUser}`), jailInput);
+    
+    // Dispara notificação de missão da cadeia
+    const meuNome = currentUser === 'pablo' ? 'Pablo' : 'Ana Clara';
+    enviarNotificacaoProAmor("Cadeia", `🚨 ${meuNome} te deu uma missão para sair da cadeia: "${jailInput}"`);
     setJailInput('');
   };
 
@@ -147,11 +190,11 @@ export default function Satisfacao() {
   const currentTargetLevel = LEVELS[currentLevels[targetUser]] || LEVELS.perfect;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 pb-20">
+    <div className="min-h-screen bg-slate-50 p-4 pb-20 relative z-50">
       
       {/* HEADER */}
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-8 pt-4">
-        <Link to="/central" className="p-2 bg-white rounded-full shadow-sm text-slate-500 hover:scale-110 transition-transform">
+        <Link to="/central" className="p-2 bg-white rounded-full shadow-sm text-slate-500 hover:scale-110 transition-transform cursor-pointer">
           <ArrowLeft size={24} />
         </Link>
         <h1 className="text-2xl font-bold text-slate-700 flex items-center gap-2">
@@ -165,16 +208,22 @@ export default function Satisfacao() {
         {/* QUEM É VOCÊ? */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Quem está usando agora?</p>
-          <div className="flex gap-4 w-full max-w-sm bg-slate-100 p-1.5 rounded-2xl">
+          <div className="flex gap-4 w-full max-w-sm bg-slate-100 p-1.5 rounded-2xl relative z-50">
             <button 
-              onClick={() => setCurrentUser('pablo')}
-              className={`flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${currentUser === 'pablo' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
+              onClick={() => {
+                setCurrentUser('pablo');
+                if(OneSignal.User) OneSignal.User.addTag('usuario', 'pablo');
+              }}
+              className={`flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${currentUser === 'pablo' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
             >
               <User size={18}/> Pablo
             </button>
             <button 
-              onClick={() => setCurrentUser('ana')}
-              className={`flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${currentUser === 'ana' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
+              onClick={() => {
+                setCurrentUser('ana');
+                if(OneSignal.User) OneSignal.User.addTag('usuario', 'ana');
+              }}
+              className={`flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${currentUser === 'ana' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
             >
               <User size={18}/> Ana
             </button>
@@ -192,7 +241,7 @@ export default function Satisfacao() {
               <p className="text-slate-500 text-sm mt-1">Status atual: <strong className={currentTargetLevel.text}>{currentTargetLevel.label}</strong></p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 relative z-50">
               {Object.values(LEVELS).map((level) => {
                 const Icon = level.icon;
                 const isSelected = currentLevels[targetUser] === level.id;
@@ -200,7 +249,7 @@ export default function Satisfacao() {
                   <button
                     key={level.id}
                     onClick={() => handleVote(level.id)}
-                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-300 ${isSelected ? `${level.color} border-transparent text-white shadow-lg transform -translate-y-1` : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50'}`}
+                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer ${isSelected ? `${level.color} border-transparent text-white shadow-lg transform -translate-y-1` : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50'}`}
                   >
                     <Icon size={28} className="mb-2" />
                     <span className="text-xs font-bold text-center leading-tight">{level.label}</span>
@@ -211,7 +260,7 @@ export default function Satisfacao() {
 
             {/* SE O ALVO ESTIVER NA CADEIA */}
             {currentLevels[targetUser] === 'jail' && (
-              <div className="mt-6 p-5 bg-slate-800 rounded-2xl text-white animate-in zoom-in-95">
+              <div className="mt-6 p-5 bg-slate-800 rounded-2xl text-white animate-in zoom-in-95 relative z-50">
                 <h3 className="font-bold flex items-center gap-2 mb-2"><Lock size={18} className="text-slate-400" /> Fiança da Cadeia</h3>
                 
                 {/* Se você botou o outro na cadeia, você escreve a missão */}
@@ -224,7 +273,7 @@ export default function Satisfacao() {
                     placeholder="Ex: Fazer massagem por 20 min..."
                     className="flex-1 px-4 py-2 rounded-xl bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-rose-500"
                   />
-                  <button onClick={saveJailNote} className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl transition-colors">
+                  <button onClick={saveJailNote} className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl transition-colors cursor-pointer">
                     Salvar
                   </button>
                 </div>
@@ -242,7 +291,7 @@ export default function Satisfacao() {
         )}
 
         {/* ÁREA DO GRÁFICO HISTÓRICO */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative z-50">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-slate-800">Histórico de Humor</h2>
             
@@ -250,13 +299,13 @@ export default function Satisfacao() {
             <div className="flex bg-slate-100 p-1 rounded-xl">
               <button 
                 onClick={() => setChartTab('pablo')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${chartTab === 'pablo' ? 'bg-white text-blue-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${chartTab === 'pablo' ? 'bg-white text-blue-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 Pablo
               </button>
               <button 
                 onClick={() => setChartTab('ana')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${chartTab === 'ana' ? 'bg-white text-rose-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${chartTab === 'ana' ? 'bg-white text-rose-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 Ana Clara
               </button>

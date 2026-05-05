@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Heart, Star, Coffee, Snowflake, Lock, TrendingUp, User, PenSquare } from 'lucide-react';
+import { ArrowLeft, Heart, Star, Coffee, Snowflake, Lock, TrendingUp, User, PenSquare, Smartphone } from 'lucide-react';
 import { ref, onValue, set, push } from 'firebase/database';
 import { rtdb } from '../firebase';
 import OneSignal from 'react-onesignal';
@@ -52,6 +52,23 @@ export default function Satisfacao() {
   }, []);
 
   // ==========================================
+  // BOTÃO TEMPORÁRIO PARA CONFIRMAR O VÍNCULO
+  // ==========================================
+  const confirmarVinculoCelular = () => {
+    if (!currentUser) {
+      alert("Selecione primeiro lá em cima quem você é!");
+      return;
+    }
+    const myName = currentUser === 'pablo' ? 'Pablo' : 'Ana Clara';
+    if (OneSignal.User) {
+      OneSignal.User.addTag('usuario', currentUser);
+      alert(`✅ Pronto! O OneSignal agora sabe que este celular pertence ao(à) ${myName}. Você já pode enviar e receber notificações!`);
+    } else {
+      alert("O OneSignal ainda não terminou de carregar ou as notificações não foram permitidas pelo navegador.");
+    }
+  };
+
+  // ==========================================
   // FUNÇÃO MÁGICA DA NOTIFICAÇÃO DO ONESIGNAL
   // ==========================================
   const enviarNotificacaoProAmor = async (nivelLabel, mensagemExtra = "") => {
@@ -64,19 +81,30 @@ export default function Satisfacao() {
 
     const body = {
       app_id: APP_ID,
-      target_channel: "push",
       filters: [{ field: "tag", key: "usuario", relation: "=", value: alvo }],
       headings: { en: "Termômetro do Amor 🌡️", pt: "Termômetro do Amor 🌡️" },
       contents: { en: msg, pt: msg }
     };
 
     try {
-      await fetch("https://api.onesignal.com/notifications", {
+      const resposta = await fetch("https://onesignal.com/api/v1/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Basic ${REST_API_KEY}` },
         body: JSON.stringify(body)
       });
+      
+      const retorno = await resposta.json();
+      
+      if (retorno.errors) {
+        alert("Erro no envio: " + JSON.stringify(retorno.errors));
+      } else if (retorno.recipients === 0) {
+        alert(`Aviso: O celular alvo não foi encontrado. Certifique-se de que a pessoa clicou em "Confirmar Vínculo" no celular dela!`);
+      } else {
+        // Alerta de sucesso opcional para você ter certeza que foi (comentado caso não queira)
+        // alert(`Notificação enviada e entregue com sucesso!`);
+      }
     } catch (error) {
+      alert("Erro de rede ao tentar enviar a notificação.");
       console.error("Erro ao enviar notificação", error);
     }
   };
@@ -208,7 +236,7 @@ export default function Satisfacao() {
         {/* QUEM É VOCÊ? */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Quem está usando agora?</p>
-          <div className="flex gap-4 w-full max-w-sm bg-slate-100 p-1.5 rounded-2xl relative z-50">
+          <div className="flex gap-4 w-full max-w-sm bg-slate-100 p-1.5 rounded-2xl relative z-50 mb-4">
             <button 
               onClick={() => {
                 setCurrentUser('pablo');
@@ -228,6 +256,18 @@ export default function Satisfacao() {
               <User size={18}/> Ana
             </button>
           </div>
+          
+          {/* BOTÃO DE CONFIRMAÇÃO */}
+          {currentUser && (
+            <button 
+              onClick={confirmarVinculoCelular} 
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white text-sm font-bold rounded-full hover:bg-slate-700 transition-colors cursor-pointer"
+            >
+              <Smartphone size={16} />
+              Confirmar Vínculo do Celular
+            </button>
+          )}
+
         </div>
 
         {/* PAINEL DE VOTAÇÃO (Só aparece se alguém estiver logado) */}

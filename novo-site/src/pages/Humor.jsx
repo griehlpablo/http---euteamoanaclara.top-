@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Activity, Heart, Flame, Battery, ShieldAlert, CheckCircle2, BellRing } from 'lucide-react';
+import { ArrowLeft, Activity, Heart, Flame, Battery, ShieldAlert, CheckCircle2, BellRing, Smartphone } from 'lucide-react';
 import { ref, onValue, set } from 'firebase/database';
 import { rtdb } from '../firebase';
 import OneSignal from 'react-onesignal';
@@ -57,6 +57,22 @@ export default function Humor() {
   };
 
   // ==========================================
+  // BOTÃO TEMPORÁRIO PARA CONFIRMAR O VÍNCULO
+  // ==========================================
+  const confirmarVinculoCelular = () => {
+    if (!currentUser) {
+      alert("Selecione primeiro lá em cima quem você é!");
+      return;
+    }
+    if (OneSignal.User) {
+      OneSignal.User.addTag('usuario', currentUser);
+      alert(`✅ Pronto! O OneSignal agora sabe que este celular pertence ao(à) ${myName}. Você já pode enviar e receber notificações!`);
+    } else {
+      alert("O OneSignal ainda não terminou de carregar ou as notificações não foram permitidas pelo navegador.");
+    }
+  };
+
+  // ==========================================
   // FUNÇÃO MÁGICA DA NOTIFICAÇÃO DO ONESIGNAL
   // ==========================================
   const dispararNotificacaoRadar = async () => {
@@ -65,7 +81,6 @@ export default function Humor() {
     
     const body = {
       app_id: APP_ID,
-      target_channel: "push",
       filters: [{ field: "tag", key: "usuario", relation: "=", value: targetUser }],
       headings: { en: "Radar de Humor Atualizado 📡", pt: "Radar de Humor Atualizado 📡" },
       contents: { 
@@ -75,13 +90,23 @@ export default function Humor() {
     };
 
     try {
-      await fetch("https://api.onesignal.com/notifications", {
+      const resposta = await fetch("https://onesignal.com/api/v1/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Basic ${REST_API_KEY}` },
         body: JSON.stringify(body)
       });
-      alert(`Aviso enviado para ${targetName}!`);
+      
+      const retorno = await resposta.json();
+      
+      if (retorno.errors) {
+        alert("Erro no envio: " + JSON.stringify(retorno.errors));
+      } else if (retorno.recipients === 0) {
+        alert(`Aviso: O OneSignal não encontrou o celular da ${targetName}. Ela precisa entrar no app, selecionar o nome dela e clicar no botão "Confirmar Vínculo" primeiro!`);
+      } else {
+        alert(`Notificação enviada e entregue para ${targetName} com sucesso!`);
+      }
     } catch (error) {
+      alert("Erro de rede ao tentar enviar a notificação.");
       console.error("Erro ao enviar notificação", error);
     }
   };
@@ -127,7 +152,7 @@ export default function Humor() {
     // MODO HIBERNAÇÃO: Zero Energia, Zero Estresse
     if (estresse <= 2 && energia <= 2) {
       return {
-        titulo: "MODO PREGUIÇA ATIVADO snooze",
+        titulo: "MODO PREGUIÇA ATIVADO 💤",
         texto: `${nome} está na paz absoluta, mas sem bateria nenhuma. Apenas deitem juntos, façam um carinho leve e coloquem uma série rolando no fundo.`,
         cor: "bg-blue-100 text-blue-700 border-blue-400",
         icone: Battery
@@ -161,7 +186,7 @@ export default function Humor() {
       
       {/* HEADER */}
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-8 pt-4">
-        <Link to="/central" className="p-2 bg-white rounded-full shadow-sm text-slate-500 hover:scale-110 transition-transform">
+        <Link to="/central" className="p-2 bg-white rounded-full shadow-sm text-slate-500 hover:scale-110 transition-transform cursor-pointer">
           <ArrowLeft size={24} />
         </Link>
         <h1 className="text-2xl font-bold text-slate-700 flex items-center gap-2">
@@ -175,13 +200,13 @@ export default function Humor() {
         {/* QUEM É VOCÊ? */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Quem está usando agora?</p>
-          <div className="flex gap-4 w-full max-w-sm bg-slate-100 p-1.5 rounded-2xl relative z-50">
+          <div className="flex gap-4 w-full max-w-sm bg-slate-100 p-1.5 rounded-2xl relative z-50 mb-4">
             <button 
               onClick={() => {
                 setCurrentUser('pablo');
                 if(OneSignal.User) OneSignal.User.addTag('usuario', 'pablo');
               }}
-              className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${currentUser === 'pablo' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
+              className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all cursor-pointer ${currentUser === 'pablo' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
             >
               Pablo
             </button>
@@ -190,11 +215,23 @@ export default function Humor() {
                 setCurrentUser('ana');
                 if(OneSignal.User) OneSignal.User.addTag('usuario', 'ana');
               }}
-              className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all ${currentUser === 'ana' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
+              className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all cursor-pointer ${currentUser === 'ana' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
             >
               Ana
             </button>
           </div>
+          
+          {/* BOTÃO DE CONFIRMAÇÃO */}
+          {currentUser && (
+            <button 
+              onClick={confirmarVinculoCelular} 
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white text-sm font-bold rounded-full hover:bg-slate-700 transition-colors cursor-pointer"
+            >
+              <Smartphone size={16} />
+              Confirmar Vínculo do Celular
+            </button>
+          )}
+
         </div>
 
         {currentUser && (
@@ -258,6 +295,7 @@ export default function Humor() {
                 <BellRing size={20} className="animate-pulse" />
                 Avisar {targetName} do meu Humor
               </button>
+
             </div>
 
             {/* PAINEL 2: MANUAL DE SOBREVIVÊNCIA DO PARCEIRO */}
@@ -276,9 +314,18 @@ export default function Humor() {
                     
                     {/* Barrinhas menores mostrando como estão os níveis do parceiro */}
                     <div className="mt-6 pt-4 border-t border-current/20 flex gap-4 justify-around opacity-80">
-                      <div className="text-center"><div className="text-[10px] uppercase font-bold mb-1">Carência</div><div className="text-lg font-black">{partnerMood.carencia}/5</div></div>
-                      <div className="text-center"><div className="text-[10px] uppercase font-bold mb-1">Estresse</div><div className="text-lg font-black">{partnerMood.estresse}/5</div></div>
-                      <div className="text-center"><div className="text-[10px] uppercase font-bold mb-1">Energia</div><div className="text-lg font-black">{partnerMood.energia}/5</div></div>
+                      <div className="text-center">
+                        <div className="text-[10px] uppercase font-bold mb-1">Carência</div>
+                        <div className="text-lg font-black">{partnerMood.carencia}/5</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[10px] uppercase font-bold mb-1">Estresse</div>
+                        <div className="text-lg font-black">{partnerMood.estresse}/5</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[10px] uppercase font-bold mb-1">Energia</div>
+                        <div className="text-lg font-black">{partnerMood.energia}/5</div>
+                      </div>
                     </div>
                   </div>
                 ) : (

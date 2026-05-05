@@ -1,15 +1,10 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="roseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fb7185" /> <!-- rose-400 -->
-      <stop offset="100%" stop-color="#e11d48" /> <!-- rose-600 -->
+      <stop offset="0%" stop-color="#fb7185" />
+      <stop offset="100%" stop-color="#e11d48" />
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#e11d48" flood-opacity="0.3"/>
-    </filter>
   </defs>
-  <!-- Fundo clarinho combinando com o site -->
-  <rect width="512" height="512" rx="110" fill="#fff8f9"/> 
-  <!-- Coração com gradiente e sombra -->
-  <path d="M256 420.5c-4.4 0-8.8-1.5-12.4-4.6C211.3 388.5 106 295.6 106 200.6c0-62.8 49-109.6 110-109.6 34.6 0 67.5 16.5 80 43.1 12.5-26.6 45.4-43.1 80-43.1 61 0 110 46.8 110 109.6 0 95-105.3 187.9-137.6 215.3-3.6 3.1-8 4.6-12.4 4.6z" fill="url(#roseGradient)" filter="url(#shadow)"/>
+  <!-- Coração com simetria matemática perfeita e fundo transparente -->
+  <path fill="url(#roseGradient)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
 </svg>

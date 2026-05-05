@@ -15,7 +15,7 @@ export default function Retrospectiva() {
     daysTogether: 0,
     daysDating: 0,
     kisses: 0,
-    hoursThisYear: 0
+    minutesThisYear: 0 // Mudamos aqui para Minutos!
   });
 
   // 1. CÁLCULO DE DATAS
@@ -28,6 +28,7 @@ export default function Retrospectiva() {
     const diffInfo = (start) => {
       const diffMs = now.getTime() - start.getTime();
       return {
+        minutes: Math.floor(diffMs / (1000 * 60)), // Cálculo de minutos adicionado!
         hours: Math.floor(diffMs / (1000 * 60 * 60)),
         days: Math.floor(diffMs / (1000 * 60 * 60 * 24))
       };
@@ -42,7 +43,7 @@ export default function Retrospectiva() {
       daysTogether: together.days.toLocaleString('pt-BR'),
       daysDating: dating.days.toLocaleString('pt-BR'),
       kisses: (together.days * 10).toLocaleString('pt-BR'),
-      hoursThisYear: yearOnly.hours.toLocaleString('pt-BR')
+      minutesThisYear: yearOnly.minutes.toLocaleString('pt-BR') // Puxando os minutos astronômicos
     });
   }, []);
 
@@ -170,12 +171,10 @@ export default function Retrospectiva() {
         {/* ================= SLIDE 0: INTRO ================= */}
         {currentSlide === 0 && (
           <div className="w-full h-full bg-concentric flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in duration-500">
-            {/* Texto gigante de fundo (diminuído) */}
             <div className="absolute top-1/4 -left-6 text-[180px] md:text-[250px] leading-none text-[#FF5500] font-black opacity-90 animate-float z-10 spotify-font">
               2025
             </div>
             <div className="relative z-20 px-6 text-center">
-              {/* Título principal (diminuído) */}
               <h1 className="text-5xl md:text-7xl font-black text-outline uppercase leading-[0.9] tracking-tighter">
                 Sua<br/>retrospectiva<br/>2025 está aqui!
               </h1>
@@ -189,7 +188,6 @@ export default function Retrospectiva() {
         {/* ================= SLIDE 1: TEMPO JUNTOS ================= */}
         {currentSlide === 1 && (
           <div className="w-full h-full bg-[#F1EFE7] flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in duration-500">
-            {/* Foto de fundo sutil com mix-blend devolvida */}
             {fotos.length > 0 && (
               <img src={fotos[0]} className="absolute inset-0 w-full h-full object-cover opacity-15 grayscale mix-blend-darken z-0" alt="Background" />
             )}
@@ -202,7 +200,6 @@ export default function Retrospectiva() {
             <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-concentric rounded-full opacity-90 border-8 border-[#90A8FF] z-0"></div>
 
             <div className="relative z-20 px-8 w-full max-w-lg bg-[#F1EFE7]/80 p-6 backdrop-blur-sm rounded-2xl border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
-              {/* Fonte diminuída */}
               <h1 className="text-4xl md:text-5xl font-black text-black leading-tight tracking-tighter uppercase mb-4">
                 Vocês estão<br/>juntos há<br/>
                 <span className="text-[#90A8FF] bg-black px-3 py-1 inline-block mt-2">
@@ -219,7 +216,6 @@ export default function Retrospectiva() {
         {/* ================= SLIDE 2: TOP 5 ================= */}
         {currentSlide === 2 && (
           <div className="w-full h-full bg-[#F1EFE7] flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in duration-500">
-            {/* Outra foto no fundo devolvida */}
             {fotos.length > 1 && (
               <img src={fotos[1]} className="absolute inset-0 w-full h-full object-cover opacity-10 grayscale mix-blend-multiply z-0" alt="Background" />
             )}
@@ -236,12 +232,10 @@ export default function Retrospectiva() {
             </svg>
 
             <div className="relative z-20 w-full max-w-md px-6">
-              {/* Título diminuído */}
               <h2 className="text-xl md:text-2xl font-black text-black uppercase mb-6 bg-white/90 p-2 inline-block rounded-md border-2 border-black">
                 Seu Top [MOMENTOS]
               </h2>
               
-              {/* Lista diminuída */}
               <div className="flex flex-col gap-3 text-2xl md:text-4xl font-black uppercase tracking-tighter">
                 {['Beijinhos', 'Conchinha', 'Viajar', 'Filme agarradinho', 'Jogar!!!!!'].map((item, i) => (
                   <div key={i} className="flex gap-3 items-center group">
@@ -259,7 +253,6 @@ export default function Retrospectiva() {
         {/* ================= SLIDE 3: O GRANDE NÚMERO ================= */}
         {currentSlide === 3 && (
           <div className="w-full h-full bg-black flex flex-col items-start justify-center relative overflow-hidden animate-in fade-in duration-500 px-8 md:px-20">
-            {/* Mais uma foto de fundo devolvida */}
             {fotos.length > 2 && (
               <img src={fotos[2]} className="absolute inset-0 w-full h-full object-cover opacity-20 grayscale mix-blend-lighten z-0" alt="Background" />
             )}
@@ -272,11 +265,9 @@ export default function Retrospectiva() {
             <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-concentric rounded-tr-full opacity-80 border-r-8 border-t-8 border-[#90A8FF] z-0"></div>
 
             <div className="relative z-20">
-              {/* Número gigante reduzido levemente para caber bem em mobiles */}
               <h1 className="text-[70px] md:text-[110px] font-black text-[#FF5500] leading-none tracking-tighter spotify-font drop-shadow-[4px_4px_0_rgba(255,255,255,1)]">
                 {stats.hoursTogether}
               </h1>
-              {/* Subtítulo reduzido */}
               <p className="text-lg md:text-2xl text-black bg-white inline-block px-3 py-1 font-bold mt-4 uppercase shadow-[4px_4px_0_0_rgba(144,168,255,1)]">
                 Horas totais de amorzinho.
               </p>
@@ -284,7 +275,7 @@ export default function Retrospectiva() {
           </div>
         )}
 
-        {/* ================= SLIDE 4: RESUMO FINAL (COM SLIDESHOW) ================= */}
+        {/* ================= SLIDE 4: RESUMO FINAL (AGORA COM MINUTOS!) ================= */}
         {currentSlide === 4 && (
           <div className="w-full h-full bg-[#F1EFE7] flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in duration-500 p-6">
             
@@ -293,7 +284,7 @@ export default function Retrospectiva() {
                 2025
               </div>
 
-              {/* FOTO CENTRAL COM O EFEITO SLIDESHOW DO FIREBASE */}
+              {/* FOTO CENTRAL COM O EFEITO SLIDESHOW */}
               <div className="w-full aspect-square bg-[#90A8FF] border-4 border-black mb-6 overflow-hidden relative group shadow-inner">
                  {fotos.length > 0 ? (
                    <img 
@@ -330,7 +321,8 @@ export default function Retrospectiva() {
               <div className="flex justify-between w-full items-end">
                 <div>
                   <h3 className="text-[10px] md:text-xs uppercase font-bold text-gray-500">Minutos ouvidos</h3>
-                  <p className="text-xl font-black uppercase tracking-tighter">{stats.hoursThisYear}</p>
+                  {/* Variável alterada para os minutos gigantes */}
+                  <p className="text-xl font-black uppercase tracking-tighter">{stats.minutesThisYear}</p>
                 </div>
                 <div className="text-right">
                   <h3 className="text-xs uppercase font-black text-black bg-[#90A8FF] px-2 py-1">Obrigado.</h3>

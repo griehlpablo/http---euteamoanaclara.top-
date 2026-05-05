@@ -21,7 +21,7 @@ const cards = [
   // Novo botão para o Humor adicionado
   { path: "/humor", icon: Activity, title: "Radar de Humor", desc: "Manual de sobrevivência diário." },
   { path: "/mural", icon: MessageCircleHeart, title: "Mural", desc: "Recados e missões diárias." },
-  { path: "/genealogia", icon: GitMerge, title: "Genealogia", desc: "As nossas raízes Kovalek." },
+  { path: "/genealogia", icon: GitMerge, title: "Genealogia", desc: "As suas raízes." },
   { path: "/links", icon: LinkIcon, title: "Links Úteis", desc: "Acessos rápidos importantes." },
 ];
 

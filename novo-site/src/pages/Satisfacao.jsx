@@ -84,7 +84,7 @@ export default function Satisfacao() {
     const alvo = currentUser === 'pablo' ? 'ana' : 'pablo';
     const meuNome = currentUser === 'pablo' ? 'Pablo' : 'Ana Clara';
     
-    // Na notificação vai só o resumo curto
+    // Se tiver msgManual (como na fiança), envia ela. Senão, envia o resumo do nível.
     const msg = msgManual || `${meuNome} diz: ${LEVELS[levelKey].resumo}`;
 
     const body = {
@@ -126,12 +126,16 @@ export default function Satisfacao() {
   const saveJailNote = () => {
     if (!jailInput.trim()) return;
     const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
+    
+    // Salva no banco de dados
     set(ref(rtdb, `satisfaction/pablo-ana/current/notes/${targetUser}`), jailInput);
     
-    const meuNome = currentUser === 'pablo' ? 'Pablo' : 'Ana Clara';
+    // Envia a notificação com O TEXTO DA FIANÇA!
     const msgCadeia = `🚨 Missão da Cadeia: "${jailInput}"`;
     enviarNotificacaoProAmor('jail', msgCadeia); 
+    
     setJailInput('');
+    alert("Missão enviada com sucesso!");
   };
 
   const renderChart = () => {
@@ -207,7 +211,6 @@ export default function Satisfacao() {
             
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-slate-800">Como está {targetName}?</h2>
-              {/* No site mostra a frase completa e detalhada */}
               <p className="text-slate-500 text-sm mt-1 italic">
                 {LEVELS[currentLevels[currentUser === 'pablo' ? 'ana' : 'pablo']]?.frase}
               </p>
@@ -229,6 +232,40 @@ export default function Satisfacao() {
                 );
               })}
             </div>
+
+            {/* SE O ALVO ESTIVER NA CADEIA: MOSTRA O INPUT PARA DEFINIR MISSÃO */}
+            {currentLevels[currentUser === 'pablo' ? 'ana' : 'pablo'] === 'jail' && (
+              <div className="mt-6 p-5 bg-slate-800 rounded-2xl text-white animate-in zoom-in-95 relative z-50 shadow-xl">
+                <h3 className="font-bold flex items-center gap-2 mb-1"><Lock size={18} className="text-rose-500" /> Fiança da Cadeia</h3>
+                <p className="text-xs text-slate-400 mb-4">Defina uma missão para soltar {targetName}:</p>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={jailInput} 
+                    onChange={(e) => setJailInput(e.target.value)} 
+                    placeholder="Ex: Fazer massagem..." 
+                    className="flex-1 px-4 py-3 rounded-xl bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-rose-500 cursor-text"
+                  />
+                  <button 
+                    onClick={saveJailNote} 
+                    className="px-5 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl transition-colors cursor-pointer"
+                  >
+                    Enviar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* SE EU ESTIVER NA CADEIA: MOSTRA A MISSÃO QUE EU RECEBI */}
+            {currentLevels[currentUser] === 'jail' && jailNote[currentUser] && (
+              <div className="mt-8 p-6 bg-rose-50 border-2 border-rose-500 rounded-2xl text-rose-800 animate-in zoom-in-95 relative z-50 shadow-md">
+                <h3 className="font-black flex items-center gap-2 mb-2 text-rose-600">
+                  <Lock size={20} /> ALERTA: Você está na cadeia!
+                </h3>
+                <p className="text-sm text-rose-700 mb-1">Cumpra esta missão para ser solto(a):</p>
+                <p className="font-bold text-xl italic">"{jailNote[currentUser]}"</p>
+              </div>
+            )}
             
             <button 
               onClick={() => enviarNotificacaoProAmor(currentLevels[currentUser === 'pablo' ? 'ana' : 'pablo'])} 

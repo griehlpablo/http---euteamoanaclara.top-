@@ -9,7 +9,9 @@ export default function Galeria() {
   const [selectedImg, setSelectedImg] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('grid');
+  
+  // A MÁGICA AQUI: O estado inicial agora é 'carousel' ao invés de 'grid'
+  const [viewMode, setViewMode] = useState('carousel');
 
   const findImageLink = (data) => {
     if (typeof data === 'string') {

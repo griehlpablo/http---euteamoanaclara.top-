@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
@@ -10,10 +10,20 @@ const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
   
-  // Estados do Player
+  // ==========================================
+  // ESTADOS DO PLAYER E DO VINIL
+  // ==========================================
   const playerRef = useRef(null);
+  const vinylRef = useRef(null);
+  
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
+  
+  // Estados da Física do Vinil
+  const [rotation, setRotation] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const lastAngleRef = useRef(0);
+  const lastSeekTimeRef = useRef(0);
 
   const handleLoveChange = (e) => {
     setLoveValue(e.target.value);
@@ -22,11 +32,13 @@ const Home = () => {
     }
   };
 
-  // Controles do Player
+  // Controles Tradicionais
   const togglePlay = () => setIsPlaying(!isPlaying);
 
   const handleProgress = (state) => {
-    setProgress(state.played * 100); // Converte de 0.0~1.0 para 0~100%
+    if (!isDragging) {
+      setProgress(state.played * 100); 
+    }
   };
 
   const handleSeek = (e) => {
@@ -37,17 +49,100 @@ const Home = () => {
 
   const nextTrack = () => {
     const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && internalPlayer.nextVideo) {
-      internalPlayer.nextVideo();
-    }
+    if (internalPlayer && internalPlayer.nextVideo) internalPlayer.nextVideo();
   };
 
   const prevTrack = () => {
     const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && internalPlayer.previousVideo) {
-      internalPlayer.previousVideo();
-    }
+    if (internalPlayer && internalPlayer.previousVideo) internalPlayer.previousVideo();
   };
+
+  // ==========================================
+  // LÓGICA DO VINIL INTERATIVO (SCRATCH)
+  // ==========================================
+  
+  // 1. Rotação automática quando está tocando
+  useEffect(() => {
+    let animationFrameId;
+    const spin = () => {
+      if (isPlaying && !isDragging) {
+        setRotation((prev) => (prev + 0.8) % 360); // Velocidade do giro automático
+      }
+      animationFrameId = requestAnimationFrame(spin);
+    };
+    if (isPlaying) {
+      animationFrameId = requestAnimationFrame(spin);
+    }
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isPlaying, isDragging]);
+
+  // 2. Cálculo do ângulo do mouse/dedo
+  const getAngle = (clientX, clientY) => {
+    if (!vinylRef.current) return 0;
+    const rect = vinylRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    // Math.atan2 retorna radianos, convertemos para graus
+    return Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+  };
+
+  // 3. Quando o usuário clica/toca no disco
+  const handlePointerDown = (e) => {
+    setIsDragging(true);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    lastAngleRef.current = getAngle(clientX, clientY);
+  };
+
+  // 4. Efeito global para ler o movimento mesmo se o mouse sair de cima do disco
+  useEffect(() => {
+    const handlePointerMove = (e) => {
+      if (!isDragging) return;
+      
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const currentAngle = getAngle(clientX, clientY);
+      
+      let delta = currentAngle - lastAngleRef.current;
+      // Corrigir o pulo brusco quando passa do grau 180 para -180
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+
+      setRotation((prev) => prev + delta);
+      lastAngleRef.current = currentAngle;
+
+      // Avançar ou Voltar a música com base no giro (A mágica acontece aqui)
+      if (playerRef.current) {
+        const currentTime = playerRef.current.getCurrentTime();
+        if (currentTime !== undefined) {
+          const now = Date.now();
+          // Limita as requisições ao YouTube para evitar que ele trave (throttle)
+          if (now - lastSeekTimeRef.current > 150) {
+            // Cada 1 grau girado equivale a 0.3 segundos de música
+            const newTime = Math.max(0, currentTime + (delta * 0.3)); 
+            playerRef.current.seekTo(newTime, 'seconds');
+            lastSeekTimeRef.current = now;
+          }
+        }
+      }
+    };
+
+    const handlePointerUp = () => setIsDragging(false);
+
+    if (isDragging) {
+      window.addEventListener('pointermove', handlePointerMove);
+      window.addEventListener('touchmove', handlePointerMove, { passive: false });
+      window.addEventListener('pointerup', handlePointerUp);
+      window.addEventListener('touchend', handlePointerUp);
+    }
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('touchend', handlePointerUp);
+    };
+  }, [isDragging]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center min-h-[80vh] text-center px-2">
@@ -94,16 +189,17 @@ const Home = () => {
           <div className="flex flex-col w-full max-w-md bg-white/80 p-5 rounded-3xl shadow-sm border border-slate-100">
             <div className="flex items-center gap-4">
               
-              {/* VINIL GIRATÓRIO COM A FOTO DE VOCÊS */}
+              {/* VINIL GIRATÓRIO INTERATIVO (SCRATCH) */}
               <div 
-                className={`relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-slate-900 shadow-lg flex-shrink-0 bg-slate-900 ${isPlaying ? 'animate-spin' : ''}`} 
-                style={{ animationDuration: '4s' }}
+                ref={vinylRef}
+                onPointerDown={handlePointerDown}
+                onTouchStart={handlePointerDown}
+                className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-slate-900 shadow-lg flex-shrink-0 bg-slate-900 cursor-grab active:cursor-grabbing touch-none" 
+                style={{ transform: `rotate(${rotation}deg)` }} // Giro controlado pelo React
               >
-                {/* Capa do Vinil */}
-                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil do Casal" className="w-full h-full object-cover opacity-90" />
-                {/* Furo do disco e detalhe do centro */}
-                <div className="absolute inset-0 m-auto w-5 h-5 bg-slate-100 rounded-full border-2 border-slate-300"></div>
-                <div className="absolute inset-0 m-auto w-1 h-1 bg-slate-800 rounded-full"></div>
+                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil do Casal" className="w-full h-full object-cover opacity-90 pointer-events-none" />
+                <div className="absolute inset-0 m-auto w-5 h-5 bg-slate-100 rounded-full border-2 border-slate-300 pointer-events-none"></div>
+                <div className="absolute inset-0 m-auto w-1 h-1 bg-slate-800 rounded-full pointer-events-none"></div>
               </div>
               
               <div className="flex-1 text-left">

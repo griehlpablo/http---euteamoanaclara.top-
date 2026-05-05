@@ -15,7 +15,7 @@ export default function Retrospectiva() {
     daysTogether: 0,
     daysDating: 0,
     kisses: 0,
-    minutesThisYear: 0 // Mudamos aqui para Minutos!
+    minutesThisYear: 0
   });
 
   // 1. CÁLCULO DE DATAS
@@ -28,7 +28,7 @@ export default function Retrospectiva() {
     const diffInfo = (start) => {
       const diffMs = now.getTime() - start.getTime();
       return {
-        minutes: Math.floor(diffMs / (1000 * 60)), // Cálculo de minutos adicionado!
+        minutes: Math.floor(diffMs / (1000 * 60)), 
         hours: Math.floor(diffMs / (1000 * 60 * 60)),
         days: Math.floor(diffMs / (1000 * 60 * 60 * 24))
       };
@@ -43,7 +43,7 @@ export default function Retrospectiva() {
       daysTogether: together.days.toLocaleString('pt-BR'),
       daysDating: dating.days.toLocaleString('pt-BR'),
       kisses: (together.days * 10).toLocaleString('pt-BR'),
-      minutesThisYear: yearOnly.minutes.toLocaleString('pt-BR') // Puxando os minutos astronômicos
+      minutesThisYear: yearOnly.minutes.toLocaleString('pt-BR') 
     });
   }, []);
 
@@ -81,6 +81,17 @@ export default function Retrospectiva() {
     });
   }, []);
 
+  // NOVO: PRÉ-CARREGAMENTO (Image Preloading)
+  useEffect(() => {
+    if (fotos.length > 0) {
+      const fotosParaPrecarregar = fotos.slice(0, 15);
+      fotosParaPrecarregar.forEach((url) => {
+        const img = new Image();
+        img.src = url; 
+      });
+    }
+  }, [fotos]);
+
   // 3. MOTOR DO CARROSSEL & SLIDESHOW FINAL
   const TEMPO_POR_SLIDE = 6000;
   const TOTAL_SLIDES = 5;
@@ -95,7 +106,6 @@ export default function Retrospectiva() {
     return () => clearTimeout(timer);
   }, [currentSlide, isPaused]);
 
-  // Efeito especial: Passar as fotos rápido SOMENTE no último slide
   useEffect(() => {
     let interval;
     if (currentSlide === 4 && fotos.length > 1 && !isPaused) {
@@ -189,7 +199,7 @@ export default function Retrospectiva() {
         {currentSlide === 1 && (
           <div className="w-full h-full bg-[#F1EFE7] flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in duration-500">
             {fotos.length > 0 && (
-              <img src={fotos[0]} className="absolute inset-0 w-full h-full object-cover opacity-15 grayscale mix-blend-darken z-0" alt="Background" />
+              <img src={fotos[0]} decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-15 grayscale mix-blend-darken z-0" alt="Background" />
             )}
             
             <svg className="absolute top-10 left-0 w-full h-64 opacity-80 z-0" viewBox="0 0 200 200" preserveAspectRatio="none">
@@ -217,7 +227,7 @@ export default function Retrospectiva() {
         {currentSlide === 2 && (
           <div className="w-full h-full bg-[#F1EFE7] flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in duration-500">
             {fotos.length > 1 && (
-              <img src={fotos[1]} className="absolute inset-0 w-full h-full object-cover opacity-10 grayscale mix-blend-multiply z-0" alt="Background" />
+              <img src={fotos[1]} decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-10 grayscale mix-blend-multiply z-0" alt="Background" />
             )}
 
             <div className="absolute inset-0 flex flex-wrap justify-around items-center opacity-90 z-0">
@@ -254,7 +264,7 @@ export default function Retrospectiva() {
         {currentSlide === 3 && (
           <div className="w-full h-full bg-black flex flex-col items-start justify-center relative overflow-hidden animate-in fade-in duration-500 px-8 md:px-20">
             {fotos.length > 2 && (
-              <img src={fotos[2]} className="absolute inset-0 w-full h-full object-cover opacity-20 grayscale mix-blend-lighten z-0" alt="Background" />
+              <img src={fotos[2]} decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-20 grayscale mix-blend-lighten z-0" alt="Background" />
             )}
 
             <svg className="absolute top-20 right-0 w-full h-64 opacity-50 z-0" viewBox="0 0 200 200" preserveAspectRatio="none">
@@ -275,7 +285,7 @@ export default function Retrospectiva() {
           </div>
         )}
 
-        {/* ================= SLIDE 4: RESUMO FINAL (AGORA COM MINUTOS!) ================= */}
+        {/* ================= SLIDE 4: RESUMO FINAL (COM SLIDESHOW) ================= */}
         {currentSlide === 4 && (
           <div className="w-full h-full bg-[#F1EFE7] flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in duration-500 p-6">
             
@@ -284,13 +294,14 @@ export default function Retrospectiva() {
                 2025
               </div>
 
-              {/* FOTO CENTRAL COM O EFEITO SLIDESHOW */}
+              {/* FOTO CENTRAL COM O EFEITO SLIDESHOW DO FIREBASE */}
               <div className="w-full aspect-square bg-[#90A8FF] border-4 border-black mb-6 overflow-hidden relative group shadow-inner">
                  {fotos.length > 0 ? (
                    <img 
                       key={fotoCarrosselIndex} 
                       src={fotos[fotoCarrosselIndex]} 
                       alt="Momentos de Vocês" 
+                      decoding="async"
                       className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300 animate-in fade-in zoom-in-95" 
                    />
                  ) : (
@@ -321,7 +332,6 @@ export default function Retrospectiva() {
               <div className="flex justify-between w-full items-end">
                 <div>
                   <h3 className="text-[10px] md:text-xs uppercase font-bold text-gray-500">Minutos ouvidos</h3>
-                  {/* Variável alterada para os minutos gigantes */}
                   <p className="text-xl font-black uppercase tracking-tighter">{stats.minutesThisYear}</p>
                 </div>
                 <div className="text-right">

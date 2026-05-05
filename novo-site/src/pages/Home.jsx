@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, ArrowRight, X, Sparkles, Play, Pause, Disc } from 'lucide-react';
-import ReactPlayer from 'react-player'; // Correção: importando o pacote principal para não quebrar o Vite
+import { Heart, ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
 
 const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
+  
+  // Estados do Player
+  const playerRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false); 
+  const [progress, setProgress] = useState(0);
 
   const handleLoveChange = (e) => {
     setLoveValue(e.target.value);
@@ -18,14 +22,37 @@ const Home = () => {
     }
   };
 
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
+  // Controles do Player
+  const togglePlay = () => setIsPlaying(!isPlaying);
+
+  const handleProgress = (state) => {
+    setProgress(state.played * 100); // Converte de 0.0~1.0 para 0~100%
+  };
+
+  const handleSeek = (e) => {
+    const value = parseFloat(e.target.value);
+    setProgress(value);
+    playerRef.current.seekTo(value / 100, 'fraction');
+  };
+
+  const nextTrack = () => {
+    const internalPlayer = playerRef.current?.getInternalPlayer();
+    if (internalPlayer && internalPlayer.nextVideo) {
+      internalPlayer.nextVideo();
+    }
+  };
+
+  const prevTrack = () => {
+    const internalPlayer = playerRef.current?.getInternalPlayer();
+    if (internalPlayer && internalPlayer.previousVideo) {
+      internalPlayer.previousVideo();
+    }
   };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center min-h-[80vh] text-center px-2">
       
-      {/* FOTO DE VOCÊS */}
+      {/* FOTO DE VOCÊS (Tela Inicial) */}
       <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="mb-8 relative z-50">
         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto">
           <img src="/images/ana_e_eu_zoo.jpg" alt="Ana e Pablo" className="w-full h-full object-cover" />
@@ -60,38 +87,68 @@ const Home = () => {
           </p>
         </div>
 
-        {/* CARD 3: NOSSA TRILHA SONORA (CUSTOM PLAYER) */}
-        <div className={`${glassClasses} p-4 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center`}>
+        {/* CARD 3: NOSSA TRILHA SONORA (CUSTOM PLAYER COM DISCO DE VINIL) */}
+        <div className={`${glassClasses} p-5 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center`}>
           <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
           
-          {/* O "COSMÉTICO" (Interface Bonitinha) */}
-          <div className="flex items-center gap-4 bg-white/80 p-3 md:p-4 rounded-2xl w-full max-w-md shadow-sm border border-slate-100">
-            {/* Disco girando quando dá Play */}
-            <div className={`w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-rose-400 shadow-md ${isPlaying ? 'animate-[spin_4s_linear_infinite]' : ''}`}>
-               <Disc size={24} />
+          <div className="flex flex-col w-full max-w-md bg-white/80 p-5 rounded-3xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-4">
+              
+              {/* VINIL GIRATÓRIO COM A FOTO DE VOCÊS */}
+              <div 
+                className={`relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-slate-900 shadow-lg flex-shrink-0 bg-slate-900 ${isPlaying ? 'animate-spin' : ''}`} 
+                style={{ animationDuration: '4s' }}
+              >
+                {/* Capa do Vinil */}
+                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil do Casal" className="w-full h-full object-cover opacity-90" />
+                {/* Furo do disco e detalhe do centro */}
+                <div className="absolute inset-0 m-auto w-5 h-5 bg-slate-100 rounded-full border-2 border-slate-300"></div>
+                <div className="absolute inset-0 m-auto w-1 h-1 bg-slate-800 rounded-full"></div>
+              </div>
+              
+              <div className="flex-1 text-left">
+                 <p className="font-bold text-slate-800 text-sm md:text-base line-clamp-1">Playlist "iA"</p>
+                 <p className="text-xs text-slate-500 font-medium">Pablo & Ana Clara</p>
+              </div>
             </div>
-            
-            <div className="flex-1 text-left">
-               <p className="font-bold text-slate-800 text-sm">Playlist "iA"</p>
-               <p className="text-xs text-slate-500 font-medium">Pablo & Ana Clara</p>
+
+            {/* BARRA DE PROGRESSO */}
+            <div className="mt-5 w-full">
+              <input 
+                type="range" min="0" max="100" value={progress} onChange={handleSeek}
+                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
+              />
             </div>
-            
-            <button 
-              onClick={togglePlay} 
-              className="w-12 h-12 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors shadow-md cursor-pointer hover:scale-105"
-            >
-               {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-1" />}
-            </button>
+
+            {/* BOTÕES DE CONTROLE */}
+            <div className="flex items-center justify-center gap-6 mt-4">
+              <button onClick={prevTrack} className="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
+                <SkipBack size={24} fill="currentColor" />
+              </button>
+              
+              <button 
+                onClick={togglePlay} 
+                className="w-14 h-14 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-md cursor-pointer hover:scale-105"
+              >
+                 {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}
+              </button>
+              
+              <button onClick={nextTrack} className="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
+                <SkipForward size={24} fill="currentColor" />
+              </button>
+            </div>
           </div>
 
           {/* O MOTOR DO YOUTUBE (Escondido) */}
           <div className="hidden">
             <ReactPlayer
+              ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
               width="0"
               height="0"
               volume={0.8}
+              onProgress={handleProgress}
               config={{
                 youtube: {
                   playerVars: { showinfo: 0, controls: 0 }

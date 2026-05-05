@@ -43,7 +43,7 @@ const Home = () => {
           />
         </div>
         
-        {/* CARD 2: A NOVA FASE (Substituiu o "Perdoa o Pablo") */}
+        {/* CARD 2: A NOVA FASE */}
         <div className={`${glassClasses} p-6 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden`}>
           {/* Detalhe visual na borda superior */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-rose-600"></div>
@@ -52,6 +52,26 @@ const Home = () => {
           <h3 className="font-bold mb-2 text-slate-800 text-lg">Nova Fase Desbloqueada</h3>
           <p className="text-sm text-slate-600 font-medium italic px-2">
             "Sem brigas, sem estresse. Apenas paz, muito amor e nós dois contra o mundo."
+          </p>
+        </div>
+
+        {/* CARD 3: NOSSA TRILHA SONORA (YOUTUBE) */}
+        <div className={`${glassClasses} p-4 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center`}>
+          <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
+          
+          <div className="w-full relative rounded-xl overflow-hidden shadow-md" style={{ paddingTop: '56.25%' }}>
+            <iframe 
+              className="absolute top-0 left-0 w-full h-full"
+              src="https://www.youtube.com/embed/videoseries?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj" 
+              title="Nossa Playlist" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen
+            ></iframe>
+          </div>
+          
+          <p className="text-xs text-slate-500 mt-3 italic text-center">
+            Dê o play para ouvir nossa playlist completa sem sair do app! ❤️
           </p>
         </div>
 

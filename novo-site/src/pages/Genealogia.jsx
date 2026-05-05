@@ -19,7 +19,7 @@ const MembroCard = ({ nome, datas, foto, doc, papel }) => (
       <h4 className="text-xs md:text-sm font-bold text-slate-800 leading-tight">{nome}</h4>
       {datas && <p className="text-[9px] md:text-[10px] text-slate-500 mt-1">{datas}</p>}
       
-      {/* Botão de Documento se existir PDF */}
+      {/* Botão de Documento se existir arquivo (PDF ou Certidão PNG) */}
       {doc && (
         <a href={doc} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 bg-slate-800 text-white text-[9px] px-2 py-1 rounded-full hover:bg-slate-700 transition-colors">
           <FileText size={10} /> Ver Doc
@@ -80,10 +80,10 @@ export default function Genealogia() {
               
               {/* LINHA 1: TETRAVÓS / TRISAVÓS (EUROPA) */}
               <div className="flex justify-around w-full relative">
-                <MembroCard nome="Grzegorz Kowalyk & Anna" datas="Europa (Galícia)" papel="Trisavós" />
-                <MembroCard nome="Andreas Zielinski" datas="1869-1919" foto="/images/andreaszielinski.png" papel="Trisavô" />
-                <MembroCard nome="Nicolaus Pylypiw & Anna" datas="Europa" papel="Trisavós" />
-                <MembroCard nome="Alexius Weresiuk & Maria" datas="Europa" papel="Trisavós" />
+                <MembroCard nome="Grzegorz Kowalyk" datas="Hulcze (Galícia)" doc="/docs/SanNicolauKowalyk.pdf" papel="Trisavô" />
+                <MembroCard nome="Andreas Zielinski" datas="1869-1919" doc="/images/certidaonascimentoandreaszielinski.png" papel="Trisavô" />
+                <MembroCard nome="Nicolaus Pylypiw" datas="Europa" papel="Trisavô" />
+                <MembroCard nome="Alexius Weresiuk" datas="Europa" doc="/images/certidaonascimentoalexiusweresiuk.png" papel="Trisavô" />
               </div>
 
               {/* CONECTORES LINHA 1 PARA 2 */}
@@ -104,7 +104,7 @@ export default function Genealogia() {
 
               {/* LINHA 2: BISAVÓS */}
               <div className="flex justify-around w-[80%] relative mt-8">
-                <MembroCard nome="Paulo Kovalek" datas="1900-1967" papel="Bisavô" />
+                <MembroCard nome="Paulo Kovalek" datas="1900-1967" foto="/images/paulokovalek.jpg" papel="Bisavô" />
                 <MembroCard nome="Anastacia Gelinski" datas="1912-1981" foto="/images/anastasiazielinski.png" papel="Bisavó" />
                 <MembroCard nome="Theodoro Felipe" datas="1906-1991" doc="/docs/batismotheodorus.pdf" papel="Bisavô" />
                 <MembroCard nome="Maria Veresiuk" datas="1906-1977" doc="/docs/batismomaria.pdf" papel="Bisavó" />
@@ -166,7 +166,9 @@ export default function Genealogia() {
           </div>
         )}
 
-        {/* As outras abas continuam idênticas... */}
+        {/* ========================================== */}
+        {/* ABA: LINHA DO TEMPO                        */}
+        {/* ========================================== */}
         {activeTab === 'historia' && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 relative">
             <div className="absolute left-6 md:left-1/2 top-4 bottom-4 w-0.5 bg-slate-200 -z-10 hidden md:block"></div>
@@ -184,12 +186,15 @@ export default function Genealogia() {
 
             <div className={`${glassClasses} flex flex-col md:flex-row gap-6 items-start`}>
               <div className="bg-slate-100 p-3 rounded-2xl text-slate-500 shrink-0"><Footprints size={24} /></div>
-              <div>
+              <div className="w-full">
                 <span className="text-rose-500 font-bold text-sm">1890 a 1905</span>
                 <h3 className="text-xl font-bold text-slate-800 mt-1 mb-2">A Grande Imigração</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-slate-600 leading-relaxed mb-4">
                   As famílias deixam o Império Austro-Húngaro rumo ao Brasil, estabelecendo-se em Prudentópolis, Paraná. Em 1906, nascem os primeiros brasileiros da linhagem: Theodoro e Maria.
                 </p>
+                <a href="/docs/ListaDeEmbarqueRioDeJaneiro.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-rose-50 text-rose-600 font-bold text-sm px-4 py-2 rounded-xl hover:bg-rose-100 transition-colors">
+                  <Download size={16} /> Lista de Embarque (Rio de Janeiro)
+                </a>
               </div>
             </div>
 
@@ -206,6 +211,9 @@ export default function Genealogia() {
           </div>
         )}
 
+        {/* ========================================== */}
+        {/* ABA: CURIOSIDADES                          */}
+        {/* ========================================== */}
         {activeTab === 'curiosidades' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4">
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
@@ -247,6 +255,17 @@ export default function Genealogia() {
                   Enquanto a família Weresiuk pertencia à paróquia Católica Romana, a linhagem Kowalyk e Pylypiw tinha raízes na tradição Ortodoxa ou Greco-Católica.
                 </p>
               </div>
+            </div>
+            
+            {/* Certidão Extra */}
+            <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-800">Acervo: Stephanus Zielinski</h3>
+                <p className="text-sm text-slate-500">Certidão de nascimento resgatada dos arquivos históricos.</p>
+              </div>
+              <a href="/images/certidaonascimentostephanuszielinski.png" target="_blank" rel="noopener noreferrer" className="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">
+                Ver Imagem
+              </a>
             </div>
           </div>
         )}

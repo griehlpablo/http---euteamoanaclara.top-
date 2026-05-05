@@ -1,16 +1,44 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, MapPin, Users, History, FileText, Globe, Footprints } from 'lucide-react';
+import { ArrowLeft, BookOpen, MapPin, History, FileText, Globe, Footprints, User, Download } from 'lucide-react';
 
+// ==========================================
+// COMPONENTE DO CARTÃO DA ÁRVORE
+// ==========================================
+const MembroCard = ({ nome, datas, foto, doc, papel }) => (
+  <div className="flex flex-col items-center relative z-10 w-32 md:w-40 group">
+    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border-4 border-rose-100 shadow-md overflow-hidden flex items-center justify-center relative z-10 transition-transform group-hover:scale-110">
+      {foto ? (
+        <img src={foto} alt={nome} className="w-full h-full object-cover" />
+      ) : (
+        <User size={32} className="text-slate-300" />
+      )}
+    </div>
+    <div className="bg-white/80 backdrop-blur-sm border border-slate-100 shadow-sm rounded-xl p-2 mt-2 text-center w-full relative z-10">
+      <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider mb-0.5">{papel}</p>
+      <h4 className="text-xs md:text-sm font-bold text-slate-800 leading-tight">{nome}</h4>
+      {datas && <p className="text-[9px] md:text-[10px] text-slate-500 mt-1">{datas}</p>}
+      
+      {/* Botão de Documento se existir PDF */}
+      {doc && (
+        <a href={doc} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 bg-slate-800 text-white text-[9px] px-2 py-1 rounded-full hover:bg-slate-700 transition-colors">
+          <FileText size={10} /> Ver Doc
+        </a>
+      )}
+    </div>
+  </div>
+);
+
+// ==========================================
+// PÁGINA PRINCIPAL
+// ==========================================
 export default function Genealogia() {
   const [activeTab, setActiveTab] = useState('arvore');
-
   const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-sm rounded-3xl p-6";
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 pb-20 relative z-50">
       
-      {/* HEADER */}
       <div className="max-w-4xl mx-auto flex items-center justify-between mb-8 pt-4">
         <Link to="/central" className="p-2 bg-white rounded-full shadow-sm text-slate-500 hover:scale-110 transition-transform cursor-pointer">
           <ArrowLeft size={24} />
@@ -23,93 +51,124 @@ export default function Genealogia() {
 
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* HERO SECTION */}
         <div className="bg-slate-800 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
           <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
           <h2 className="text-3xl font-serif font-bold mb-2 relative z-10">Família Kovalek & Felipe</h2>
-          <p className="text-slate-300 relative z-10 max-w-2xl leading-relaxed">
-            Uma jornada que atravessa fronteiras, desde as terras frias da Galícia, no antigo Império Austro-Húngaro, até as terras promissoras de Prudentópolis no Paraná. Esta é a história da ascendência de Ana Clara.
+          <p className="text-slate-300 relative z-10 max-w-2xl leading-relaxed text-sm">
+            Uma jornada que atravessa fronteiras, desde as terras da Galícia até Prudentópolis no Paraná.
           </p>
         </div>
 
-        {/* NAVEGAÇÃO DE ABAS */}
         <div className="flex gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
-          <button 
-            onClick={() => setActiveTab('arvore')}
-            className={`flex-1 py-3 px-6 rounded-xl font-bold text-sm whitespace-nowrap flex items-center justify-center gap-2 transition-all cursor-pointer ${activeTab === 'arvore' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
-          >
-            <Users size={16} /> Árvore Direta
+          <button onClick={() => setActiveTab('arvore')} className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap flex items-center justify-center gap-2 transition-all cursor-pointer ${activeTab === 'arvore' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>
+            <User size={16} /> Árvore Visual
           </button>
-          <button 
-            onClick={() => setActiveTab('historia')}
-            className={`flex-1 py-3 px-6 rounded-xl font-bold text-sm whitespace-nowrap flex items-center justify-center gap-2 transition-all cursor-pointer ${activeTab === 'historia' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
-          >
+          <button onClick={() => setActiveTab('historia')} className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap flex items-center justify-center gap-2 transition-all cursor-pointer ${activeTab === 'historia' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>
             <History size={16} /> Linha do Tempo
           </button>
-          <button 
-            onClick={() => setActiveTab('curiosidades')}
-            className={`flex-1 py-3 px-6 rounded-xl font-bold text-sm whitespace-nowrap flex items-center justify-center gap-2 transition-all cursor-pointer ${activeTab === 'curiosidades' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
-          >
-            <FileText size={16} /> Registros & Curiosidades
+          <button onClick={() => setActiveTab('curiosidades')} className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap flex items-center justify-center gap-2 transition-all cursor-pointer ${activeTab === 'curiosidades' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>
+            <FileText size={16} /> Curiosidades
           </button>
         </div>
 
-        {/* CONTEÚDO: ÁRVORE GENEALÓGICA */}
+        {/* ========================================== */}
+        {/* ABA: ÁRVORE VISUAL                         */}
+        {/* ========================================== */}
         {activeTab === 'arvore' && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-            
-            <div className={`${glassClasses} border-l-4 border-l-rose-500`}>
-              <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-1">Geração Atual</div>
-              <h3 className="text-xl font-black text-slate-800">Ana Clara Kovalek Santos</h3>
-              <p className="text-sm text-slate-500 mt-1">Nascida em 2005.</p>
-            </div>
-
-            <div className="flex gap-4 px-4 opacity-50"><div className="w-0.5 h-6 bg-slate-300 mx-auto"></div></div>
-
-            <div className={`${glassClasses} border-l-4 border-l-slate-400`}>
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Pais (Geração 2)</div>
-              <h3 className="text-lg font-bold text-slate-800">Maria Juliana Felipe (1980) & Saint-Clair Santos (1975)</h3>
-            </div>
-
-            <div className="flex gap-4 px-4 opacity-50"><div className="w-0.5 h-6 bg-slate-300 mx-auto"></div></div>
-
-            <div className={`${glassClasses} border-l-4 border-l-slate-400`}>
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Avós Maternos (Geração 3)</div>
-              <h3 className="text-lg font-bold text-slate-800">Justina Kovalek (1942-2015) & Eleutério Felipe (1945)</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className={`${glassClasses} bg-white/80`}>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Ramo Kovalek (Bisavós)</div>
-                <h3 className="font-bold text-slate-800">Paulo Kovalek (1900-1967)</h3>
-                <p className="text-sm text-slate-500 mb-3">Casado com Anastacia Gelinski (1912-1981)</p>
-                
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 mt-4 border-t pt-3">Trisavós (Imigrantes)</div>
-                <ul className="text-sm text-slate-600 space-y-1">
-                  <li>• Grzegorz Kowalyk & Anna (1871-1927)</li>
-                  <li>• André Zielinski (1869-1919) & Natália Materacka</li>
-                </ul>
+          <div className={`${glassClasses} overflow-x-auto pb-8`}>
+            <div className="min-w-[800px] flex flex-col items-center pt-8">
+              
+              {/* LINHA 1: TETRAVÓS / TRISAVÓS (EUROPA) */}
+              <div className="flex justify-around w-full relative">
+                <MembroCard nome="Grzegorz Kowalyk & Anna" datas="Europa (Galícia)" papel="Trisavós" />
+                <MembroCard nome="Andreas Zielinski" datas="1869-1919" foto="/images/andreaszielinski.png" papel="Trisavô" />
+                <MembroCard nome="Nicolaus Pylypiw & Anna" datas="Europa" papel="Trisavós" />
+                <MembroCard nome="Alexius Weresiuk & Maria" datas="Europa" papel="Trisavós" />
               </div>
 
-              <div className={`${glassClasses} bg-white/80`}>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Ramo Felipe (Bisavós)</div>
-                <h3 className="font-bold text-slate-800">Theodoro Felipe (1906-1991)</h3>
-                <p className="text-sm text-slate-500 mb-3">Casado com Maria Veresiuk (1906-1977)</p>
+              {/* CONECTORES LINHA 1 PARA 2 */}
+              <div className="flex justify-around w-full h-8 relative">
+                <div className="w-px h-full bg-slate-300 absolute left-[12%]"></div>
+                <div className="w-px h-full bg-slate-300 absolute left-[38%]"></div>
+                <div className="w-px h-full bg-slate-300 absolute left-[62%]"></div>
+                <div className="w-px h-full bg-slate-300 absolute left-[88%]"></div>
                 
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 mt-4 border-t pt-3">Trisavós (Imigrantes)</div>
-                <ul className="text-sm text-slate-600 space-y-1">
-                  <li>• Nicolaus Pylypiw & Anna</li>
-                  <li>• Alexius Weresiuk & Maria</li>
-                </ul>
+                {/* Linhas horizontais unindo os casais */}
+                <div className="absolute top-8 left-[12%] right-[38%] h-px bg-slate-300"></div>
+                <div className="absolute top-8 left-[62%] right-[88%] h-px bg-slate-300"></div>
+                
+                {/* Linhas descendo para os Bisavós */}
+                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[25%]"></div>
+                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[75%]"></div>
               </div>
+
+              {/* LINHA 2: BISAVÓS */}
+              <div className="flex justify-around w-[80%] relative mt-8">
+                <MembroCard nome="Paulo Kovalek" datas="1900-1967" papel="Bisavô" />
+                <MembroCard nome="Anastacia Gelinski" datas="1912-1981" foto="/images/anastasiazielinski.png" papel="Bisavó" />
+                <MembroCard nome="Theodoro Felipe" datas="1906-1991" doc="/docs/batismotheodorus.pdf" papel="Bisavô" />
+                <MembroCard nome="Maria Veresiuk" datas="1906-1977" doc="/docs/batismomaria.pdf" papel="Bisavó" />
+              </div>
+
+              {/* CONECTORES LINHA 2 PARA 3 */}
+              <div className="flex justify-around w-[80%] h-8 relative">
+                <div className="w-px h-full bg-slate-300 absolute left-[15%]"></div>
+                <div className="w-px h-full bg-slate-300 absolute left-[45%]"></div>
+                <div className="w-px h-full bg-slate-300 absolute left-[55%]"></div>
+                <div className="w-px h-full bg-slate-300 absolute left-[85%]"></div>
+                
+                {/* Linhas horizontais unindo os casais */}
+                <div className="absolute top-8 left-[15%] right-[45%] h-px bg-slate-300"></div>
+                <div className="absolute top-8 left-[55%] right-[85%] h-px bg-slate-300"></div>
+                
+                {/* Linhas descendo para os Avós */}
+                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[30%]"></div>
+                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[70%]"></div>
+              </div>
+
+              {/* LINHA 3: AVÓS */}
+              <div className="flex justify-around w-[60%] relative mt-8">
+                <MembroCard nome="Justina Kovalek" datas="1942-2015" foto="/images/justinakovalek.png" papel="Avó" />
+                <MembroCard nome="Eleutério Felipe" datas="Nasc: 1945" foto="/images/EleuterioFelipe.jpeg" papel="Avô" />
+              </div>
+
+              {/* CONECTORES LINHA 3 PARA 4 */}
+              <div className="flex justify-around w-[60%] h-8 relative">
+                <div className="w-px h-full bg-slate-300 absolute left-[25%]"></div>
+                <div className="w-px h-full bg-slate-300 absolute left-[75%]"></div>
+                <div className="absolute top-8 left-[25%] right-[75%] h-px bg-slate-300"></div>
+                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[50%]"></div>
+              </div>
+
+              {/* LINHA 4: PAIS */}
+              <div className="flex justify-center w-full relative mt-8">
+                <div className="flex gap-16">
+                  <MembroCard nome="Maria Juliana Felipe" datas="Nasc: 1980" papel="Mãe" />
+                  <MembroCard nome="Saint-Clair Santos" datas="Nasc: 1975" papel="Pai" />
+                </div>
+              </div>
+
+              {/* CONECTORES LINHA 4 PARA 5 */}
+              <div className="flex justify-center w-full h-8 relative">
+                <div className="w-px h-full bg-slate-300 absolute left-[45%]"></div>
+                <div className="w-px h-full bg-slate-300 absolute left-[55%]"></div>
+                <div className="absolute top-8 left-[45%] right-[55%] h-px bg-slate-300"></div>
+                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[50%]"></div>
+              </div>
+
+              {/* LINHA 5: ANA CLARA */}
+              <div className="flex justify-center w-full relative mt-8 mb-4">
+                <MembroCard nome="Ana Clara Kovalek" datas="Nasc: 2005" foto="/images/ana_e_eu_zoo.jpg" papel="Geração Atual" />
+              </div>
+
             </div>
+            <p className="text-center text-xs text-slate-400 mt-4 italic">Deslize para os lados para ver a árvore completa.</p>
           </div>
         )}
 
-        {/* CONTEÚDO: LINHA DO TEMPO */}
+        {/* As outras abas continuam idênticas... */}
         {activeTab === 'historia' && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 relative">
-            {/* Linha vertical decorativa */}
             <div className="absolute left-6 md:left-1/2 top-4 bottom-4 w-0.5 bg-slate-200 -z-10 hidden md:block"></div>
 
             <div className={`${glassClasses} flex flex-col md:flex-row gap-6 items-start`}>
@@ -147,10 +206,8 @@ export default function Genealogia() {
           </div>
         )}
 
-        {/* CONTEÚDO: CURIOSIDADES */}
         {activeTab === 'curiosidades' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4">
-            
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <FileText className="text-blue-500" size={20} /> Metamorfose dos Nomes
@@ -161,22 +218,18 @@ export default function Genealogia() {
               <ul className="space-y-3 text-sm">
                 <li className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
                   <span className="font-medium text-slate-500 line-through decoration-rose-300">Pylypiw</span>
-                  <ArrowRight size={14} className="text-slate-300" />
-                  <span className="font-bold text-slate-800">Felipe (Filipe)</span>
+                  <span className="font-bold text-slate-800">Felipe</span>
                 </li>
                 <li className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                  <span className="font-medium text-slate-500 line-through decoration-rose-300">Kowalyk / Kowalik</span>
-                  <ArrowRight size={14} className="text-slate-300" />
+                  <span className="font-medium text-slate-500 line-through decoration-rose-300">Kowalyk</span>
                   <span className="font-bold text-slate-800">Kovalek</span>
                 </li>
                 <li className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
                   <span className="font-medium text-slate-500 line-through decoration-rose-300">Zieliński</span>
-                  <ArrowRight size={14} className="text-slate-300" />
                   <span className="font-bold text-slate-800">Gelinski</span>
                 </li>
                 <li className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
                   <span className="font-medium text-slate-500 line-through decoration-rose-300">Weresiuk</span>
-                  <ArrowRight size={14} className="text-slate-300" />
                   <span className="font-bold text-slate-800">Veresiuk</span>
                 </li>
               </ul>
@@ -187,7 +240,7 @@ export default function Genealogia() {
                 <History className="text-rose-400" size={20} /> O Império Austro-Húngaro
               </h3>
               <p className="text-sm text-slate-300 leading-relaxed mb-4">
-                A Galícia Oriental era uma região multiétnica e multilíngue. Os registros encontrados dividem-se entre línguas (polonês, latim, ucraniano) e confissões religiosas:
+                A Galícia Oriental era uma região multiétnica. Os registros dividem-se entre polonês, latim e ucraniano.
               </p>
               <div className="p-4 bg-white/10 rounded-xl">
                 <p className="text-sm font-medium">
@@ -195,7 +248,6 @@ export default function Genealogia() {
                 </p>
               </div>
             </div>
-
           </div>
         )}
 

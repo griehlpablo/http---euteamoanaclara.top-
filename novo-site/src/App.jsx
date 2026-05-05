@@ -8,8 +8,9 @@ import Contagem from './pages/Contagem';
 import AssistenteCasal from './pages/AssistenteCasal';
 import Genealogia from './pages/Genealogia';
 import Galeria from './pages/Galeria'; 
-// Importando a nova página de Retrospectiva
 import Retrospectiva from './pages/Retrospectiva'; 
+// Importando a nova página de Satisfação
+import Satisfacao from './pages/Satisfacao';
 
 export default function App() {
   return (
@@ -25,8 +26,9 @@ export default function App() {
             <Route path="/assistente" element={<AssistenteCasal />} />
             <Route path="/genealogia" element={<Genealogia />} />
             <Route path="/galeria" element={<Galeria />} /> 
-            {/* Rota da Retrospectiva Spotify Wrapped adicionada aqui 👇 */}
             <Route path="/retrospectiva" element={<Retrospectiva />} />
+            {/* Rota do Termômetro do Amor (Satisfação) adicionada aqui 👇 */}
+            <Route path="/satisfacao" element={<Satisfacao />} />
           </Routes>
         </main>
       </Router>

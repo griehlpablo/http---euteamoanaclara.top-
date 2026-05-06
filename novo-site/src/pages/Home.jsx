@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
 import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -15,6 +15,7 @@ const Home = () => {
   // ==========================================
   const playerRef = useRef(null);
   const vinylRef = useRef(null);
+  const scratchAudioRef = useRef(null);
   
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
@@ -24,6 +25,12 @@ const Home = () => {
   const [isDragging, setIsDragging] = useState(false);
   const lastAngleRef = useRef(0);
   const lastSeekTimeRef = useRef(0);
+
+  // Inicializa o som do Scratch
+  useEffect(() => {
+    scratchAudioRef.current = new Audio('/audio/scratch.mp3');
+    scratchAudioRef.current.volume = 0.4; // Volume um pouco mais baixo para não assustar
+  }, []);
 
   const handleLoveChange = (e) => {
     setLoveValue(e.target.value);
@@ -61,40 +68,40 @@ const Home = () => {
   // LÓGICA DO VINIL INTERATIVO (SCRATCH)
   // ==========================================
   
-  // 1. Rotação automática quando está tocando
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
       if (isPlaying && !isDragging) {
-        setRotation((prev) => (prev + 0.8) % 360); // Velocidade do giro automático
+        setRotation((prev) => (prev + 0.6) % 360); // Giro suave e constante
       }
       animationFrameId = requestAnimationFrame(spin);
     };
-    if (isPlaying) {
-      animationFrameId = requestAnimationFrame(spin);
-    }
+    animationFrameId = requestAnimationFrame(spin);
     return () => cancelAnimationFrame(animationFrameId);
   }, [isPlaying, isDragging]);
 
-  // 2. Cálculo do ângulo do mouse/dedo
   const getAngle = (clientX, clientY) => {
     if (!vinylRef.current) return 0;
     const rect = vinylRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    // Math.atan2 retorna radianos, convertemos para graus
     return Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
   };
 
-  // 3. Quando o usuário clica/toca no disco
   const handlePointerDown = (e) => {
     setIsDragging(true);
+    
+    // Toca o som de Scratch!
+    if (scratchAudioRef.current) {
+      scratchAudioRef.current.currentTime = 0;
+      scratchAudioRef.current.play().catch(err => console.log('Interação bloqueada pelo navegador', err));
+    }
+
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     lastAngleRef.current = getAngle(clientX, clientY);
   };
 
-  // 4. Efeito global para ler o movimento mesmo se o mouse sair de cima do disco
   useEffect(() => {
     const handlePointerMove = (e) => {
       if (!isDragging) return;
@@ -104,22 +111,18 @@ const Home = () => {
       const currentAngle = getAngle(clientX, clientY);
       
       let delta = currentAngle - lastAngleRef.current;
-      // Corrigir o pulo brusco quando passa do grau 180 para -180
       if (delta > 180) delta -= 360;
       if (delta < -180) delta += 360;
 
       setRotation((prev) => prev + delta);
       lastAngleRef.current = currentAngle;
 
-      // Avançar ou Voltar a música com base no giro (A mágica acontece aqui)
       if (playerRef.current) {
         const currentTime = playerRef.current.getCurrentTime();
         if (currentTime !== undefined) {
           const now = Date.now();
-          // Limita as requisições ao YouTube para evitar que ele trave (throttle)
           if (now - lastSeekTimeRef.current > 150) {
-            // Cada 1 grau girado equivale a 0.3 segundos de música
-            const newTime = Math.max(0, currentTime + (delta * 0.3)); 
+            const newTime = Math.max(0, currentTime + (delta * 0.2)); // Ajustei a sensibilidade
             playerRef.current.seekTo(newTime, 'seconds');
             lastSeekTimeRef.current = now;
           }
@@ -147,7 +150,7 @@ const Home = () => {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center min-h-[80vh] text-center px-2">
       
-      {/* FOTO DE VOCÊS (Tela Inicial) */}
+      {/* FOTO DE VOCÊS */}
       <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="mb-8 relative z-50">
         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto">
           <img src="/images/ana_e_eu_zoo.jpg" alt="Ana e Pablo" className="w-full h-full object-cover" />
@@ -174,7 +177,6 @@ const Home = () => {
         {/* CARD 2: A NOVA FASE */}
         <div className={`${glassClasses} p-6 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden`}>
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-rose-600"></div>
-          
           <Sparkles className="text-rose-400 mb-2" size={28} />
           <h3 className="font-bold mb-2 text-slate-800 text-lg">Nova Fase Desbloqueada</h3>
           <p className="text-sm text-slate-600 font-medium italic px-2">
@@ -182,72 +184,76 @@ const Home = () => {
           </p>
         </div>
 
-        {/* CARD 3: NOSSA TRILHA SONORA (CUSTOM PLAYER COM DISCO DE VINIL) */}
-        <div className={`${glassClasses} p-5 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center`}>
-          <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
+        {/* CARD 3: NOSSA TRILHA SONORA (VINIL GIGANTE E INTERATIVO) */}
+        <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center`}>
+          <h3 className="font-bold mb-6 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
           
-          <div className="flex flex-col w-full max-w-md bg-white/80 p-5 rounded-3xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-4">
-              
-              {/* VINIL GIRATÓRIO INTERATIVO (SCRATCH) */}
-              <div 
-                ref={vinylRef}
-                onPointerDown={handlePointerDown}
-                onTouchStart={handlePointerDown}
-                className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-slate-900 shadow-lg flex-shrink-0 bg-slate-900 cursor-grab active:cursor-grabbing touch-none" 
-                style={{ transform: `rotate(${rotation}deg)` }} // Giro controlado pelo React
-              >
-                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil do Casal" className="w-full h-full object-cover opacity-90 pointer-events-none" />
-                <div className="absolute inset-0 m-auto w-5 h-5 bg-slate-100 rounded-full border-2 border-slate-300 pointer-events-none"></div>
-                <div className="absolute inset-0 m-auto w-1 h-1 bg-slate-800 rounded-full pointer-events-none"></div>
+          <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
+            
+            {/* VINIL GIGANTE */}
+            <div 
+              ref={vinylRef}
+              onPointerDown={handlePointerDown}
+              onTouchStart={handlePointerDown}
+              className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
+              style={{ transform: `rotate(${rotation}deg)` }}
+            >
+              <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil do Casal" className="w-full h-full object-cover opacity-90 pointer-events-none" />
+              {/* Ranhuras do vinil (efeito visual) */}
+              <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
+              {/* Centro do disco */}
+              <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center">
+                <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
               </div>
-              
-              <div className="flex-1 text-left">
-                 <p className="font-bold text-slate-800 text-sm md:text-base line-clamp-1">Playlist "iA"</p>
-                 <p className="text-xs text-slate-500 font-medium">Pablo & Ana Clara</p>
-              </div>
+            </div>
+            
+            <div className="text-center w-full mb-6">
+               <p className="font-bold text-slate-800 text-lg">Playlist "iA"</p>
+               <p className="text-sm text-slate-500 font-medium">Pablo & Ana Clara</p>
             </div>
 
             {/* BARRA DE PROGRESSO */}
-            <div className="mt-5 w-full">
+            <div className="w-full mb-6">
               <input 
                 type="range" min="0" max="100" value={progress} onChange={handleSeek}
-                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
               />
             </div>
 
             {/* BOTÕES DE CONTROLE */}
-            <div className="flex items-center justify-center gap-6 mt-4">
-              <button onClick={prevTrack} className="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
-                <SkipBack size={24} fill="currentColor" />
+            <div className="flex items-center justify-center gap-8">
+              <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                <SkipBack size={28} fill="currentColor" />
               </button>
               
               <button 
                 onClick={togglePlay} 
-                className="w-14 h-14 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-md cursor-pointer hover:scale-105"
+                className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
               >
-                 {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}
+                 {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
               </button>
               
-              <button onClick={nextTrack} className="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
-                <SkipForward size={24} fill="currentColor" />
+              <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                <SkipForward size={28} fill="currentColor" />
               </button>
             </div>
           </div>
 
-          {/* O MOTOR DO YOUTUBE (Escondido) */}
-          <div className="hidden">
+          {/* O MOTOR DO YOUTUBE (Escondido estrategicamente) */}
+          <div className="absolute w-[10px] h-[10px] overflow-hidden opacity-0 pointer-events-none top-[-9999px]">
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
-              width="0"
-              height="0"
+              width="100%"
+              height="100%"
               volume={0.8}
               onProgress={handleProgress}
               config={{
                 youtube: {
-                  playerVars: { showinfo: 0, controls: 0 }
+                  playerVars: { showinfo: 0, controls: 0, autoplay: 1 }
                 }
               }}
             />

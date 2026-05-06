@@ -29,7 +29,8 @@ const Home = () => {
   // Inicializa o som do Scratch
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
-    scratchAudioRef.current.volume = 0.4; // Volume um pouco mais baixo para não assustar
+    scratchAudioRef.current.volume = 0.5; 
+    scratchAudioRef.current.loop = true; // Fica tocando em loop enquanto segura
   }, []);
 
   const handleLoveChange = (e) => {
@@ -91,10 +92,9 @@ const Home = () => {
   const handlePointerDown = (e) => {
     setIsDragging(true);
     
-    // Toca o som de Scratch!
+    // Toca o som de Scratch ao encostar
     if (scratchAudioRef.current) {
-      scratchAudioRef.current.currentTime = 0;
-      scratchAudioRef.current.play().catch(err => console.log('Interação bloqueada pelo navegador', err));
+      scratchAudioRef.current.play().catch(err => console.log('Interação bloqueada', err));
     }
 
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -122,7 +122,7 @@ const Home = () => {
         if (currentTime !== undefined) {
           const now = Date.now();
           if (now - lastSeekTimeRef.current > 150) {
-            const newTime = Math.max(0, currentTime + (delta * 0.2)); // Ajustei a sensibilidade
+            const newTime = Math.max(0, currentTime + (delta * 0.2)); 
             playerRef.current.seekTo(newTime, 'seconds');
             lastSeekTimeRef.current = now;
           }
@@ -130,7 +130,14 @@ const Home = () => {
       }
     };
 
-    const handlePointerUp = () => setIsDragging(false);
+    // Parar de arrastar e cortar o som imediatamente!
+    const handlePointerUp = () => {
+      setIsDragging(false);
+      if (scratchAudioRef.current) {
+        scratchAudioRef.current.pause();
+        scratchAudioRef.current.currentTime = 0; // Reseta o som para o início
+      }
+    };
 
     if (isDragging) {
       window.addEventListener('pointermove', handlePointerMove);
@@ -199,7 +206,7 @@ const Home = () => {
               style={{ transform: `rotate(${rotation}deg)` }}
             >
               <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil do Casal" className="w-full h-full object-cover opacity-90 pointer-events-none" />
-              {/* Ranhuras do vinil (efeito visual) */}
+              {/* Ranhuras do vinil */}
               <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
               <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
               <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
@@ -230,7 +237,7 @@ const Home = () => {
               
               <button 
                 onClick={togglePlay} 
-                className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
+                className="w-14 h-14 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
               >
                  {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
               </button>
@@ -241,19 +248,23 @@ const Home = () => {
             </div>
           </div>
 
-          {/* O MOTOR DO YOUTUBE (Escondido estrategicamente) */}
-          <div className="absolute w-[10px] h-[10px] overflow-hidden opacity-0 pointer-events-none top-[-9999px]">
+          {/* O MOTOR DO YOUTUBE (Transparente e ativo para o iOS não bloquear) */}
+          <div className="absolute opacity-0 pointer-events-none w-1 h-1 z-[-1]">
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
-              width="100%"
-              height="100%"
+              width="10px"
+              height="10px"
               volume={0.8}
               onProgress={handleProgress}
               config={{
                 youtube: {
-                  playerVars: { showinfo: 0, controls: 0, autoplay: 1 }
+                  playerVars: { 
+                    showinfo: 0, 
+                    controls: 0,
+                    playsinline: 1 // Crucial para o iPhone permitir tocar sem forçar tela cheia
+                  }
                 }
               }}
             />

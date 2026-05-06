@@ -10,28 +10,23 @@ const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
   
-  // ==========================================
-  // ESTADOS DO PLAYER E DO VINIL
-  // ==========================================
   const playerRef = useRef(null);
   const vinylRef = useRef(null);
   const scratchAudioRef = useRef(null);
   
   const [isPlaying, setIsPlaying] = useState(false); 
-  const [isActuallyPlaying, setIsActuallyPlaying] = useState(false); // Só true quando o som sai
+  const [isActuallyPlaying, setIsActuallyPlaying] = useState(false); 
   const [isBuffering, setIsBuffering] = useState(false);
   const [progress, setProgress] = useState(0);
   
-  // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const lastAngleRef = useRef(0);
   const lastSeekTimeRef = useRef(0);
 
-  // Inicializa o som do Scratch
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
-    scratchAudioRef.current.volume = 0.5; 
+    scratchAudioRef.current.volume = 0.4; 
     scratchAudioRef.current.loop = true; 
   }, []);
 
@@ -42,32 +37,34 @@ const Home = () => {
     }
   };
 
-  // Função de Play/Pause com "Acordada" forçada no YouTube
+  // FUNÇÃO DE PLAY CORRIGIDA (FORÇA BRUTA)
   const togglePlay = () => {
-    const nextState = !isPlaying;
-    setIsPlaying(nextState);
+    const internalPlayer = playerRef.current?.getInternalPlayer();
     
-    // Se estiver dando play, sinalizamos que estamos tentando carregar
-    if (nextState) {
+    if (!isPlaying) {
+      setIsPlaying(true);
       setIsBuffering(true);
+      // O segredo: Chamar o método nativo da API do YouTube diretamente no clique
+      if (internalPlayer && internalPlayer.playVideo) {
+        internalPlayer.playVideo();
+      }
     } else {
+      setIsPlaying(false);
       setIsActuallyPlaying(false);
-      setIsBuffering(false);
+      if (internalPlayer && internalPlayer.pauseVideo) {
+        internalPlayer.pauseVideo();
+      }
     }
   };
 
   const handleProgress = (state) => {
-    if (!isDragging) {
-      setProgress(state.played * 100); 
-    }
+    if (!isDragging) setProgress(state.played * 100); 
   };
 
   const handleSeek = (e) => {
     const value = parseFloat(e.target.value);
     setProgress(value);
-    if (playerRef.current) {
-      playerRef.current.seekTo(value / 100, 'fraction');
-    }
+    playerRef.current?.seekTo(value / 100, 'fraction');
   };
 
   const nextTrack = () => {
@@ -80,14 +77,10 @@ const Home = () => {
     if (internalPlayer && internalPlayer.previousVideo) internalPlayer.previousVideo();
   };
 
-  // ==========================================
-  // LÓGICA DO VINIL INTERATIVO (SCRATCH)
-  // ==========================================
-  
+  // Loop de animação do Vinil
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
-      // O vinil só gira se o som estiver REALMENTE saindo e o usuário não estiver arrastando
       if (isActuallyPlaying && !isDragging) {
         setRotation((prev) => (prev + 0.8) % 360); 
       }
@@ -97,6 +90,7 @@ const Home = () => {
     return () => cancelAnimationFrame(animationFrameId);
   }, [isActuallyPlaying, isDragging]);
 
+  // Lógica de Scratch
   const getAngle = (clientX, clientY) => {
     if (!vinylRef.current) return 0;
     const rect = vinylRef.current.getBoundingClientRect();
@@ -107,9 +101,7 @@ const Home = () => {
 
   const handlePointerDown = (e) => {
     setIsDragging(true);
-    if (scratchAudioRef.current) {
-      scratchAudioRef.current.play().catch(() => {});
-    }
+    scratchAudioRef.current?.play().catch(() => {});
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     lastAngleRef.current = getAngle(clientX, clientY);
@@ -124,19 +116,16 @@ const Home = () => {
       let delta = currentAngle - lastAngleRef.current;
       if (delta > 180) delta -= 360;
       if (delta < -180) delta += 360;
-
       setRotation((prev) => prev + delta);
       lastAngleRef.current = currentAngle;
 
       if (playerRef.current) {
         const currentTime = playerRef.current.getCurrentTime();
-        if (currentTime !== undefined) {
-          const now = Date.now();
-          if (now - lastSeekTimeRef.current > 150) {
-            const newTime = Math.max(0, currentTime + (delta * 0.2)); 
-            playerRef.current.seekTo(newTime, 'seconds');
-            lastSeekTimeRef.current = now;
-          }
+        const now = Date.now();
+        if (now - lastSeekTimeRef.current > 150) {
+          const newTime = Math.max(0, (currentTime || 0) + (delta * 0.2)); 
+          playerRef.current.seekTo(newTime, 'seconds');
+          lastSeekTimeRef.current = now;
         }
       }
     };
@@ -155,7 +144,6 @@ const Home = () => {
       window.addEventListener('pointerup', handlePointerUp);
       window.addEventListener('touchend', handlePointerUp);
     }
-
     return () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('touchmove', handlePointerMove);
@@ -192,14 +180,14 @@ const Home = () => {
           </p>
         </div>
 
-        {/* CARD 3: NOSSA TRILHA SONORA */}
-        <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative overflow-hidden`}>
+        <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative`}>
           
           <div className="relative z-10 flex flex-col items-center w-full">
             <h3 className="font-bold mb-6 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
             
             <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
               
+              {/* DISCO DE VINIL */}
               <div 
                 ref={vinylRef}
                 onPointerDown={handlePointerDown}
@@ -207,15 +195,16 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                {/* O YOUTUBE CAMUFLADO NO DISCO */}
-                <div className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-[0.01]">
+                {/* CAMADA DO YOUTUBE: 200px para o YouTube aceitar, mas opacity quase zero */}
+                <div className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-[0.02]">
                    <ReactPlayer
                     ref={playerRef}
-                    url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj&index=1"
+                    url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
                     playing={isPlaying}
                     width="100%"
                     height="100%"
                     volume={1}
+                    playsinline={true}
                     onPlay={() => {
                         setIsActuallyPlaying(true);
                         setIsBuffering(false);
@@ -226,7 +215,12 @@ const Home = () => {
                     onProgress={handleProgress}
                     config={{
                       youtube: {
-                        playerVars: { controls: 0, playsinline: 1, origin: window.location.origin }
+                        playerVars: { 
+                            controls: 0, 
+                            modestbranding: 1, 
+                            rel: 0, 
+                            origin: window.location.origin 
+                        }
                       }
                     }}
                   />
@@ -250,7 +244,7 @@ const Home = () => {
               </div>
 
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className="text-slate-400 hover:text-rose-500 cursor-pointer">
+                <button onClick={prevTrack} className="text-slate-400 hover:text-rose-500 transition-colors">
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
@@ -260,13 +254,13 @@ const Home = () => {
                     ${isActuallyPlaying ? 'bg-rose-500 text-white' : 'bg-slate-400 text-white'}`}
                 >
                    {isBuffering ? (
-                     <Loader2 size={28} className="animate-spin" />
+                     <Loader2 size={28} className="animate-spin text-white" />
                    ) : (
                      isActuallyPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />
                    )}
                 </button>
                 
-                <button onClick={nextTrack} className="text-slate-400 hover:text-rose-500 cursor-pointer">
+                <button onClick={nextTrack} className="text-slate-400 hover:text-rose-500 transition-colors">
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>
@@ -276,10 +270,10 @@ const Home = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 relative z-50">
-        <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2 cursor-pointer">
+        <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2">
           Entrar no Nosso Mundo <ArrowRight size={20} />
         </Link>
-        <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all cursor-pointer">
+        <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all">
           Surpresa 💍
         </button>
       </div>

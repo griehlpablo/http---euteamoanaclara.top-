@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack, Loader2 } from 'lucide-react';
 import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -19,6 +19,7 @@ const Home = () => {
   
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false); 
   
   // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
@@ -40,7 +41,18 @@ const Home = () => {
     }
   };
 
-  const togglePlay = () => setIsPlaying(!isPlaying);
+  const togglePlay = () => {
+    if (isReady) {
+      // Força a chamada nativa na API do YouTube além do React State
+      const internalPlayer = playerRef.current?.getInternalPlayer();
+      if (!isPlaying) {
+        internalPlayer?.playVideo();
+      } else {
+        internalPlayer?.pauseVideo();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
 
   const handleProgress = (state) => {
     if (!isDragging) {
@@ -78,9 +90,7 @@ const Home = () => {
       }
       animationFrameId = requestAnimationFrame(spin);
     };
-    if (isPlaying) {
-      animationFrameId = requestAnimationFrame(spin);
-    }
+    animationFrameId = requestAnimationFrame(spin);
     return () => cancelAnimationFrame(animationFrameId);
   }, [isPlaying, isDragging]);
 
@@ -189,6 +199,7 @@ const Home = () => {
             
             <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
               
+              {/* O VINIL: Agora ele é a prisão perfeita para o YouTube */}
               <div 
                 ref={vinylRef}
                 onPointerDown={handlePointerDown}
@@ -196,11 +207,40 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="w-full h-full object-cover opacity-90 pointer-events-none" />
-                <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
-                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
-                <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
-                <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center">
+                {/* 1. O CAVALO DE TRÓIA: O YouTube roda aqui no fundo. Visível para o navegador, invisível para o usuário */}
+                <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                  <ReactPlayer
+                    ref={playerRef}
+                    url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj&index=1"
+                    playing={isPlaying}
+                    width="100%"
+                    height="100%"
+                    volume={1}
+                    onReady={() => setIsReady(true)}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onProgress={handleProgress}
+                    config={{
+                      youtube: {
+                        playerVars: { 
+                          controls: 0, 
+                          playsinline: 1,
+                          disablekb: 1,
+                          origin: window.location.origin
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* 2. A FOTO (CAPA DO VINIL): Fica por cima do YouTube com z-index maior (z-10) */}
+                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10" />
+                
+                {/* 3. DETALHES DO DISCO: Ficam na camada mais alta (z-20) */}
+                <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none z-20"></div>
+                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none z-20"></div>
+                <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none z-20"></div>
+                <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center z-20">
                   <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
                 </div>
               </div>
@@ -215,49 +255,24 @@ const Home = () => {
               </div>
 
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                <button onClick={prevTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
                 <button 
                   onClick={togglePlay} 
-                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
+                  disabled={!isReady}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform shadow-lg ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600 hover:scale-105 cursor-pointer' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
                 >
-                   {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+                   {!isReady ? <Loader2 size={28} className="animate-spin" /> : (isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />)}
                 </button>
                 
-                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                <button onClick={nextTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>
             </div>
           </div>
-
-          {/* O MOTOR DO YOUTUBE INVISÍVEL */}
-          {/* Fixado no canto, invisível para o usuário, mas visível para o navegador aprovar o play */}
-          <div className="fixed top-0 left-0 w-[100px] h-[100px] opacity-0 pointer-events-none -z-50">
-            <ReactPlayer
-              ref={playerRef}
-              url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj&index=1"
-              playing={isPlaying}
-              width="100%"
-              height="100%"
-              volume={1}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onProgress={handleProgress}
-              config={{
-                youtube: {
-                  playerVars: { 
-                    controls: 0, 
-                    playsinline: 1,
-                    disablekb: 1
-                  }
-                }
-              }}
-            />
-          </div>
-
         </div>
       </div>
 

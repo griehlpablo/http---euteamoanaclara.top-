@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
-import ReactPlayer from 'react-player';
+import ReactPlayer from 'react-player'; // Importação limpa e oficial!
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
 
@@ -52,7 +52,9 @@ const Home = () => {
   const handleSeek = (e) => {
     const value = parseFloat(e.target.value);
     setProgress(value);
-    playerRef.current.seekTo(value / 100, 'fraction');
+    if (playerRef.current) {
+      playerRef.current.seekTo(value / 100, 'fraction');
+    }
   };
 
   const nextTrack = () => {

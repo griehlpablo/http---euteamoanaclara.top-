@@ -19,7 +19,7 @@ const Home = () => {
   
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
-  const [isReady, setIsReady] = useState(false); // Para sabermos se o YouTube carregou
+  const [isReady, setIsReady] = useState(false);
   
   // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
@@ -93,11 +93,9 @@ const Home = () => {
 
   const handlePointerDown = (e) => {
     setIsDragging(true);
-    
     if (scratchAudioRef.current) {
       scratchAudioRef.current.play().catch(err => console.log('Interação bloqueada', err));
     }
-
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     lastAngleRef.current = getAngle(clientX, clientY);
@@ -184,56 +182,9 @@ const Home = () => {
 
         {/* CARD 3: NOSSA TRILHA SONORA */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative overflow-hidden`}>
-          <h3 className="font-bold mb-6 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
           
-          <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
-            
-            <div 
-              ref={vinylRef}
-              onPointerDown={handlePointerDown}
-              onTouchStart={handlePointerDown}
-              className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
-              style={{ transform: `rotate(${rotation}deg)` }}
-            >
-              <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="w-full h-full object-cover opacity-90 pointer-events-none" />
-              <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
-              <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
-              <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
-              <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center">
-                <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
-              </div>
-            </div>
-            
-            <div className="text-center w-full mb-6">
-               <p className="font-bold text-slate-800 text-lg">Playlist "iA"</p>
-               <p className="text-sm text-slate-500 font-medium">Pablo & Ana Clara</p>
-            </div>
-
-            <div className="w-full mb-6">
-              <input type="range" min="0" max="100" value={progress} onChange={handleSeek} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" />
-            </div>
-
-            <div className="flex items-center justify-center gap-8">
-              <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
-                <SkipBack size={28} fill="currentColor" />
-              </button>
-              
-              <button 
-                onClick={togglePlay} 
-                disabled={!isReady} // Opcional: Só libera o clique quando o YouTube carregar
-                className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform shadow-lg cursor-pointer hover:scale-105 ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600' : 'bg-slate-300 text-slate-500'}`}
-              >
-                 {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
-              </button>
-              
-              <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
-                <SkipForward size={28} fill="currentColor" />
-              </button>
-            </div>
-          </div>
-
-          {/* O MOTOR DO YOUTUBE: Centralizado e no fluxo da tela, mas invisível! */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] opacity-0 pointer-events-none z-[-1]">
+          {/* O MOTOR DO YOUTUBE: Fundo do Card, gigante, porém 1% opaco para o navegador achar que está visível! */}
+          <div className="absolute inset-0 w-full h-full opacity-[0.01] pointer-events-none z-0">
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
@@ -241,21 +192,77 @@ const Home = () => {
               width="100%"
               height="100%"
               volume={1}
-              onReady={() => setIsReady(true)} // Avisa que carregou
-              onPlay={() => setIsPlaying(true)} // Sincroniza Play
-              onPause={() => setIsPlaying(false)} // Sincroniza Pause
-              onProgress={handleProgress} // Atualiza a barra de progresso
+              onReady={() => setIsReady(true)}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onProgress={handleProgress}
               config={{
                 youtube: {
-                  playerVars: { showinfo: 0, controls: 0, playsinline: 1 }
+                  playerVars: { 
+                    showinfo: 0, 
+                    controls: 0, 
+                    playsinline: 1,
+                    origin: window.location.origin
+                  }
                 }
               }}
             />
           </div>
 
+          {/* INTERFACE DO USUÁRIO (Sempre acima do YouTube, z-index: 10) */}
+          <div className="relative z-10 flex flex-col items-center w-full">
+            <h3 className="font-bold mb-6 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
+            
+            <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
+              
+              <div 
+                ref={vinylRef}
+                onPointerDown={handlePointerDown}
+                onTouchStart={handlePointerDown}
+                className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
+                style={{ transform: `rotate(${rotation}deg)` }}
+              >
+                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="w-full h-full object-cover opacity-90 pointer-events-none" />
+                <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
+                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
+                <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
+                <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center">
+                  <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
+                </div>
+              </div>
+              
+              <div className="text-center w-full mb-6">
+                 <p className="font-bold text-slate-800 text-lg">Playlist "iA"</p>
+                 <p className="text-sm text-slate-500 font-medium">Pablo & Ana Clara</p>
+              </div>
+
+              <div className="w-full mb-6">
+                <input type="range" min="0" max="100" value={progress} onChange={handleSeek} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" />
+              </div>
+
+              <div className="flex items-center justify-center gap-8">
+                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                  <SkipBack size={28} fill="currentColor" />
+                </button>
+                
+                <button 
+                  onClick={togglePlay} 
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform shadow-lg cursor-pointer hover:scale-105 ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600' : 'bg-slate-300 text-slate-500'}`}
+                >
+                   {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+                </button>
+                
+                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                  <SkipForward size={28} fill="currentColor" />
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
+      {/* BOTÕES DE AÇÃO */}
       <div className="flex flex-col sm:flex-row gap-4 relative z-50">
         <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2 cursor-pointer">
           Entrar no Nosso Mundo <ArrowRight size={20} />
@@ -265,6 +272,7 @@ const Home = () => {
         </button>
       </div>
 
+      {/* MODAL DO CASAMENTO */}
       <AnimatePresence>
         {showProposal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">

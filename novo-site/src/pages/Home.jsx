@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack, Loader2 } from 'lucide-react';
+import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
 import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -19,7 +19,6 @@ const Home = () => {
   
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
-  const [isReady, setIsReady] = useState(false); // Só libera o botão quando o YouTube disser OK
   
   // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
@@ -41,23 +40,9 @@ const Home = () => {
     }
   };
 
-  // FUNÇÃO DE PLAY (Síncrona para driblar o bloqueio do iPhone)
+  // FUNÇÃO DE PLAY: Direta e sem travas
   const togglePlay = () => {
-    if (!isReady) return; // Se não carregou, ignora o clique
-
-    const internalPlayer = playerRef.current?.getInternalPlayer();
-    
-    if (!isPlaying) {
-      setIsPlaying(true);
-      if (internalPlayer && internalPlayer.playVideo) {
-        internalPlayer.playVideo(); // Força bruta síncrona
-      }
-    } else {
-      setIsPlaying(false);
-      if (internalPlayer && internalPlayer.pauseVideo) {
-        internalPlayer.pauseVideo();
-      }
-    }
+    setIsPlaying(!isPlaying);
   };
 
   const handleProgress = (state) => {
@@ -87,7 +72,6 @@ const Home = () => {
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
-      // O vinil roda baseado no isPlaying
       if (isPlaying && !isDragging) {
         setRotation((prev) => (prev + 0.8) % 360); 
       }
@@ -200,9 +184,8 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10" />
+                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="w-full h-full object-cover opacity-90 pointer-events-none z-10" />
                 <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none z-20"></div>
-                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center z-20">
                   <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
@@ -219,34 +202,27 @@ const Home = () => {
               </div>
 
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
+                <button onClick={prevTrack} className="text-slate-400 hover:text-rose-500 cursor-pointer">
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
-                {/* BOTÃO INTELIGENTE: Cinza enquanto carrega, Vermelho quando pronto! */}
+                {/* BOTÃO SEMPRE VERMELHO E CLICÁVEL */}
                 <button 
                   onClick={togglePlay} 
-                  disabled={!isReady}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg 
-                    ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600 hover:scale-105 cursor-pointer' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
+                  className="w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg bg-rose-500 text-white hover:bg-rose-600 hover:scale-105 cursor-pointer"
                 >
-                   {!isReady ? (
-                     <Loader2 size={28} className="animate-spin text-slate-500" />
-                   ) : (
-                     isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />
-                   )}
+                   {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                 </button>
                 
-                <button onClick={nextTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
+                <button onClick={nextTrack} className="text-slate-400 hover:text-rose-500 cursor-pointer">
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* O MOTOR DO YOUTUBE INVISÍVEL */}
-          {/* MÁGICA: controls: 1 libera o carregamento de playlists em iframes no mobile */}
-          <div className="fixed top-[-1000px] left-0 w-[300px] h-[300px] pointer-events-none opacity-0">
+          {/* MOTOR DO YOUTUBE INVISÍVEL */}
+          <div style={{ position: 'absolute', top: '-1000px', left: 0, width: '300px', height: '300px', pointerEvents: 'none', opacity: 0 }}>
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
@@ -254,14 +230,11 @@ const Home = () => {
               width="100%"
               height="100%"
               volume={1}
-              onReady={() => setIsReady(true)}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
               onProgress={handleProgress}
               config={{
                 youtube: {
                   playerVars: { 
-                    controls: 1, // Isso aqui é ouro! Burlamos o bloqueio de headless.
+                    controls: 1, 
                     playsinline: 1,
                     origin: window.location.origin
                   }

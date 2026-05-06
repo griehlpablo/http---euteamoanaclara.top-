@@ -10,10 +10,14 @@ const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
   
+  // ==========================================
+  // ESTADOS DO PLAYER E DO VINIL
+  // ==========================================
   const playerRef = useRef(null);
   const vinylRef = useRef(null);
   const scratchAudioRef = useRef(null);
   
+  // Estados Simples e Diretos do React
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
   const [rotation, setRotation] = useState(0);
@@ -22,6 +26,7 @@ const Home = () => {
   const lastAngleRef = useRef(0);
   const lastSeekTimeRef = useRef(0);
 
+  // Inicializa o som do Scratch
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
     scratchAudioRef.current.volume = 0.3; 
@@ -33,8 +38,8 @@ const Home = () => {
     if (e.target.value < 10) setTimeout(() => setLoveValue(10), 1000); 
   };
 
+  // Botão de Play limpo, sem forçar comandos na API
   const togglePlay = () => {
-    console.log("-> Você clicou no botão de Play/Pause. Estado atual enviado ao YouTube:", !isPlaying);
     setIsPlaying(!isPlaying);
   };
 
@@ -46,6 +51,20 @@ const Home = () => {
     playerRef.current?.getInternalPlayer()?.previousVideo();
   };
 
+  const handleProgress = (state) => {
+    if (!isDragging) setProgress(state.played * 100); 
+  };
+
+  const handleSeek = (e) => {
+    const value = parseFloat(e.target.value);
+    setProgress(value);
+    playerRef.current?.seekTo(value / 100, 'fraction');
+  };
+
+  // ==========================================
+  // LÓGICA DO VINIL INTERATIVO (SCRATCH)
+  // ==========================================
+  
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
@@ -161,7 +180,33 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
+                {/* 1. O YOUTUBE REAL: Tamanho normal, opacidade normal, rodando DE VERDADE aqui dentro! */}
+                <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
+                  <ReactPlayer
+                    ref={playerRef}
+                    url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
+                    playing={isPlaying}
+                    width="100%"
+                    height="100%"
+                    volume={1}
+                    muted={false}
+                    onProgress={handleProgress}
+                    config={{
+                      youtube: {
+                        playerVars: { 
+                          controls: 0, 
+                          playsinline: 1,
+                          disablekb: 1
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* 2. A FOTO (CAPA DO VINIL): Renderizada por cima do player (z-10), "tampando" o vídeo. */}
                 <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10" />
+                
+                {/* 3. DETALHES DO DISCO: Ficam na camada mais alta (z-20) */}
                 <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none z-20"></div>
@@ -176,15 +221,7 @@ const Home = () => {
               </div>
 
               <div className="w-full mb-6">
-                <input 
-                  type="range" min="0" max="100" value={progress} 
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    setProgress(val);
-                    playerRef.current?.seekTo(val / 100, 'fraction');
-                  }} 
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" 
-                />
+                <input type="range" min="0" max="100" value={progress} onChange={handleSeek} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" />
               </div>
 
               <div className="flex items-center justify-center gap-8">
@@ -194,7 +231,7 @@ const Home = () => {
                 
                 <button 
                   onClick={togglePlay} 
-                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer hover:scale-105 hover:bg-rose-600"
+                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center transition-transform shadow-lg cursor-pointer hover:scale-105 hover:bg-rose-600"
                 >
                    {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                 </button>
@@ -205,46 +242,6 @@ const Home = () => {
               </div>
             </div>
           </div>
-
-          {/* O PLAYER OFICIAL: 100% Opaco, mas escondido ATRÁS do site inteiro (-z-50) */}
-          <div className="fixed top-0 left-0 w-[300px] h-[300px] -z-50 pointer-events-none">
-            <ReactPlayer
-              ref={playerRef}
-              url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
-              playing={isPlaying}
-              width="100%"
-              height="100%"
-              volume={1}
-              muted={false} 
-              playsinline={true}
-              onReady={() => console.log("📺 YOUTUBE: Player carregado e pronto!")}
-              onStart={() => console.log("📺 YOUTUBE: Primeira música iniciada!")}
-              onPlay={() => {
-                console.log("📺 YOUTUBE: Estado mudou para PLAYING (Tocando de verdade)");
-                setIsPlaying(true);
-              }}
-              onPause={() => {
-                console.log("📺 YOUTUBE: Estado mudou para PAUSED");
-                setIsPlaying(false);
-              }}
-              onBuffer={() => console.log("📺 YOUTUBE: Carregando/Buffering...")}
-              onProgress={(state) => {
-                if (!isDragging) setProgress(state.played * 100);
-              }}
-              onError={(e) => console.error("🚨 YOUTUBE ERRO CRÍTICO:", e)}
-              config={{
-                youtube: {
-                  playerVars: { 
-                    playsinline: 1,
-                    controls: 0,
-                    disablekb: 1,
-                    origin: window.location.origin
-                  }
-                }
-              }}
-            />
-          </div>
-
         </div>
       </div>
 

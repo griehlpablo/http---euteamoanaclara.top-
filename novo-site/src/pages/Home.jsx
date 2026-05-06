@@ -10,20 +10,24 @@ const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
   
+  // ==========================================
+  // ESTADOS DO PLAYER E DO VINIL
+  // ==========================================
   const playerRef = useRef(null);
   const vinylRef = useRef(null);
   const scratchAudioRef = useRef(null);
   
   const [isPlaying, setIsPlaying] = useState(false); 
-  const [isActuallyPlaying, setIsActuallyPlaying] = useState(false); 
-  const [isBuffering, setIsBuffering] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false); // Só libera o botão quando o YouTube disser OK
   
+  // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const lastAngleRef = useRef(0);
   const lastSeekTimeRef = useRef(0);
 
+  // Inicializa o som do Scratch
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
     scratchAudioRef.current.volume = 0.4; 
@@ -37,20 +41,19 @@ const Home = () => {
     }
   };
 
-  // FUNÇÃO DE PLAY CORRIGIDA (FORÇA BRUTA)
+  // FUNÇÃO DE PLAY (Síncrona para driblar o bloqueio do iPhone)
   const togglePlay = () => {
+    if (!isReady) return; // Se não carregou, ignora o clique
+
     const internalPlayer = playerRef.current?.getInternalPlayer();
     
     if (!isPlaying) {
       setIsPlaying(true);
-      setIsBuffering(true);
-      // O segredo: Chamar o método nativo da API do YouTube diretamente no clique
       if (internalPlayer && internalPlayer.playVideo) {
-        internalPlayer.playVideo();
+        internalPlayer.playVideo(); // Força bruta síncrona
       }
     } else {
       setIsPlaying(false);
-      setIsActuallyPlaying(false);
       if (internalPlayer && internalPlayer.pauseVideo) {
         internalPlayer.pauseVideo();
       }
@@ -77,20 +80,23 @@ const Home = () => {
     if (internalPlayer && internalPlayer.previousVideo) internalPlayer.previousVideo();
   };
 
-  // Loop de animação do Vinil
+  // ==========================================
+  // LÓGICA DO VINIL INTERATIVO (SCRATCH)
+  // ==========================================
+  
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
-      if (isActuallyPlaying && !isDragging) {
+      // O vinil roda baseado no isPlaying
+      if (isPlaying && !isDragging) {
         setRotation((prev) => (prev + 0.8) % 360); 
       }
       animationFrameId = requestAnimationFrame(spin);
     };
     animationFrameId = requestAnimationFrame(spin);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isActuallyPlaying, isDragging]);
+  }, [isPlaying, isDragging]);
 
-  // Lógica de Scratch
   const getAngle = (clientX, clientY) => {
     if (!vinylRef.current) return 0;
     const rect = vinylRef.current.getBoundingClientRect();
@@ -187,7 +193,6 @@ const Home = () => {
             
             <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
               
-              {/* DISCO DE VINIL */}
               <div 
                 ref={vinylRef}
                 onPointerDown={handlePointerDown}
@@ -195,39 +200,9 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                {/* CAMADA DO YOUTUBE: 200px para o YouTube aceitar, mas opacity quase zero */}
-                <div className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-[0.02]">
-                   <ReactPlayer
-                    ref={playerRef}
-                    url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
-                    playing={isPlaying}
-                    width="100%"
-                    height="100%"
-                    volume={1}
-                    playsinline={true}
-                    onPlay={() => {
-                        setIsActuallyPlaying(true);
-                        setIsBuffering(false);
-                    }}
-                    onPause={() => setIsActuallyPlaying(false)}
-                    onBuffer={() => setIsBuffering(true)}
-                    onBufferEnd={() => setIsBuffering(false)}
-                    onProgress={handleProgress}
-                    config={{
-                      youtube: {
-                        playerVars: { 
-                            controls: 0, 
-                            modestbranding: 1, 
-                            rel: 0, 
-                            origin: window.location.origin 
-                        }
-                      }
-                    }}
-                  />
-                </div>
-
                 <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10" />
                 <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none z-20"></div>
+                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center z-20">
                   <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
@@ -244,36 +219,65 @@ const Home = () => {
               </div>
 
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className="text-slate-400 hover:text-rose-500 transition-colors">
+                <button onClick={prevTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
+                {/* BOTÃO INTELIGENTE: Cinza enquanto carrega, Vermelho quando pronto! */}
                 <button 
                   onClick={togglePlay} 
-                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer hover:scale-105 
-                    ${isActuallyPlaying ? 'bg-rose-500 text-white' : 'bg-slate-400 text-white'}`}
+                  disabled={!isReady}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg 
+                    ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600 hover:scale-105 cursor-pointer' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
                 >
-                   {isBuffering ? (
-                     <Loader2 size={28} className="animate-spin text-white" />
+                   {!isReady ? (
+                     <Loader2 size={28} className="animate-spin text-slate-500" />
                    ) : (
-                     isActuallyPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />
+                     isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />
                    )}
                 </button>
                 
-                <button onClick={nextTrack} className="text-slate-400 hover:text-rose-500 transition-colors">
+                <button onClick={nextTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>
             </div>
           </div>
+
+          {/* O MOTOR DO YOUTUBE INVISÍVEL */}
+          {/* MÁGICA: controls: 1 libera o carregamento de playlists em iframes no mobile */}
+          <div className="fixed top-[-1000px] left-0 w-[300px] h-[300px] pointer-events-none opacity-0">
+            <ReactPlayer
+              ref={playerRef}
+              url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
+              playing={isPlaying}
+              width="100%"
+              height="100%"
+              volume={1}
+              onReady={() => setIsReady(true)}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onProgress={handleProgress}
+              config={{
+                youtube: {
+                  playerVars: { 
+                    controls: 1, // Isso aqui é ouro! Burlamos o bloqueio de headless.
+                    playsinline: 1,
+                    origin: window.location.origin
+                  }
+                }
+              }}
+            />
+          </div>
+
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 relative z-50">
-        <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2">
+        <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2 cursor-pointer">
           Entrar no Nosso Mundo <ArrowRight size={20} />
         </Link>
-        <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all">
+        <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all cursor-pointer">
           Surpresa 💍
         </button>
       </div>

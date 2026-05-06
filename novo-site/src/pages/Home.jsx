@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
-import ReactPlayer from 'react-player'; 
+import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
 
@@ -183,14 +183,15 @@ const Home = () => {
         {/* CARD 3: NOSSA TRILHA SONORA */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative overflow-hidden`}>
           
-          {/* O MOTOR DO YOUTUBE: Fundo do Card, gigante, porém 1% opaco para o navegador achar que está visível! */}
-          <div className="absolute inset-0 w-full h-full opacity-[0.01] pointer-events-none z-0">
+          {/* O MOTOR DO YOUTUBE: A Solução Headless Definitiva (1px de prisão) */}
+          <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', pointerEvents: 'none', zIndex: -1 }}>
             <ReactPlayer
               ref={playerRef}
+              // DICA: Se a playlist pura não tocar, substitua a URL abaixo pela URL da primeira música da playlist + o parâmetro da lista!
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
-              width="100%"
-              height="100%"
+              width="300px"  // Tamanho grande para o YouTube não desconfiar
+              height="300px" // Tamanho grande para o YouTube não desconfiar
               volume={1}
               onReady={() => setIsReady(true)}
               onPlay={() => setIsPlaying(true)}
@@ -199,17 +200,16 @@ const Home = () => {
               config={{
                 youtube: {
                   playerVars: { 
-                    showinfo: 0, 
                     controls: 0, 
                     playsinline: 1,
-                    origin: window.location.origin
+                    disablekb: 1 // Desativa teclado para evitar bugs no fundo
                   }
                 }
               }}
             />
           </div>
 
-          {/* INTERFACE DO USUÁRIO (Sempre acima do YouTube, z-index: 10) */}
+          {/* INTERFACE DO USUÁRIO */}
           <div className="relative z-10 flex flex-col items-center w-full">
             <h3 className="font-bold mb-6 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
             
@@ -247,7 +247,7 @@ const Home = () => {
                 
                 <button 
                   onClick={togglePlay} 
-                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform shadow-lg cursor-pointer hover:scale-105 ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600' : 'bg-slate-300 text-slate-500'}`}
+                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
                 >
                    {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                 </button>

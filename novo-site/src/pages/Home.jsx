@@ -10,23 +10,18 @@ const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
   
-  // ==========================================
-  // ESTADOS DO PLAYER E DO VINIL
-  // ==========================================
   const playerRef = useRef(null);
   const vinylRef = useRef(null);
   const scratchAudioRef = useRef(null);
   
-  // Estados Simples e Diretos do React
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
   const [rotation, setRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  
+
   const lastAngleRef = useRef(0);
   const lastSeekTimeRef = useRef(0);
 
-  // Inicializa o som do Scratch
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
     scratchAudioRef.current.volume = 0.3; 
@@ -38,7 +33,6 @@ const Home = () => {
     if (e.target.value < 10) setTimeout(() => setLoveValue(10), 1000); 
   };
 
-  // Botão de Play limpo, sem forçar comandos na API
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
   };
@@ -61,10 +55,6 @@ const Home = () => {
     playerRef.current?.seekTo(value / 100, 'fraction');
   };
 
-  // ==========================================
-  // LÓGICA DO VINIL INTERATIVO (SCRATCH)
-  // ==========================================
-  
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
@@ -73,7 +63,9 @@ const Home = () => {
       }
       animationFrameId = requestAnimationFrame(spin);
     };
-    animationFrameId = requestAnimationFrame(spin);
+    if (isPlaying) {
+      animationFrameId = requestAnimationFrame(spin);
+    }
     return () => cancelAnimationFrame(animationFrameId);
   }, [isPlaying, isDragging]);
 
@@ -180,37 +172,12 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                {/* 1. O YOUTUBE REAL: Tamanho normal, opacidade normal, rodando DE VERDADE aqui dentro! */}
-                <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
-                  <ReactPlayer
-                    ref={playerRef}
-                    url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
-                    playing={isPlaying}
-                    width="100%"
-                    height="100%"
-                    volume={1}
-                    muted={false}
-                    onProgress={handleProgress}
-                    config={{
-                      youtube: {
-                        playerVars: { 
-                          controls: 0, 
-                          playsinline: 1,
-                          disablekb: 1
-                        }
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* 2. A FOTO (CAPA DO VINIL): Renderizada por cima do player (z-10), "tampando" o vídeo. */}
-                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10" />
-                
-                {/* 3. DETALHES DO DISCO: Ficam na camada mais alta (z-20) */}
-                <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none z-20"></div>
-                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none z-20"></div>
-                <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none z-20"></div>
-                <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center z-20">
+                {/* APENAS A FOTO DO VINIL. Sem YouTube escondido aqui. */}
+                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+                <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
+                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
+                <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
+                <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center">
                   <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
                 </div>
               </div>
@@ -221,11 +188,15 @@ const Home = () => {
               </div>
 
               <div className="w-full mb-6">
-                <input type="range" min="0" max="100" value={progress} onChange={handleSeek} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" />
+                <input 
+                  type="range" min="0" max="100" value={progress} 
+                  onChange={handleSeek} 
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" 
+                />
               </div>
 
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className="text-slate-400 hover:text-rose-500 cursor-pointer">
+                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 cursor-pointer">
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
@@ -236,7 +207,7 @@ const Home = () => {
                    {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                 </button>
                 
-                <button onClick={nextTrack} className="text-slate-400 hover:text-rose-500 cursor-pointer">
+                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 cursor-pointer">
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>
@@ -252,6 +223,28 @@ const Home = () => {
         <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all cursor-pointer">
           Surpresa 💍
         </button>
+      </div>
+
+      {/* O SEGREDO DE ESTADO: O PLAYER OFICIAL FICA AQUI EMBAIXO, LIVRE E SOLTO */}
+      {/* "sr-only" é a classe oficial do Tailwind para esconder algo VISUALMENTE sem remover do fluxo do navegador (finge que tá visível para as regras do Safari/Chrome) */}
+      <div className="sr-only">
+        <ReactPlayer
+          ref={playerRef}
+          url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
+          playing={isPlaying}
+          width="100px"
+          height="100px"
+          onProgress={handleProgress}
+          config={{
+            youtube: {
+              playerVars: { 
+                playsinline: 1,
+                controls: 1, // Controles precisam estar ligados pro mobile aceitar a playlist
+                origin: window.location.origin
+              }
+            }
+          }}
+        />
       </div>
 
       <AnimatePresence>

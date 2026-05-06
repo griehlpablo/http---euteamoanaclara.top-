@@ -126,7 +126,8 @@ const Home = () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('touchmove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('touchend', handlePointerUp);
+      // Aqui estava o erro! Corrigido para 'touchend'
+      window.removeEventListener('touchend', handlePointerUp); 
     };
   }, [isDragging]);
 
@@ -158,6 +159,28 @@ const Home = () => {
           </p>
         </div>
 
+        {/* 1º PASSO: O PLAYER VISÍVEL E NATIVO PARA O NOSSO TESTE */}
+        <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative bg-rose-50/50`}>
+          <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest text-center w-full">Teste: Player Original do YouTube 🚨</h3>
+          <div className="w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-slate-300 bg-black">
+            <ReactPlayer
+              ref={playerRef}
+              url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
+              playing={isPlaying}
+              controls={true} // Controles nativos habilitados
+              width="100%"
+              height="100%"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onProgress={handleProgress}
+            />
+          </div>
+          <p className="mt-4 text-xs text-slate-500 max-w-sm text-center">
+             Dê play no nosso botão vermelho customizado abaixo. Se o vídeo aqui em cima começar a tocar junto com ele, a conexão de controle está perfeita!
+          </p>
+        </div>
+
+        {/* 2º PASSO: A NOSSA INTERFACE CUSTOMIZADA */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative`}>
           
           <div className="relative z-10 flex flex-col items-center w-full">
@@ -172,7 +195,6 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                {/* APENAS A FOTO DO VINIL. Sem YouTube escondido aqui. */}
                 <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
                 <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
@@ -223,28 +245,6 @@ const Home = () => {
         <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all cursor-pointer">
           Surpresa 💍
         </button>
-      </div>
-
-      {/* O SEGREDO DE ESTADO: O PLAYER OFICIAL FICA AQUI EMBAIXO, LIVRE E SOLTO */}
-      {/* "sr-only" é a classe oficial do Tailwind para esconder algo VISUALMENTE sem remover do fluxo do navegador (finge que tá visível para as regras do Safari/Chrome) */}
-      <div className="sr-only">
-        <ReactPlayer
-          ref={playerRef}
-          url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
-          playing={isPlaying}
-          width="100px"
-          height="100px"
-          onProgress={handleProgress}
-          config={{
-            youtube: {
-              playerVars: { 
-                playsinline: 1,
-                controls: 1, // Controles precisam estar ligados pro mobile aceitar a playlist
-                origin: window.location.origin
-              }
-            }
-          }}
-        />
       </div>
 
       <AnimatePresence>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
-import ReactPlayer from 'react-player'; // Importação limpa e oficial!
+import ReactPlayer from 'react-player'; 
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
 
@@ -19,6 +19,7 @@ const Home = () => {
   
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false); // Para sabermos se o YouTube carregou
   
   // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
@@ -30,7 +31,7 @@ const Home = () => {
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
     scratchAudioRef.current.volume = 0.5; 
-    scratchAudioRef.current.loop = true; // Fica tocando em loop enquanto segura
+    scratchAudioRef.current.loop = true; 
   }, []);
 
   const handleLoveChange = (e) => {
@@ -40,7 +41,6 @@ const Home = () => {
     }
   };
 
-  // Controles Tradicionais
   const togglePlay = () => setIsPlaying(!isPlaying);
 
   const handleProgress = (state) => {
@@ -75,7 +75,7 @@ const Home = () => {
     let animationFrameId;
     const spin = () => {
       if (isPlaying && !isDragging) {
-        setRotation((prev) => (prev + 0.6) % 360); // Giro suave e constante
+        setRotation((prev) => (prev + 0.6) % 360); 
       }
       animationFrameId = requestAnimationFrame(spin);
     };
@@ -94,7 +94,6 @@ const Home = () => {
   const handlePointerDown = (e) => {
     setIsDragging(true);
     
-    // Toca o som de Scratch ao encostar
     if (scratchAudioRef.current) {
       scratchAudioRef.current.play().catch(err => console.log('Interação bloqueada', err));
     }
@@ -132,12 +131,11 @@ const Home = () => {
       }
     };
 
-    // Parar de arrastar e cortar o som imediatamente!
     const handlePointerUp = () => {
       setIsDragging(false);
       if (scratchAudioRef.current) {
         scratchAudioRef.current.pause();
-        scratchAudioRef.current.currentTime = 0; // Reseta o som para o início
+        scratchAudioRef.current.currentTime = 0; 
       }
     };
 
@@ -159,7 +157,6 @@ const Home = () => {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center min-h-[80vh] text-center px-2">
       
-      {/* FOTO DE VOCÊS */}
       <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="mb-8 relative z-50">
         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto">
           <img src="/images/ana_e_eu_zoo.jpg" alt="Ana e Pablo" className="w-full h-full object-cover" />
@@ -168,22 +165,14 @@ const Home = () => {
 
       <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Ana Clara</h1>
       
-      {/* GRID DE INTERAÇÃO ROMÂNTICA */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-12 relative z-50">
         
-        {/* CARD 1: MEDIDOR DE AMOR */}
         <div className={`${glassClasses} p-6 rounded-3xl flex flex-col justify-center`}>
           <h3 className="font-bold mb-2 text-slate-700">Quanto você ama o Pablo?</h3>
           <div className="text-rose-500 font-bold text-3xl mb-3">{loveValue}/10</div>
-          <input 
-            type="range" min="0" max="10" 
-            value={loveValue} 
-            onChange={handleLoveChange} 
-            className="w-full accent-rose-500 cursor-pointer" 
-          />
+          <input type="range" min="0" max="10" value={loveValue} onChange={handleLoveChange} className="w-full accent-rose-500 cursor-pointer" />
         </div>
         
-        {/* CARD 2: A NOVA FASE */}
         <div className={`${glassClasses} p-6 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden`}>
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-rose-600"></div>
           <Sparkles className="text-rose-400 mb-2" size={28} />
@@ -193,13 +182,12 @@ const Home = () => {
           </p>
         </div>
 
-        {/* CARD 3: NOSSA TRILHA SONORA (VINIL GIGANTE E INTERATIVO) */}
-        <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center`}>
+        {/* CARD 3: NOSSA TRILHA SONORA */}
+        <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative overflow-hidden`}>
           <h3 className="font-bold mb-6 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
           
           <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
             
-            {/* VINIL GIGANTE */}
             <div 
               ref={vinylRef}
               onPointerDown={handlePointerDown}
@@ -207,12 +195,10 @@ const Home = () => {
               className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
               style={{ transform: `rotate(${rotation}deg)` }}
             >
-              <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil do Casal" className="w-full h-full object-cover opacity-90 pointer-events-none" />
-              {/* Ranhuras do vinil */}
+              <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="w-full h-full object-cover opacity-90 pointer-events-none" />
               <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
               <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
               <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
-              {/* Centro do disco */}
               <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center">
                 <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
               </div>
@@ -223,15 +209,10 @@ const Home = () => {
                <p className="text-sm text-slate-500 font-medium">Pablo & Ana Clara</p>
             </div>
 
-            {/* BARRA DE PROGRESSO */}
             <div className="w-full mb-6">
-              <input 
-                type="range" min="0" max="100" value={progress} onChange={handleSeek}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
-              />
+              <input type="range" min="0" max="100" value={progress} onChange={handleSeek} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" />
             </div>
 
-            {/* BOTÕES DE CONTROLE */}
             <div className="flex items-center justify-center gap-8">
               <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
                 <SkipBack size={28} fill="currentColor" />
@@ -239,7 +220,8 @@ const Home = () => {
               
               <button 
                 onClick={togglePlay} 
-                className="w-14 h-14 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
+                disabled={!isReady} // Opcional: Só libera o clique quando o YouTube carregar
+                className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform shadow-lg cursor-pointer hover:scale-105 ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600' : 'bg-slate-300 text-slate-500'}`}
               >
                  {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
               </button>
@@ -250,8 +232,8 @@ const Home = () => {
             </div>
           </div>
 
-          {/* O MOTOR DO YOUTUBE (Solução para iOS não pausar no background) */}
-          <div className="fixed top-[-2000px] left-[-2000px] w-[300px] h-[300px] opacity-0 pointer-events-none z-[-50]">
+          {/* O MOTOR DO YOUTUBE: Centralizado e no fluxo da tela, mas invisível! */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] opacity-0 pointer-events-none z-[-1]">
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
@@ -259,24 +241,21 @@ const Home = () => {
               width="100%"
               height="100%"
               volume={1}
-              onProgress={handleProgress}
+              onReady={() => setIsReady(true)} // Avisa que carregou
+              onPlay={() => setIsPlaying(true)} // Sincroniza Play
+              onPause={() => setIsPlaying(false)} // Sincroniza Pause
+              onProgress={handleProgress} // Atualiza a barra de progresso
               config={{
                 youtube: {
-                  playerVars: { 
-                    showinfo: 0, 
-                    controls: 0, 
-                    playsinline: 1 
-                  }
+                  playerVars: { showinfo: 0, controls: 0, playsinline: 1 }
                 }
               }}
             />
           </div>
 
         </div>
-
       </div>
 
-      {/* BOTÕES DE AÇÃO */}
       <div className="flex flex-col sm:flex-row gap-4 relative z-50">
         <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2 cursor-pointer">
           Entrar no Nosso Mundo <ArrowRight size={20} />
@@ -286,7 +265,6 @@ const Home = () => {
         </button>
       </div>
 
-      {/* MODAL DO CASAMENTO */}
       <AnimatePresence>
         {showProposal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
@@ -300,7 +278,6 @@ const Home = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
     </motion.div>
   );
 };

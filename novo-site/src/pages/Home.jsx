@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack, Loader2 } from 'lucide-react';
 import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -19,7 +19,7 @@ const Home = () => {
   
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(false); 
   
   // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
@@ -41,7 +41,11 @@ const Home = () => {
     }
   };
 
-  const togglePlay = () => setIsPlaying(!isPlaying);
+  const togglePlay = () => {
+    if (isReady) {
+      setIsPlaying(!isPlaying);
+    }
+  };
 
   const handleProgress = (state) => {
     if (!isDragging) {
@@ -183,33 +187,6 @@ const Home = () => {
         {/* CARD 3: NOSSA TRILHA SONORA */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative overflow-hidden`}>
           
-          {/* O MOTOR DO YOUTUBE: A Solução Headless Definitiva (1px de prisão) */}
-          <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', pointerEvents: 'none', zIndex: -1 }}>
-            <ReactPlayer
-              ref={playerRef}
-              // DICA: Se a playlist pura não tocar, substitua a URL abaixo pela URL da primeira música da playlist + o parâmetro da lista!
-              url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
-              playing={isPlaying}
-              width="300px"  // Tamanho grande para o YouTube não desconfiar
-              height="300px" // Tamanho grande para o YouTube não desconfiar
-              volume={1}
-              onReady={() => setIsReady(true)}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onProgress={handleProgress}
-              config={{
-                youtube: {
-                  playerVars: { 
-                    controls: 0, 
-                    playsinline: 1,
-                    disablekb: 1 // Desativa teclado para evitar bugs no fundo
-                  }
-                }
-              }}
-            />
-          </div>
-
-          {/* INTERFACE DO USUÁRIO */}
           <div className="relative z-10 flex flex-col items-center w-full">
             <h3 className="font-bold mb-6 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
             
@@ -241,22 +218,49 @@ const Home = () => {
               </div>
 
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                <button onClick={prevTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
                 <button 
                   onClick={togglePlay} 
-                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
+                  disabled={!isReady}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform shadow-lg ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600 hover:scale-105 cursor-pointer' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
                 >
-                   {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+                   {!isReady ? <Loader2 size={28} className="animate-spin" /> : (isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />)}
                 </button>
                 
-                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                <button onClick={nextTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* O MOTOR DO YOUTUBE INVISÍVEL - AGORA COM O LINK CORRETO */}
+          <div style={{ position: 'absolute', top: '-1000px', left: '-1000px', width: '200px', height: '200px', opacity: 0, pointerEvents: 'none' }}>
+            <ReactPlayer
+              ref={playerRef}
+              url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj&index=1"
+              playing={isPlaying}
+              width="100%"
+              height="100%"
+              volume={1}
+              onReady={() => setIsReady(true)}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onProgress={handleProgress}
+              config={{
+                youtube: {
+                  playerVars: { 
+                    controls: 0, 
+                    playsinline: 1,
+                    disablekb: 1,
+                    origin: window.location.origin
+                  }
+                }
+              }}
+            />
           </div>
 
         </div>

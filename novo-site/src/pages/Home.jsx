@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack, Loader2 } from 'lucide-react';
+import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
 import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -19,7 +19,6 @@ const Home = () => {
   
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
-  const [isReady, setIsReady] = useState(false); 
   
   // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
@@ -41,11 +40,7 @@ const Home = () => {
     }
   };
 
-  const togglePlay = () => {
-    if (isReady) {
-      setIsPlaying(!isPlaying);
-    }
-  };
+  const togglePlay = () => setIsPlaying(!isPlaying);
 
   const handleProgress = (state) => {
     if (!isDragging) {
@@ -83,7 +78,9 @@ const Home = () => {
       }
       animationFrameId = requestAnimationFrame(spin);
     };
-    animationFrameId = requestAnimationFrame(spin);
+    if (isPlaying) {
+      animationFrameId = requestAnimationFrame(spin);
+    }
     return () => cancelAnimationFrame(animationFrameId);
   }, [isPlaying, isDragging]);
 
@@ -218,27 +215,27 @@ const Home = () => {
               </div>
 
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
+                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
                 <button 
                   onClick={togglePlay} 
-                  disabled={!isReady}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform shadow-lg ${isReady ? 'bg-rose-500 text-white hover:bg-rose-600 hover:scale-105 cursor-pointer' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
                 >
-                   {!isReady ? <Loader2 size={28} className="animate-spin" /> : (isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />)}
+                   {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                 </button>
                 
-                <button onClick={nextTrack} className={`transition-colors cursor-pointer ${isReady ? 'text-slate-500 hover:text-rose-500' : 'text-slate-300 pointer-events-none'}`}>
+                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* O MOTOR DO YOUTUBE INVISÍVEL - AGORA COM O LINK CORRETO */}
-          <div style={{ position: 'absolute', top: '-1000px', left: '-1000px', width: '200px', height: '200px', opacity: 0, pointerEvents: 'none' }}>
+          {/* O MOTOR DO YOUTUBE INVISÍVEL */}
+          {/* Fixado no canto, invisível para o usuário, mas visível para o navegador aprovar o play */}
+          <div className="fixed top-0 left-0 w-[100px] h-[100px] opacity-0 pointer-events-none -z-50">
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj&index=1"
@@ -246,7 +243,6 @@ const Home = () => {
               width="100%"
               height="100%"
               volume={1}
-              onReady={() => setIsReady(true)}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onProgress={handleProgress}
@@ -255,8 +251,7 @@ const Home = () => {
                   playerVars: { 
                     controls: 0, 
                     playsinline: 1,
-                    disablekb: 1,
-                    origin: window.location.origin
+                    disablekb: 1
                   }
                 }
               }}

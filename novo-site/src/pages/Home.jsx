@@ -215,20 +215,12 @@ const Home = () => {
               width="100%"
               height="100%"
               volume={1}
-              muted={false} // FORÇA O ÁUDIO A LIGAR NA RAIZ DO COMPONENTE
+              muted={false} 
               playsinline={true}
               onReady={() => console.log("📺 YOUTUBE: Player carregado e pronto!")}
               onStart={() => console.log("📺 YOUTUBE: Primeira música iniciada!")}
               onPlay={() => {
                 console.log("📺 YOUTUBE: Estado mudou para PLAYING (Tocando de verdade)");
-                
-                // SOCO DUPLO NO MUTE: Garante via API que o player vai gritar
-                const internal = playerRef.current?.getInternalPlayer();
-                if (internal) {
-                  internal.unMute();
-                  internal.setVolume(100);
-                }
-                
                 setIsPlaying(true);
               }}
               onPause={() => {

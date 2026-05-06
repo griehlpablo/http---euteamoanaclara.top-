@@ -248,22 +248,22 @@ const Home = () => {
             </div>
           </div>
 
-          {/* O MOTOR DO YOUTUBE (Transparente e ativo para o iOS não bloquear) */}
-          <div className="absolute opacity-0 pointer-events-none w-1 h-1 z-[-1]">
+          {/* O MOTOR DO YOUTUBE (Solução para iOS não pausar no background) */}
+          <div className="fixed top-[-2000px] left-[-2000px] w-[300px] h-[300px] opacity-0 pointer-events-none z-[-50]">
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
-              width="10px"
-              height="10px"
-              volume={0.8}
+              width="100%"
+              height="100%"
+              volume={1}
               onProgress={handleProgress}
               config={{
                 youtube: {
                   playerVars: { 
                     showinfo: 0, 
-                    controls: 0,
-                    playsinline: 1 // Crucial para o iPhone permitir tocar sem forçar tela cheia
+                    controls: 0, 
+                    playsinline: 1 
                   }
                 }
               }}

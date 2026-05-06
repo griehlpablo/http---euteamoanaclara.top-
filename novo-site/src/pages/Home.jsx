@@ -14,7 +14,6 @@ const Home = () => {
   const vinylRef = useRef(null);
   const scratchAudioRef = useRef(null);
   
-  // ESTADOS MAIS SIMPLES E DIRETOS
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
   const [rotation, setRotation] = useState(0);
@@ -23,7 +22,6 @@ const Home = () => {
   const lastAngleRef = useRef(0);
   const lastSeekTimeRef = useRef(0);
 
-  // 1. CARREGAMENTO DO SOM DE SCRATCH
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
     scratchAudioRef.current.volume = 0.3; 
@@ -35,7 +33,6 @@ const Home = () => {
     if (e.target.value < 10) setTimeout(() => setLoveValue(10), 1000); 
   };
 
-  // 2. FUNÇÃO DE PLAY LIMPA
   const togglePlay = () => {
     console.log("-> Você clicou no botão de Play/Pause. Estado atual enviado ao YouTube:", !isPlaying);
     setIsPlaying(!isPlaying);
@@ -49,7 +46,6 @@ const Home = () => {
     playerRef.current?.getInternalPlayer()?.previousVideo();
   };
 
-  // 3. ANIMAÇÃO DO VINIL (Só roda se isPlaying for TRUE)
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
@@ -62,7 +58,6 @@ const Home = () => {
     return () => cancelAnimationFrame(animationFrameId);
   }, [isPlaying, isDragging]);
 
-  // 4. LÓGICA DE SCRATCH (Arrastar o Vinil)
   const getAngle = (clientX, clientY) => {
     if (!vinylRef.current) return 0;
     const rect = vinylRef.current.getBoundingClientRect();
@@ -211,20 +206,29 @@ const Home = () => {
             </div>
           </div>
 
-          {/* O PLAYER OFICIAL: Estruturado exatamente como a documentação pede */}
-          <div className="absolute opacity-0 pointer-events-none">
+          {/* O PLAYER OFICIAL: 100% Opaco, mas escondido ATRÁS do site inteiro (-z-50) */}
+          <div className="fixed top-0 left-0 w-[300px] h-[300px] -z-50 pointer-events-none">
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
-              width="200px"
-              height="200px"
+              width="100%"
+              height="100%"
               volume={1}
+              muted={false} // FORÇA O ÁUDIO A LIGAR NA RAIZ DO COMPONENTE
               playsinline={true}
               onReady={() => console.log("📺 YOUTUBE: Player carregado e pronto!")}
               onStart={() => console.log("📺 YOUTUBE: Primeira música iniciada!")}
               onPlay={() => {
                 console.log("📺 YOUTUBE: Estado mudou para PLAYING (Tocando de verdade)");
+                
+                // SOCO DUPLO NO MUTE: Garante via API que o player vai gritar
+                const internal = playerRef.current?.getInternalPlayer();
+                if (internal) {
+                  internal.unMute();
+                  internal.setVolume(100);
+                }
+                
                 setIsPlaying(true);
               }}
               onPause={() => {
@@ -241,7 +245,8 @@ const Home = () => {
                   playerVars: { 
                     playsinline: 1,
                     controls: 0,
-                    disablekb: 1
+                    disablekb: 1,
+                    origin: window.location.origin
                   }
                 }
               }}
@@ -252,10 +257,10 @@ const Home = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 relative z-50">
-        <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2">
+        <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2 cursor-pointer">
           Entrar no Nosso Mundo <ArrowRight size={20} />
         </Link>
-        <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all">
+        <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all cursor-pointer">
           Surpresa 💍
         </button>
       </div>

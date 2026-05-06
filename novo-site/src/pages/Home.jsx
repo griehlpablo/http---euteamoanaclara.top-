@@ -10,65 +10,46 @@ const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
   
-  // ==========================================
-  // ESTADOS DO PLAYER E DO VINIL
-  // ==========================================
   const playerRef = useRef(null);
   const vinylRef = useRef(null);
   const scratchAudioRef = useRef(null);
   
+  // ESTADOS MAIS SIMPLES E DIRETOS
   const [isPlaying, setIsPlaying] = useState(false); 
   const [progress, setProgress] = useState(0);
-  
-  // Estados da Física do Vinil
   const [rotation, setRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  
   const lastAngleRef = useRef(0);
   const lastSeekTimeRef = useRef(0);
 
-  // Inicializa o som do Scratch
+  // 1. CARREGAMENTO DO SOM DE SCRATCH
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
-    scratchAudioRef.current.volume = 0.4; 
+    scratchAudioRef.current.volume = 0.3; 
     scratchAudioRef.current.loop = true; 
   }, []);
 
   const handleLoveChange = (e) => {
     setLoveValue(e.target.value);
-    if (e.target.value < 10) {
-      setTimeout(() => setLoveValue(10), 1000); 
-    }
+    if (e.target.value < 10) setTimeout(() => setLoveValue(10), 1000); 
   };
 
-  // FUNÇÃO DE PLAY: Direta e sem travas
+  // 2. FUNÇÃO DE PLAY LIMPA
   const togglePlay = () => {
+    console.log("-> Você clicou no botão de Play/Pause. Estado atual enviado ao YouTube:", !isPlaying);
     setIsPlaying(!isPlaying);
   };
 
-  const handleProgress = (state) => {
-    if (!isDragging) setProgress(state.played * 100); 
-  };
-
-  const handleSeek = (e) => {
-    const value = parseFloat(e.target.value);
-    setProgress(value);
-    playerRef.current?.seekTo(value / 100, 'fraction');
-  };
-
   const nextTrack = () => {
-    const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && internalPlayer.nextVideo) internalPlayer.nextVideo();
+    playerRef.current?.getInternalPlayer()?.nextVideo();
   };
 
   const prevTrack = () => {
-    const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && internalPlayer.previousVideo) internalPlayer.previousVideo();
+    playerRef.current?.getInternalPlayer()?.previousVideo();
   };
 
-  // ==========================================
-  // LÓGICA DO VINIL INTERATIVO (SCRATCH)
-  // ==========================================
-  
+  // 3. ANIMAÇÃO DO VINIL (Só roda se isPlaying for TRUE)
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
@@ -81,6 +62,7 @@ const Home = () => {
     return () => cancelAnimationFrame(animationFrameId);
   }, [isPlaying, isDragging]);
 
+  // 4. LÓGICA DE SCRATCH (Arrastar o Vinil)
   const getAngle = (clientX, clientY) => {
     if (!vinylRef.current) return 0;
     const rect = vinylRef.current.getBoundingClientRect();
@@ -104,8 +86,10 @@ const Home = () => {
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const currentAngle = getAngle(clientX, clientY);
       let delta = currentAngle - lastAngleRef.current;
+      
       if (delta > 180) delta -= 360;
       if (delta < -180) delta += 360;
+      
       setRotation((prev) => prev + delta);
       lastAngleRef.current = currentAngle;
 
@@ -122,10 +106,8 @@ const Home = () => {
 
     const handlePointerUp = () => {
       setIsDragging(false);
-      if (scratchAudioRef.current) {
-        scratchAudioRef.current.pause();
-        scratchAudioRef.current.currentTime = 0; 
-      }
+      scratchAudioRef.current?.pause();
+      if (scratchAudioRef.current) scratchAudioRef.current.currentTime = 0; 
     };
 
     if (isDragging) {
@@ -184,8 +166,9 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="w-full h-full object-cover opacity-90 pointer-events-none z-10" />
+                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10" />
                 <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none z-20"></div>
+                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center z-20">
                   <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
@@ -198,7 +181,15 @@ const Home = () => {
               </div>
 
               <div className="w-full mb-6">
-                <input type="range" min="0" max="100" value={progress} onChange={handleSeek} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" />
+                <input 
+                  type="range" min="0" max="100" value={progress} 
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setProgress(val);
+                    playerRef.current?.seekTo(val / 100, 'fraction');
+                  }} 
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" 
+                />
               </div>
 
               <div className="flex items-center justify-center gap-8">
@@ -206,10 +197,9 @@ const Home = () => {
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
-                {/* BOTÃO SEMPRE VERMELHO E CLICÁVEL */}
                 <button 
                   onClick={togglePlay} 
-                  className="w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg bg-rose-500 text-white hover:bg-rose-600 hover:scale-105 cursor-pointer"
+                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer hover:scale-105 hover:bg-rose-600"
                 >
                    {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                 </button>
@@ -221,22 +211,37 @@ const Home = () => {
             </div>
           </div>
 
-          {/* MOTOR DO YOUTUBE INVISÍVEL */}
-          <div style={{ position: 'absolute', top: '-1000px', left: 0, width: '300px', height: '300px', pointerEvents: 'none', opacity: 0 }}>
+          {/* O PLAYER OFICIAL: Estruturado exatamente como a documentação pede */}
+          <div className="absolute opacity-0 pointer-events-none">
             <ReactPlayer
               ref={playerRef}
               url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
-              width="100%"
-              height="100%"
+              width="200px"
+              height="200px"
               volume={1}
-              onProgress={handleProgress}
+              playsinline={true}
+              onReady={() => console.log("📺 YOUTUBE: Player carregado e pronto!")}
+              onStart={() => console.log("📺 YOUTUBE: Primeira música iniciada!")}
+              onPlay={() => {
+                console.log("📺 YOUTUBE: Estado mudou para PLAYING (Tocando de verdade)");
+                setIsPlaying(true);
+              }}
+              onPause={() => {
+                console.log("📺 YOUTUBE: Estado mudou para PAUSED");
+                setIsPlaying(false);
+              }}
+              onBuffer={() => console.log("📺 YOUTUBE: Carregando/Buffering...")}
+              onProgress={(state) => {
+                if (!isDragging) setProgress(state.played * 100);
+              }}
+              onError={(e) => console.error("🚨 YOUTUBE ERRO CRÍTICO:", e)}
               config={{
                 youtube: {
                   playerVars: { 
-                    controls: 1, 
                     playsinline: 1,
-                    origin: window.location.origin
+                    controls: 0,
+                    disablekb: 1
                   }
                 }
               }}
@@ -247,10 +252,10 @@ const Home = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 relative z-50">
-        <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2 cursor-pointer">
+        <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2">
           Entrar no Nosso Mundo <ArrowRight size={20} />
         </Link>
-        <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all cursor-pointer">
+        <button onClick={() => setShowProposal(true)} className="bg-white text-rose-500 border border-rose-200 px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all">
           Surpresa 💍
         </button>
       </div>

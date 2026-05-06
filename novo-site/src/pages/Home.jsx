@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack, Loader2 } from 'lucide-react';
 import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -18,6 +18,8 @@ const Home = () => {
   const scratchAudioRef = useRef(null);
   
   const [isPlaying, setIsPlaying] = useState(false); 
+  const [isActuallyPlaying, setIsActuallyPlaying] = useState(false); // Só true quando o som sai
+  const [isBuffering, setIsBuffering] = useState(false);
   const [progress, setProgress] = useState(0);
   
   // Estados da Física do Vinil
@@ -40,9 +42,18 @@ const Home = () => {
     }
   };
 
+  // Função de Play/Pause com "Acordada" forçada no YouTube
   const togglePlay = () => {
-    // O clique humano aqui desbloqueia a reprodução no iPhone/Android
-    setIsPlaying(!isPlaying);
+    const nextState = !isPlaying;
+    setIsPlaying(nextState);
+    
+    // Se estiver dando play, sinalizamos que estamos tentando carregar
+    if (nextState) {
+      setIsBuffering(true);
+    } else {
+      setIsActuallyPlaying(false);
+      setIsBuffering(false);
+    }
   };
 
   const handleProgress = (state) => {
@@ -76,14 +87,15 @@ const Home = () => {
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
-      if (isPlaying && !isDragging) {
-        setRotation((prev) => (prev + 0.6) % 360); 
+      // O vinil só gira se o som estiver REALMENTE saindo e o usuário não estiver arrastando
+      if (isActuallyPlaying && !isDragging) {
+        setRotation((prev) => (prev + 0.8) % 360); 
       }
       animationFrameId = requestAnimationFrame(spin);
     };
     animationFrameId = requestAnimationFrame(spin);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isPlaying, isDragging]);
+  }, [isActuallyPlaying, isDragging]);
 
   const getAngle = (clientX, clientY) => {
     if (!vinylRef.current) return 0;
@@ -96,7 +108,7 @@ const Home = () => {
   const handlePointerDown = (e) => {
     setIsDragging(true);
     if (scratchAudioRef.current) {
-      scratchAudioRef.current.play().catch(err => console.log('Interação bloqueada', err));
+      scratchAudioRef.current.play().catch(() => {});
     }
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -106,11 +118,9 @@ const Home = () => {
   useEffect(() => {
     const handlePointerMove = (e) => {
       if (!isDragging) return;
-      
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const currentAngle = getAngle(clientX, clientY);
-      
       let delta = currentAngle - lastAngleRef.current;
       if (delta > 180) delta -= 360;
       if (delta < -180) delta += 360;
@@ -197,23 +207,26 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                {/* CAMADA INVISÍVEL DO YOUTUBE - O Cavalo de Tróia */}
-                <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
-                  <ReactPlayer
+                {/* O YOUTUBE CAMUFLADO NO DISCO */}
+                <div className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-[0.01]">
+                   <ReactPlayer
                     ref={playerRef}
                     url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj&index=1"
                     playing={isPlaying}
                     width="100%"
                     height="100%"
                     volume={1}
+                    onPlay={() => {
+                        setIsActuallyPlaying(true);
+                        setIsBuffering(false);
+                    }}
+                    onPause={() => setIsActuallyPlaying(false)}
+                    onBuffer={() => setIsBuffering(true)}
+                    onBufferEnd={() => setIsBuffering(false)}
                     onProgress={handleProgress}
                     config={{
                       youtube: {
-                        playerVars: { 
-                          controls: 0, 
-                          playsinline: 1,
-                          origin: window.location.origin
-                        }
+                        playerVars: { controls: 0, playsinline: 1, origin: window.location.origin }
                       }
                     }}
                   />
@@ -221,7 +234,6 @@ const Home = () => {
 
                 <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10" />
                 <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none z-20"></div>
-                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none z-20"></div>
                 <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center z-20">
                   <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
@@ -238,18 +250,23 @@ const Home = () => {
               </div>
 
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                <button onClick={prevTrack} className="text-slate-400 hover:text-rose-500 cursor-pointer">
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
                 <button 
                   onClick={togglePlay} 
-                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-transform shadow-lg cursor-pointer hover:scale-105"
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer hover:scale-105 
+                    ${isActuallyPlaying ? 'bg-rose-500 text-white' : 'bg-slate-400 text-white'}`}
                 >
-                   {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+                   {isBuffering ? (
+                     <Loader2 size={28} className="animate-spin" />
+                   ) : (
+                     isActuallyPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />
+                   )}
                 </button>
                 
-                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 transition-colors cursor-pointer">
+                <button onClick={nextTrack} className="text-slate-400 hover:text-rose-500 cursor-pointer">
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>

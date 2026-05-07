@@ -370,7 +370,7 @@ const Home = () => {
           <div className="flex flex-col items-center gap-6">
             <div className="text-center">
               <p className="text-xs uppercase tracking-[0.35em] text-rose-500 mb-2">Nossa Trilha Sonora 🎵</p>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-800">Vinil Personalizado</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-800">Pablo i Ana 🥰</h2>
             </div>
 
             <motion.div

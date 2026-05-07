@@ -16,6 +16,7 @@ const Home = () => {
   const [playerReady, setPlayerReady] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [notes, setNotes] = useState([]);
 
   const hiddenPlayerContainerRef = useRef(null);
   const ytPlayerRef = useRef(null);
@@ -30,6 +31,8 @@ const Home = () => {
   const seekTimeoutRef = useRef(null);
   const pendingSeekTimeRef = useRef(null);
   const scratchAudioRef = useRef(null);
+  const wasPlayingRef = useRef(false);
+  const lastNoteTimeRef = useRef(0);
 
   useEffect(() => {
     const loadYouTubeIframeApi = () =>
@@ -146,20 +149,7 @@ const Home = () => {
         window.clearInterval(progressTimerRef.current);
       }
     };
-  }, [isPlaying, playerReady]);
-
-  const handleLoveChange = (event) => {
-    const value = Number(event.target.value);
-    setLoveValue(value);
-    if (value < 10) {
-      if (snapTimerRef.current) {
-        window.clearTimeout(snapTimerRef.current);
-      }
-      snapTimerRef.current = window.setTimeout(() => {
-        setLoveValue(10);
-      }, 1000);
-    }
-  };
+  }, [isPlaying, playerReady, isDragging]);
 
   useEffect(() => {
     scratchAudioRef.current = new Audio('/audio/scratch.mp3');
@@ -176,6 +166,29 @@ const Home = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    let animationFrame = 0;
+    let lastTimestamp = performance.now();
+    const spinSpeed = 0.09;
+
+    const tick = (timestamp) => {
+      const delta = timestamp - lastTimestamp;
+      lastTimestamp = timestamp;
+
+      if (isPlaying && !isDragging) {
+        rotationRef.current = (rotationRef.current + delta * spinSpeed) % 360;
+        setRotation(rotationRef.current);
+      }
+
+      animationFrame = window.requestAnimationFrame(tick);
+    };
+
+    animationFrame = window.requestAnimationFrame(tick);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [isPlaying, isDragging]);
 
   const requestSeek = (newTime) => {
     const now = performance.now();
@@ -205,29 +218,6 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    let animationFrame = 0;
-    let lastTimestamp = performance.now();
-    const spinSpeed = 0.09;
-
-    const tick = (timestamp) => {
-      const delta = timestamp - lastTimestamp;
-      lastTimestamp = timestamp;
-
-      if (isPlaying && !isDragging) {
-        rotationRef.current = (rotationRef.current + delta * spinSpeed) % 360;
-        setRotation(rotationRef.current);
-      }
-
-      animationFrame = window.requestAnimationFrame(tick);
-    };
-
-    animationFrame = window.requestAnimationFrame(tick);
-    return () => {
-      window.cancelAnimationFrame(animationFrame);
-    };
-  }, [isPlaying, isDragging]);
-
   const startDrag = (event) => {
     const player = ytPlayerRef.current;
     const rect = event.currentTarget.getBoundingClientRect();
@@ -238,6 +228,10 @@ const Home = () => {
     setIsDragging(true);
     lastAngleRef.current = currentAngle;
     totalDragDeltaRef.current = 0;
+    wasPlayingRef.current = isPlaying;
+    if (player && isPlaying && typeof player.pauseVideo === 'function') {
+      player.pauseVideo();
+    }
     if (player && typeof player.getCurrentTime === 'function') {
       scratchBaseTimeRef.current = player.getCurrentTime();
     } else {
@@ -267,6 +261,22 @@ const Home = () => {
     const newTime = Math.max(0, Math.min(duration, scratchBaseTimeRef.current + totalDragDeltaRef.current * 0.2));
     setPlayed(duration > 0 ? Math.min(1, newTime / duration) : 0);
     requestSeek(newTime);
+
+    // Spawn notes if shaking
+    if (Math.abs(delta) > 2) {
+      const now = performance.now();
+      if (now - lastNoteTimeRef.current > 100 && notes.length < 15) {
+        const newNote = {
+          id: Date.now() + Math.random(),
+          symbol: ['🎵', '🎶', '♩', '♪'][Math.floor(Math.random() * 4)],
+        };
+        setNotes((prev) => [...prev, newNote]);
+        lastNoteTimeRef.current = now;
+        setTimeout(() => {
+          setNotes((prev) => prev.filter((note) => note.id !== newNote.id));
+        }, 1500);
+      }
+    }
   };
 
   const endDrag = (event) => {
@@ -276,7 +286,24 @@ const Home = () => {
       scratchAudioRef.current.pause();
       scratchAudioRef.current.currentTime = 0;
     }
+    const player = ytPlayerRef.current;
+    if (wasPlayingRef.current && player && typeof player.playVideo === 'function') {
+      player.playVideo();
+    }
     event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
+  const handleLoveChange = (event) => {
+    const value = Number(event.target.value);
+    setLoveValue(value);
+    if (value < 10) {
+      if (snapTimerRef.current) {
+        window.clearTimeout(snapTimerRef.current);
+      }
+      snapTimerRef.current = window.setTimeout(() => {
+        setLoveValue(10);
+      }, 1000);
+    }
   };
 
   const togglePlay = () => {
@@ -401,6 +428,25 @@ const Home = () => {
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-10 h-10 rounded-full bg-rose-500 border-4 border-rose-600 shadow-lg" />
               </div>
+
+              <AnimatePresence>
+                {notes.map((note) => (
+                  <motion.div
+                    key={note.id}
+                    initial={{ opacity: 0, y: 0, x: 0 }}
+                    animate={{
+                      opacity: [0, 1, 0],
+                      y: -100,
+                      x: (Math.random() - 0.5) * 60,
+                      rotate: (Math.random() - 0.5) * 45,
+                    }}
+                    transition={{ duration: 1.5, ease: 'easeOut' }}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 text-2xl"
+                  >
+                    {note.symbol}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </motion.div>
 
             <div className="w-full px-4">

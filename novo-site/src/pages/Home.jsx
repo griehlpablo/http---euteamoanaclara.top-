@@ -14,12 +14,22 @@ const Home = () => {
   const [played, setPlayed] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playerReady, setPlayerReady] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [rotation, setRotation] = useState(0);
 
   const hiddenPlayerContainerRef = useRef(null);
   const ytPlayerRef = useRef(null);
   const progressTimerRef = useRef(null);
   const snapTimerRef = useRef(null);
   const pendingPlayRef = useRef(false);
+  const rotationRef = useRef(0);
+  const lastAngleRef = useRef(0);
+  const totalDragDeltaRef = useRef(0);
+  const scratchBaseTimeRef = useRef(0);
+  const lastSeekTimeRef = useRef(0);
+  const seekTimeoutRef = useRef(null);
+  const pendingSeekTimeRef = useRef(null);
+  const scratchAudioRef = useRef(null);
 
   useEffect(() => {
     const loadYouTubeIframeApi = () =>
@@ -110,7 +120,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    if (!playerReady) return;
+    if (!playerReady || isDragging) return;
 
     const updateProgress = () => {
       const player = ytPlayerRef.current;
@@ -149,6 +159,124 @@ const Home = () => {
         setLoveValue(10);
       }, 1000);
     }
+  };
+
+  useEffect(() => {
+    scratchAudioRef.current = new Audio('/audio/scratch.mp3');
+    scratchAudioRef.current.volume = 0.3;
+    scratchAudioRef.current.loop = true;
+
+    return () => {
+      if (scratchAudioRef.current) {
+        scratchAudioRef.current.pause();
+        scratchAudioRef.current.currentTime = 0;
+      }
+      if (seekTimeoutRef.current) {
+        window.clearTimeout(seekTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const requestSeek = (newTime) => {
+    const now = performance.now();
+    const player = ytPlayerRef.current;
+    if (!player || typeof player.seekTo !== 'function') return;
+
+    const lastSeek = lastSeekTimeRef.current;
+    const delay = 150;
+    const doSeek = (time) => {
+      player.seekTo(time, true);
+      lastSeekTimeRef.current = performance.now();
+      pendingSeekTimeRef.current = null;
+    };
+
+    if (now - lastSeek >= delay) {
+      doSeek(newTime);
+    } else {
+      pendingSeekTimeRef.current = newTime;
+      if (!seekTimeoutRef.current) {
+        seekTimeoutRef.current = window.setTimeout(() => {
+          if (pendingSeekTimeRef.current !== null) {
+            doSeek(pendingSeekTimeRef.current);
+          }
+          seekTimeoutRef.current = null;
+        }, delay - (now - lastSeek));
+      }
+    }
+  };
+
+  useEffect(() => {
+    let animationFrame = 0;
+    let lastTimestamp = performance.now();
+    const spinSpeed = 0.09;
+
+    const tick = (timestamp) => {
+      const delta = timestamp - lastTimestamp;
+      lastTimestamp = timestamp;
+
+      if (isPlaying && !isDragging) {
+        rotationRef.current = (rotationRef.current + delta * spinSpeed) % 360;
+        setRotation(rotationRef.current);
+      }
+
+      animationFrame = window.requestAnimationFrame(tick);
+    };
+
+    animationFrame = window.requestAnimationFrame(tick);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [isPlaying, isDragging]);
+
+  const startDrag = (event) => {
+    const player = ytPlayerRef.current;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const currentAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * (180 / Math.PI);
+
+    setIsDragging(true);
+    lastAngleRef.current = currentAngle;
+    totalDragDeltaRef.current = 0;
+    if (player && typeof player.getCurrentTime === 'function') {
+      scratchBaseTimeRef.current = player.getCurrentTime();
+    } else {
+      scratchBaseTimeRef.current = 0;
+    }
+    if (scratchAudioRef.current) {
+      scratchAudioRef.current.play().catch(() => {});
+    }
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveDrag = (event) => {
+    if (!isDragging) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const currentAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * (180 / Math.PI);
+    let delta = currentAngle - lastAngleRef.current;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+
+    totalDragDeltaRef.current += delta;
+    lastAngleRef.current = currentAngle;
+    rotationRef.current += delta;
+    setRotation(rotationRef.current);
+
+    const newTime = Math.max(0, Math.min(duration, scratchBaseTimeRef.current + totalDragDeltaRef.current * 0.2));
+    setPlayed(duration > 0 ? Math.min(1, newTime / duration) : 0);
+    requestSeek(newTime);
+  };
+
+  const endDrag = (event) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (scratchAudioRef.current) {
+      scratchAudioRef.current.pause();
+      scratchAudioRef.current.currentTime = 0;
+    }
+    event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
   const togglePlay = () => {
@@ -246,9 +374,12 @@ const Home = () => {
             </div>
 
             <motion.div
-              animate={{ rotate: isPlaying ? 360 : 0 }}
-              transition={isPlaying ? { duration: 4, repeat: Infinity, ease: 'linear' } : { duration: 0 }}
-              className="relative w-52 h-52 md:w-64 md:h-64 rounded-full border-[10px] border-slate-900 shadow-2xl bg-slate-950 overflow-hidden"
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              style={{ transform: `rotate(${rotation}deg)` }}
+              className="relative w-52 h-52 md:w-64 md:h-64 rounded-full border-[10px] border-slate-900 shadow-2xl bg-slate-950 overflow-hidden touch-none"
             >
               <div className="absolute inset-0 rounded-full opacity-30 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_35%)]" />
               <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,transparent_20%,rgba(255,255,255,0.05)_21%,transparent_22%)]" />

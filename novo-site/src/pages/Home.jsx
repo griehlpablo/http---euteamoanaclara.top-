@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+// Importação universal restaurada para o Vite compilar com sucesso:
 import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -144,7 +145,7 @@ const Home = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-12 relative z-50">
         
         <div className={`${glassClasses} p-6 rounded-3xl flex flex-col justify-center`}>
-          <h3 className="font-bold mb-2 text-slate-700">Quanto você ama o Pablo?</h3>
+          <h3 className="font-bold mb-2 text-slate-700">Quanto amas o Pablo?</h3>
           <div className="text-rose-500 font-bold text-3xl mb-3">{loveValue}/10</div>
           <input type="range" min="0" max="10" value={loveValue} onChange={handleLoveChange} className="w-full accent-rose-500 cursor-pointer" />
         </div>
@@ -154,17 +155,16 @@ const Home = () => {
           <Sparkles className="text-rose-400 mb-2" size={28} />
           <h3 className="font-bold mb-2 text-slate-800 text-lg">Nova Fase Desbloqueada</h3>
           <p className="text-sm text-slate-600 font-medium italic px-2">
-            "Sem brigas, sem estresse. Apenas paz, muito amor e nós dois contra o mundo."
+            "Sem brigas, sem stress. Apenas paz, muito amor e nós dois contra o mundo."
           </p>
         </div>
 
-        {/* 1º PASSO: O PLAYER VISÍVEL COM O LINK FORÇADO PARA O YOUTUBE */}
+        {/* 1º PASSO: O PLAYER VISÍVEL */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative bg-rose-50/50`}>
           <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest text-center w-full">Teste: Player Original do YouTube 🚨</h3>
           <div className="w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-slate-300 bg-black">
             <ReactPlayer
               ref={playerRef}
-              // O Segredo: A URL aponta para um vídeo real e carrega a lista junto
               url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
               controls={true}
@@ -175,9 +175,6 @@ const Home = () => {
               onProgress={handleProgress}
             />
           </div>
-          <p className="mt-4 text-xs text-slate-500 max-w-sm text-center">
-             Se o ícone vermelho do YouTube aparecer aí em cima, nosso problema foi a URL. Teste dar o play pelo nosso botão redondo abaixo para ver se eles se comunicam.
-          </p>
         </div>
 
         {/* 2º PASSO: A NOSSA INTERFACE CUSTOMIZADA */}
@@ -254,8 +251,8 @@ const Home = () => {
               <button onClick={() => setShowProposal(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 cursor-pointer">
                 <X size={24} />
               </button>
-              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Amor, quer casar comigo?</h2>
-              <p className="text-slate-600 text-center italic font-medium">"Para dividir cada sonho e cada tropeço da vida. Te amo infinitamente."</p>
+              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Quer casar comigo?</h2>
+              <p className="text-slate-600 text-center italic font-medium">"Para dividir cada sonho e cada tropeço da vida. Amo-te infinitamente."</p>
             </motion.div>
           </motion.div>
         )}

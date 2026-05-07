@@ -1,150 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
-import ReactPlayer from 'react-player';
+import { ArrowRight, X, Sparkles } from 'lucide-react';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
 
 const Home = () => {
   const [loveValue, setLoveValue] = useState(10);
   const [showProposal, setShowProposal] = useState(false);
-  
-  const playerRef = useRef(null);
-  const vinylRef = useRef(null);
-  const scratchAudioRef = useRef(null);
-  
-  const [isPlaying, setIsPlaying] = useState(false); 
-  const [progress, setProgress] = useState(0);
-  const [rotation, setRotation] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const lastAngleRef = useRef(0);
-  const lastSeekTimeRef = useRef(0);
-
-  useEffect(() => {
-    try {
-      scratchAudioRef.current = new Audio('/audio/scratch.mp3');
-      scratchAudioRef.current.volume = 0.3; 
-      scratchAudioRef.current.loop = true; 
-    } catch (e) {
-      console.warn("Áudio de scratch não carregado.", e);
-    }
-  }, []);
 
   const handleLoveChange = (e) => {
     setLoveValue(e.target.value);
-    if (e.target.value < 10) setTimeout(() => setLoveValue(10), 1000); 
-  };
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const nextTrack = () => {
-    playerRef.current?.getInternalPlayer()?.nextVideo();
-  };
-
-  const prevTrack = () => {
-    playerRef.current?.getInternalPlayer()?.previousVideo();
-  };
-
-  const handleProgress = (state) => {
-    if (!isDragging) setProgress(state.played * 100); 
-  };
-
-  const handleSeek = (e) => {
-    const value = parseFloat(e.target.value);
-    setProgress(value);
-    playerRef.current?.seekTo(value / 100, 'fraction');
-  };
-
-  useEffect(() => {
-    let animationFrameId;
-    const spin = () => {
-      if (isPlaying && !isDragging) {
-        setRotation((prev) => (prev + 0.8) % 360); 
-      }
-      animationFrameId = requestAnimationFrame(spin);
-    };
-    if (isPlaying) {
-      animationFrameId = requestAnimationFrame(spin);
+    if (e.target.value < 10) {
+      setTimeout(() => setLoveValue(10), 1000); 
     }
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [isPlaying, isDragging]);
-
-  const getAngle = (clientX, clientY) => {
-    if (!vinylRef.current) return 0;
-    const rect = vinylRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    return Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
   };
-
-  const handlePointerDown = (e) => {
-    setIsDragging(true);
-    scratchAudioRef.current?.play().catch(() => {});
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    lastAngleRef.current = getAngle(clientX, clientY);
-  };
-
-  useEffect(() => {
-    const handlePointerMove = (e) => {
-      if (!isDragging) return;
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const currentAngle = getAngle(clientX, clientY);
-      let delta = currentAngle - lastAngleRef.current;
-      
-      if (delta > 180) delta -= 360;
-      if (delta < -180) delta += 360;
-      
-      setRotation((prev) => prev + delta);
-      lastAngleRef.current = currentAngle;
-
-      if (playerRef.current) {
-        const currentTime = playerRef.current.getCurrentTime();
-        const now = Date.now();
-        if (now - lastSeekTimeRef.current > 150) {
-          const newTime = Math.max(0, (currentTime || 0) + (delta * 0.2)); 
-          playerRef.current.seekTo(newTime, 'seconds');
-          lastSeekTimeRef.current = now;
-        }
-      }
-    };
-
-    const handlePointerUp = () => {
-      setIsDragging(false);
-      scratchAudioRef.current?.pause();
-      if (scratchAudioRef.current) scratchAudioRef.current.currentTime = 0; 
-    };
-
-    if (isDragging) {
-      window.addEventListener('pointermove', handlePointerMove);
-      window.addEventListener('touchmove', handlePointerMove, { passive: false });
-      window.addEventListener('pointerup', handlePointerUp);
-      window.addEventListener('touchend', handlePointerUp);
-    }
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('touchmove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('touchend', handlePointerUp);
-    };
-  }, [isDragging]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center min-h-[80vh] text-center px-2">
       
-      {/* FOTO CORRIGIDA */}
       <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="mb-8 relative z-50">
         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto">
-          <img src="/images/ana_e_eu_zoo.jpg" alt="Ana e Pablo" className="w-full h-full object-cover" />
+          <img src="/images/ana_e_eu_zoo.jpg" alt="Casal" className="w-full h-full object-cover" />
         </div>
       </motion.div>
 
-      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Ana Clara</h1>
+      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Meu Amor</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-12 relative z-50">
         
@@ -161,101 +42,6 @@ const Home = () => {
           <p className="text-sm text-slate-600 font-medium italic px-2">
             "Sem brigas, sem estresse. Apenas paz, muito amor e nós dois contra o mundo."
           </p>
-        </div>
-
-        {/* ======================================================== */}
-        {/* ÁREA DE TESTE DEFINITIVO: EMBED HTML vs REACT PLAYER */}
-        {/* ======================================================== */}
-        <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative bg-rose-50/50`}>
-          
-          {/* TESTE 1: EMBED HTML PURO (O mais infalível) */}
-          <h3 className="font-bold mb-2 text-slate-700 text-sm uppercase">1. Embed Nativo do YouTube</h3>
-          <div className="w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-slate-300 bg-black mb-8">
-            <iframe 
-              width="100%" 
-              height="100%" 
-              src="https://www.youtube.com/embed/TJrY-iqxopY" 
-              title="YouTube video player" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen>
-            </iframe>
-          </div>
-
-          {/* TESTE 2: REACT PLAYER (O nosso) */}
-          <h3 className="font-bold mb-2 text-slate-700 text-sm uppercase">2. ReactPlayer (O nosso código)</h3>
-          <div className="w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-slate-300 bg-black">
-            <ReactPlayer
-              ref={playerRef}
-              url="https://www.youtube.com/watch?v=TJrY-iqxopY"
-              playing={isPlaying}
-              controls={true}
-              width="100%"
-              height="100%"
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onProgress={handleProgress}
-            />
-          </div>
-          
-        </div>
-
-        {/* NOSSO VINIL E BOTÕES (CONECTADO APENAS AO REACT PLAYER) */}
-        <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative`}>
-          
-          <div className="relative z-10 flex flex-col items-center w-full">
-            <h3 className="font-bold mb-6 text-slate-700 text-sm uppercase tracking-widest">Nossa Trilha Sonora 🎵</h3>
-            
-            <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
-              
-              <div 
-                ref={vinylRef}
-                onPointerDown={handlePointerDown}
-                onTouchStart={handlePointerDown}
-                className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
-                style={{ transform: `rotate(${rotation}deg)` }}
-              >
-                {/* FOTO DO VINIL CORRIGIDA */}
-                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
-                <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
-                <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
-                <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
-                <div className="absolute inset-0 m-auto w-8 h-8 bg-rose-100 rounded-full border-4 border-slate-300 pointer-events-none flex items-center justify-center">
-                  <div className="w-2 h-2 bg-slate-800 rounded-full"></div>
-                </div>
-              </div>
-              
-              <div className="text-center w-full mb-6">
-                 <p className="font-bold text-slate-800 text-lg">Playlist "iA"</p>
-                 <p className="text-sm text-slate-500 font-medium">Pablo & Ana Clara</p>
-              </div>
-
-              <div className="w-full mb-6">
-                <input 
-                  type="range" min="0" max="100" value={progress} 
-                  onChange={handleSeek} 
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" 
-                />
-              </div>
-
-              <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 cursor-pointer">
-                  <SkipBack size={28} fill="currentColor" />
-                </button>
-                
-                <button 
-                  onClick={togglePlay} 
-                  className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center transition-transform shadow-lg cursor-pointer hover:scale-105 hover:bg-rose-600"
-                >
-                   {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
-                </button>
-                
-                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 cursor-pointer">
-                  <SkipForward size={28} fill="currentColor" />
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -275,7 +61,7 @@ const Home = () => {
               <button onClick={() => setShowProposal(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 cursor-pointer">
                 <X size={24} />
               </button>
-              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Ana, quer casar comigo?</h2>
+              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Meu Amor, quer casar comigo?</h2>
               <p className="text-slate-600 text-center italic font-medium">"Para dividir cada sonho e cada tropeço da vida. Te amo infinitamente."</p>
             </motion.div>
           </motion.div>

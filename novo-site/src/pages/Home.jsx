@@ -28,7 +28,7 @@ const Home = () => {
       scratchAudioRef.current.volume = 0.3; 
       scratchAudioRef.current.loop = true; 
     } catch (e) {
-      console.warn("Áudio de scratch não encontrado.", e);
+      console.warn("Áudio de scratch não carregado.", e);
     }
   }, []);
 
@@ -137,18 +137,19 @@ const Home = () => {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center min-h-[80vh] text-center px-2">
       
+      {/* FOTO CORRIGIDA */}
       <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="mb-8 relative z-50">
         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto">
-          <img src="/images/foto_casal.jpg" alt="Casal" className="w-full h-full object-cover" />
+          <img src="/images/ana_e_eu_zoo.jpg" alt="Ana e Pablo" className="w-full h-full object-cover" />
         </div>
       </motion.div>
 
-      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Meu Amor</h1>
+      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Ana Clara</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-12 relative z-50">
         
         <div className={`${glassClasses} p-6 rounded-3xl flex flex-col justify-center`}>
-          <h3 className="font-bold mb-2 text-slate-700">Quanto amas o Pablo?</h3>
+          <h3 className="font-bold mb-2 text-slate-700">Quanto você ama o Pablo?</h3>
           <div className="text-rose-500 font-bold text-3xl mb-3">{loveValue}/10</div>
           <input type="range" min="0" max="10" value={loveValue} onChange={handleLoveChange} className="w-full accent-rose-500 cursor-pointer" />
         </div>
@@ -158,17 +159,35 @@ const Home = () => {
           <Sparkles className="text-rose-400 mb-2" size={28} />
           <h3 className="font-bold mb-2 text-slate-800 text-lg">Nova Fase Desbloqueada</h3>
           <p className="text-sm text-slate-600 font-medium italic px-2">
-            "Sem brigas, sem stress. Apenas paz, muito amor e nós dois contra o mundo."
+            "Sem brigas, sem estresse. Apenas paz, muito amor e nós dois contra o mundo."
           </p>
         </div>
 
-        {/* 1º PASSO: O PLAYER VISÍVEL 100% LIMPO */}
+        {/* ======================================================== */}
+        {/* ÁREA DE TESTE DEFINITIVO: EMBED HTML vs REACT PLAYER */}
+        {/* ======================================================== */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative bg-rose-50/50`}>
-          <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest text-center w-full">Teste: Player Original do YouTube 🚨</h3>
+          
+          {/* TESTE 1: EMBED HTML PURO (O mais infalível) */}
+          <h3 className="font-bold mb-2 text-slate-700 text-sm uppercase">1. Embed Nativo do YouTube</h3>
+          <div className="w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-slate-300 bg-black mb-8">
+            <iframe 
+              width="100%" 
+              height="100%" 
+              src="https://www.youtube.com/embed/TJrY-iqxopY" 
+              title="YouTube video player" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen>
+            </iframe>
+          </div>
+
+          {/* TESTE 2: REACT PLAYER (O nosso) */}
+          <h3 className="font-bold mb-2 text-slate-700 text-sm uppercase">2. ReactPlayer (O nosso código)</h3>
           <div className="w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-slate-300 bg-black">
             <ReactPlayer
               ref={playerRef}
-              url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
+              url="https://www.youtube.com/watch?v=TJrY-iqxopY"
               playing={isPlaying}
               controls={true}
               width="100%"
@@ -178,12 +197,10 @@ const Home = () => {
               onProgress={handleProgress}
             />
           </div>
-          <p className="mt-4 text-xs text-slate-500 max-w-sm text-center">
-             O leitor vermelho do YouTube deve surgir acima sem falhas. Usa o botão de Play redondo abaixo para o controlar.
-          </p>
+          
         </div>
 
-        {/* 2º PASSO: A INTERFACE DO VINIL */}
+        {/* NOSSO VINIL E BOTÕES (CONECTADO APENAS AO REACT PLAYER) */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative`}>
           
           <div className="relative z-10 flex flex-col items-center w-full">
@@ -198,7 +215,8 @@ const Home = () => {
                 className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-slate-900 cursor-grab active:cursor-grabbing touch-none mb-6" 
                 style={{ transform: `rotate(${rotation}deg)` }}
               >
-                <img src="/images/foto_casal.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+                {/* FOTO DO VINIL CORRIGIDA */}
+                <img src="/images/ana_e_eu_zoo.jpg" alt="Vinil" className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
                 <div className="absolute inset-0 rounded-full border border-white/10 m-2 pointer-events-none"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-6 pointer-events-none"></div>
                 <div className="absolute inset-0 rounded-full border border-white/10 m-10 pointer-events-none"></div>
@@ -209,7 +227,7 @@ const Home = () => {
               
               <div className="text-center w-full mb-6">
                  <p className="font-bold text-slate-800 text-lg">Playlist "iA"</p>
-                 <p className="text-sm text-slate-500 font-medium">Pablo & Amor</p>
+                 <p className="text-sm text-slate-500 font-medium">Pablo & Ana Clara</p>
               </div>
 
               <div className="w-full mb-6">
@@ -257,8 +275,8 @@ const Home = () => {
               <button onClick={() => setShowProposal(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 cursor-pointer">
                 <X size={24} />
               </button>
-              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Quer casar comigo?</h2>
-              <p className="text-slate-600 text-center italic font-medium">"Para dividir cada sonho e cada tropeço da vida. Amo-te infinitamente."</p>
+              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Ana, quer casar comigo?</h2>
+              <p className="text-slate-600 text-center italic font-medium">"Para dividir cada sonho e cada tropeço da vida. Te amo infinitamente."</p>
             </motion.div>
           </motion.div>
         )}

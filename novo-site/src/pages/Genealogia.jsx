@@ -6,32 +6,74 @@ import { ArrowLeft, BookOpen, MapPin, History, FileText, Globe, Footprints, User
 // ==========================================
 // DADOS DA ÁRVORE (CORRIGIDOS E MAPEADOS)
 // ==========================================
+// ==========================================
+// DADOS DA ÁRVORE (EXPANDIDOS COM TRISAVÓS E TETRAVÓS)
+// ==========================================
 const arvoreData = {
   nome: "Ana Clara Kovalek Santos", datas: "2005-Viva", foto: "/images/ana_e_eu_zoo.jpg", papel: "Geração Atual", posicaoFoto: "object-top",
   pai: {
     nome: "Saint-Clair Santos", datas: "1975-Vivo", papel: "Pai",
     pai: {
       nome: "João de Jesus Santos", datas: "Vivo", papel: "Avô Paterno",
-      pai: { nome: "Venceslau dos Santos", datas: "1916-1986", papel: "Bisavô" },
-      mae: { nome: "Maria Candida Antunes", datas: "1916-1990", papel: "Bisavó" }
+      pai: { 
+        nome: "Venceslau dos Santos", datas: "1916-1986", papel: "Bisavô",
+        pai: { nome: "João Francisco dos Santos", datas: "1890-1961", papel: "Trisavô" }
+      },
+      mae: { 
+        nome: "Maria Candida Antunes", datas: "1916-1990", papel: "Bisavó",
+        pai: { nome: "Salvador Antunes de Almeida", datas: "1880-1946", papel: "Trisavô" },
+        mae: { nome: "Rosalina Santos Almeida", datas: "1884-Falecida", papel: "Trisavó" }
+      }
     },
     mae: {
       nome: "Maria Ivonete de Jesus", datas: "1949-Viva", papel: "Avó Paterna",
-      pai: { nome: "João Lustózio De Jesus", datas: "1909-1978", papel: "Bisavô" },
-      mae: { nome: "Maria Sebastiana Amaral", datas: "1914-2008", papel: "Bisavó" }
+      pai: { 
+        nome: "João Lustózio De Jesus", datas: "1909-1978", papel: "Bisavô",
+        pai: { nome: "Antonio Joaquim de Jesus", datas: "1874-1947", papel: "Trisavô" },
+        mae: { nome: "Luiza Maria de Ramos", datas: "1881-1967", papel: "Trisavó" }
+      },
+      mae: { 
+        nome: "Maria Sebastiana Amaral", datas: "1914-2008", papel: "Bisavó" 
+      }
     }
   },
   mae: {
     nome: "Maria Juliana Felipe", datas: "1980-Viva", papel: "Mãe",
     pai: {
       nome: "Eleutério Felipe", datas: "1945-Vivo", foto: "/images/EleuterioFelipe.jpeg", papel: "Avô Materno", posicaoFoto: "object-top",
-      pai: { nome: "Theodoro Felipe", datas: "1906-1991", doc: "/docs/batismotheodorus.pdf", papel: "Bisavô" },
-      mae: { nome: "Maria Veresiuk", datas: "1906-1977", doc: "/docs/batismomaria.pdf", papel: "Bisavó" }
+      pai: { 
+        nome: "Theodoro Felipe", datas: "1906-1991", doc: "/docs/batismotheodorus.pdf", papel: "Bisavô",
+        pai: { nome: "Nicolaus Pylypiw", datas: "Europa", papel: "Trisavô" }
+      },
+      mae: { 
+        nome: "Maria Veresiuk", datas: "1906-1977", doc: "/docs/batismomaria.pdf", papel: "Bisavó",
+        pai: { nome: "Alexius Weresiuk", datas: "Europa", doc: "/images/certidaonascimentoalexiusweresiuk.png", papel: "Trisavô" }
+      }
     },
     mae: {
       nome: "Justina Kovalek", datas: "1942-2015", foto: "/images/justinakovalek.png", papel: "Avó Materna", posicaoFoto: "object-top",
-      pai: { nome: "Paulo Kovalek", datas: "1900-1967", foto: "/images/paulokovalek.jpg", papel: "Bisavô", posicaoFoto: "object-top" },
-      mae: { nome: "Anastacia Gelinski", datas: "1912-1981", foto: "/images/anastasiazielinski.png", papel: "Bisavó", posicaoFoto: "object-top" }
+      pai: { 
+        nome: "Paulo Kovalek", datas: "1900-1967", foto: "/images/paulokovalek.jpg", papel: "Bisavô", posicaoFoto: "object-top",
+        pai: { nome: "Gregorio Kovalek", datas: "Falecido", doc: "/docs/SanNicolauKowalyk.pdf", papel: "Trisavô" },
+        mae: { nome: "Anastasia Petrusyk", datas: "Falecida", papel: "Trisavó" }
+      },
+      mae: { 
+        nome: "Anastacia Gelinski", datas: "1912-1981", foto: "/images/anastasiazielinski.png", papel: "Bisavó", posicaoFoto: "object-top",
+        pai: { 
+          nome: "André Zielinski", datas: "1869-1919", doc: "/images/certidaonascimentoandreaszielinski.png", papel: "Trisavô",
+          pai: { 
+            nome: "Antonius Zielinski", datas: "1836-1891", papel: "Tetravô",
+            pai: { nome: "Ignatius Zielinski", papel: "Pentavô" },
+            mae: { nome: "Thecla Marcichow", papel: "Pentavó" }
+          },
+          mae: { nome: "Anna Chorostecka", datas: "1846-1890", papel: "Tetravó" }
+        },
+        mae: { 
+          nome: "Natália Materacka", datas: "1880-1952", papel: "Trisavó",
+          pai: { nome: "Jacobus Materacki", datas: "Falecido", papel: "Tetravô" },
+          mae: { nome: "Euphemia Wysatyj", datas: "Falecida", papel: "Tetravó" }
+        }
+      }
     }
   }
 };

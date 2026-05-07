@@ -126,8 +126,7 @@ const Home = () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('touchmove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
-      // Aqui estava o erro! Corrigido para 'touchend'
-      window.removeEventListener('touchend', handlePointerUp); 
+      window.removeEventListener('touchend', handlePointerUp);
     };
   }, [isDragging]);
 
@@ -136,11 +135,11 @@ const Home = () => {
       
       <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="mb-8 relative z-50">
         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto">
-          <img src="/images/ana_e_eu_zoo.jpg" alt="Ana e Pablo" className="w-full h-full object-cover" />
+          <img src="/images/ana_e_eu_zoo.jpg" alt="Casal" className="w-full h-full object-cover" />
         </div>
       </motion.div>
 
-      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Ana Clara</h1>
+      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Meu Amor</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-12 relative z-50">
         
@@ -159,15 +158,16 @@ const Home = () => {
           </p>
         </div>
 
-        {/* 1º PASSO: O PLAYER VISÍVEL E NATIVO PARA O NOSSO TESTE */}
+        {/* 1º PASSO: O PLAYER VISÍVEL COM O LINK FORÇADO PARA O YOUTUBE */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative bg-rose-50/50`}>
           <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest text-center w-full">Teste: Player Original do YouTube 🚨</h3>
           <div className="w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-slate-300 bg-black">
             <ReactPlayer
               ref={playerRef}
-              url="https://www.youtube.com/playlist?list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
+              // O Segredo: A URL aponta para um vídeo real e carrega a lista junto
+              url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
               playing={isPlaying}
-              controls={true} // Controles nativos habilitados
+              controls={true}
               width="100%"
               height="100%"
               onPlay={() => setIsPlaying(true)}
@@ -176,7 +176,7 @@ const Home = () => {
             />
           </div>
           <p className="mt-4 text-xs text-slate-500 max-w-sm text-center">
-             Dê play no nosso botão vermelho customizado abaixo. Se o vídeo aqui em cima começar a tocar junto com ele, a conexão de controle está perfeita!
+             Se o ícone vermelho do YouTube aparecer aí em cima, nosso problema foi a URL. Teste dar o play pelo nosso botão redondo abaixo para ver se eles se comunicam.
           </p>
         </div>
 
@@ -206,7 +206,7 @@ const Home = () => {
               
               <div className="text-center w-full mb-6">
                  <p className="font-bold text-slate-800 text-lg">Playlist "iA"</p>
-                 <p className="text-sm text-slate-500 font-medium">Pablo & Ana Clara</p>
+                 <p className="text-sm text-slate-500 font-medium">Pablo & Amor</p>
               </div>
 
               <div className="w-full mb-6">
@@ -254,7 +254,7 @@ const Home = () => {
               <button onClick={() => setShowProposal(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 cursor-pointer">
                 <X size={24} />
               </button>
-              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Ana, quer casar comigo?</h2>
+              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Amor, quer casar comigo?</h2>
               <p className="text-slate-600 text-center italic font-medium">"Para dividir cada sonho e cada tropeço da vida. Te amo infinitamente."</p>
             </motion.div>
           </motion.div>

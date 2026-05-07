@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, Sparkles, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
-// Importação universal restaurada para o Vite compilar com sucesso:
 import ReactPlayer from 'react-player';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -23,10 +22,15 @@ const Home = () => {
   const lastAngleRef = useRef(0);
   const lastSeekTimeRef = useRef(0);
 
+  // Inicializa o som do Scratch de forma segura
   useEffect(() => {
-    scratchAudioRef.current = new Audio('/audio/scratch.mp3');
-    scratchAudioRef.current.volume = 0.3; 
-    scratchAudioRef.current.loop = true; 
+    try {
+      scratchAudioRef.current = new Audio('/audio/scratch.mp3');
+      scratchAudioRef.current.volume = 0.3; 
+      scratchAudioRef.current.loop = true; 
+    } catch (e) {
+      console.warn("Áudio de scratch não encontrado, mas o site continuará funcionando.", e);
+    }
   }, []);
 
   const handleLoveChange = (e) => {
@@ -56,6 +60,7 @@ const Home = () => {
     playerRef.current?.seekTo(value / 100, 'fraction');
   };
 
+  // Física do Vinil
   useEffect(() => {
     let animationFrameId;
     const spin = () => {
@@ -80,7 +85,9 @@ const Home = () => {
 
   const handlePointerDown = (e) => {
     setIsDragging(true);
-    scratchAudioRef.current?.play().catch(() => {});
+    if (scratchAudioRef.current) {
+      scratchAudioRef.current.play().catch(() => {});
+    }
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     lastAngleRef.current = getAngle(clientX, clientY);
@@ -113,8 +120,10 @@ const Home = () => {
 
     const handlePointerUp = () => {
       setIsDragging(false);
-      scratchAudioRef.current?.pause();
-      if (scratchAudioRef.current) scratchAudioRef.current.currentTime = 0; 
+      if (scratchAudioRef.current) {
+        scratchAudioRef.current.pause();
+        scratchAudioRef.current.currentTime = 0; 
+      }
     };
 
     if (isDragging) {
@@ -136,16 +145,16 @@ const Home = () => {
       
       <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="mb-8 relative z-50">
         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto">
-          <img src="/images/ana_e_eu_zoo.jpg" alt="Casal" className="w-full h-full object-cover" />
+          <img src="/images/ana_e_eu_zoo.jpg" alt="Ana e Pablo" className="w-full h-full object-cover" />
         </div>
       </motion.div>
 
-      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Meu Amor</h1>
+      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-4 text-slate-800">Ana Clara</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mb-12 relative z-50">
         
         <div className={`${glassClasses} p-6 rounded-3xl flex flex-col justify-center`}>
-          <h3 className="font-bold mb-2 text-slate-700">Quanto amas o Pablo?</h3>
+          <h3 className="font-bold mb-2 text-slate-700">Quanto você ama o Pablo?</h3>
           <div className="text-rose-500 font-bold text-3xl mb-3">{loveValue}/10</div>
           <input type="range" min="0" max="10" value={loveValue} onChange={handleLoveChange} className="w-full accent-rose-500 cursor-pointer" />
         </div>
@@ -155,17 +164,17 @@ const Home = () => {
           <Sparkles className="text-rose-400 mb-2" size={28} />
           <h3 className="font-bold mb-2 text-slate-800 text-lg">Nova Fase Desbloqueada</h3>
           <p className="text-sm text-slate-600 font-medium italic px-2">
-            "Sem brigas, sem stress. Apenas paz, muito amor e nós dois contra o mundo."
+            "Sem brigas, sem estresse. Apenas paz, muito amor e nós dois contra o mundo."
           </p>
         </div>
 
-        {/* 1º PASSO: O PLAYER VISÍVEL */}
+        {/* 1º PASSO: O PLAYER VISÍVEL COM URL LIMPA (ISSO RESOLVE O BUG CINZA) */}
         <div className={`${glassClasses} p-6 rounded-3xl col-span-1 md:col-span-2 flex flex-col items-center justify-center relative bg-rose-50/50`}>
           <h3 className="font-bold mb-4 text-slate-700 text-sm uppercase tracking-widest text-center w-full">Teste: Player Original do YouTube 🚨</h3>
           <div className="w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-slate-300 bg-black">
             <ReactPlayer
               ref={playerRef}
-              url="https://www.youtube.com/watch?v=TJrY-iqxopY&list=PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj"
+              url="https://www.youtube.com/watch?v=TJrY-iqxopY" // URL puramente da música para forçar o iframe
               playing={isPlaying}
               controls={true}
               width="100%"
@@ -173,8 +182,20 @@ const Home = () => {
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onProgress={handleProgress}
+              config={{
+                youtube: {
+                  playerVars: { 
+                    listType: 'playlist', // Injetamos a playlist por baixo dos panos!
+                    list: 'PLEJY-EkTyX3KtW_AyLiRyKA1Y1S-wyLUj',
+                    origin: window.location.origin
+                  }
+                }
+              }}
             />
           </div>
+          <p className="mt-4 text-xs text-slate-500 max-w-sm text-center">
+            O player vermelho oficial deve aparecer acima. Dê Play no botão debaixo e veja o vídeo rodar.
+          </p>
         </div>
 
         {/* 2º PASSO: A NOSSA INTERFACE CUSTOMIZADA */}
@@ -185,6 +206,7 @@ const Home = () => {
             
             <div className="flex flex-col items-center w-full max-w-md bg-white/80 p-6 rounded-3xl shadow-sm border border-slate-100">
               
+              {/* O VINIL E A FOTO */}
               <div 
                 ref={vinylRef}
                 onPointerDown={handlePointerDown}
@@ -203,9 +225,10 @@ const Home = () => {
               
               <div className="text-center w-full mb-6">
                  <p className="font-bold text-slate-800 text-lg">Playlist "iA"</p>
-                 <p className="text-sm text-slate-500 font-medium">Pablo & Amor</p>
+                 <p className="text-sm text-slate-500 font-medium">Pablo & Ana Clara</p>
               </div>
 
+              {/* BARRA DE PROGRESSO */}
               <div className="w-full mb-6">
                 <input 
                   type="range" min="0" max="100" value={progress} 
@@ -214,8 +237,9 @@ const Home = () => {
                 />
               </div>
 
+              {/* BOTÕES DE CONTROLE */}
               <div className="flex items-center justify-center gap-8">
-                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 cursor-pointer">
+                <button onClick={prevTrack} className="text-slate-500 hover:text-rose-500 cursor-pointer transition-colors">
                   <SkipBack size={28} fill="currentColor" />
                 </button>
                 
@@ -226,7 +250,7 @@ const Home = () => {
                    {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                 </button>
                 
-                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 cursor-pointer">
+                <button onClick={nextTrack} className="text-slate-500 hover:text-rose-500 cursor-pointer transition-colors">
                   <SkipForward size={28} fill="currentColor" />
                 </button>
               </div>
@@ -235,6 +259,7 @@ const Home = () => {
         </div>
       </div>
 
+      {/* BOTÕES INFERIORES */}
       <div className="flex flex-col sm:flex-row gap-4 relative z-50">
         <Link to="/central" className="bg-rose-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2 cursor-pointer">
           Entrar no Nosso Mundo <ArrowRight size={20} />
@@ -251,8 +276,8 @@ const Home = () => {
               <button onClick={() => setShowProposal(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 cursor-pointer">
                 <X size={24} />
               </button>
-              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Quer casar comigo?</h2>
-              <p className="text-slate-600 text-center italic font-medium">"Para dividir cada sonho e cada tropeço da vida. Amo-te infinitamente."</p>
+              <h2 className="font-serif text-3xl font-bold mb-4 text-center text-slate-800">Ana, quer casar comigo?</h2>
+              <p className="text-slate-600 text-center italic font-medium">"Para dividir cada sonho e cada tropeço da vida. Te amo infinitamente."</p>
             </motion.div>
           </motion.div>
         )}

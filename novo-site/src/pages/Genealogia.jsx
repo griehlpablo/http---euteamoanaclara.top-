@@ -1,35 +1,107 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, MapPin, History, FileText, Globe, Footprints, User, Download } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, BookOpen, MapPin, History, FileText, Globe, Footprints, User, Download, ChevronRight, ChevronDown } from 'lucide-react';
 
 // ==========================================
-// COMPONENTE DO CARTÃO DA ÁRVORE
+// DADOS DA ÁRVORE (CORRIGIDOS E MAPEADOS)
 // ==========================================
-// Adicionei a propriedade 'posicaoFoto' (o padrão é object-center se você não preencher)
-const MembroCard = ({ nome, datas, foto, doc, papel, posicaoFoto = "object-center" }) => (
-  <div className="flex flex-col items-center relative z-10 w-32 md:w-40 group">
-    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border-4 border-rose-100 shadow-md overflow-hidden flex items-center justify-center relative z-10 transition-transform group-hover:scale-110">
-      {foto ? (
-        /* Aqui a mágica acontece: o CSS agora aceita a posição personalizada */
-        <img src={foto} alt={nome} className={`w-full h-full object-cover ${posicaoFoto}`} />
-      ) : (
-        <User size={32} className="text-slate-300" />
-      )}
-    </div>
-    <div className="bg-white/80 backdrop-blur-sm border border-slate-100 shadow-sm rounded-xl p-2 mt-2 text-center w-full relative z-10">
-      <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider mb-0.5">{papel}</p>
-      <h4 className="text-xs md:text-sm font-bold text-slate-800 leading-tight">{nome}</h4>
-      {datas && <p className="text-[9px] md:text-[10px] text-slate-500 mt-1">{datas}</p>}
+const arvoreData = {
+  nome: "Ana Clara Kovalek Santos", datas: "2005-Viva", foto: "/images/ana_e_eu_zoo.jpg", papel: "Geração Atual", posicaoFoto: "object-top",
+  pai: {
+    nome: "Saint-Clair Santos", datas: "1975-Vivo", papel: "Pai",
+    pai: {
+      nome: "João de Jesus Santos", datas: "Vivo", papel: "Avô Paterno",
+      pai: { nome: "Venceslau dos Santos", datas: "1916-1986", papel: "Bisavô" },
+      mae: { nome: "Maria Candida Antunes", datas: "1916-1990", papel: "Bisavó" }
+    },
+    mae: {
+      nome: "Maria Ivonete de Jesus", datas: "1949-Viva", papel: "Avó Paterna",
+      pai: { nome: "João Lustózio De Jesus", datas: "1909-1978", papel: "Bisavô" },
+      mae: { nome: "Maria Sebastiana Amaral", datas: "1914-2008", papel: "Bisavó" }
+    }
+  },
+  mae: {
+    nome: "Maria Juliana Felipe", datas: "1980-Viva", papel: "Mãe",
+    pai: {
+      nome: "Eleutério Felipe", datas: "1945-Vivo", foto: "/images/EleuterioFelipe.jpeg", papel: "Avô Materno", posicaoFoto: "object-top",
+      pai: { nome: "Theodoro Felipe", datas: "1906-1991", doc: "/docs/batismotheodorus.pdf", papel: "Bisavô" },
+      mae: { nome: "Maria Veresiuk", datas: "1906-1977", doc: "/docs/batismomaria.pdf", papel: "Bisavó" }
+    },
+    mae: {
+      nome: "Justina Kovalek", datas: "1942-2015", foto: "/images/justinakovalek.png", papel: "Avó Materna", posicaoFoto: "object-top",
+      pai: { nome: "Paulo Kovalek", datas: "1900-1967", foto: "/images/paulokovalek.jpg", papel: "Bisavô", posicaoFoto: "object-top" },
+      mae: { nome: "Anastacia Gelinski", datas: "1912-1981", foto: "/images/anastasiazielinski.png", papel: "Bisavó", posicaoFoto: "object-top" }
+    }
+  }
+};
+
+// ==========================================
+// COMPONENTE DE NÓ DA ÁRVORE (ESTILO FAMILYSEARCH)
+// ==========================================
+const NoArvore = ({ membro, defaultExpanded = false }) => {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const temPais = membro.pai || membro.mae;
+
+  return (
+    <div className="flex items-center gap-6 my-2 relative">
       
-      {/* Botão de Documento se existir arquivo (PDF ou Certidão PNG) */}
-      {doc && (
-        <a href={doc} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 bg-slate-800 text-white text-[9px] px-2 py-1 rounded-full hover:bg-slate-700 transition-colors">
-          <FileText size={10} /> Ver Doc
-        </a>
-      )}
+      {/* O Cartão Horizontal */}
+      <div className="relative z-10 flex items-center bg-white shadow-sm border border-slate-200 rounded-xl p-3 w-64 md:w-72 shrink-0">
+        
+        {/* Foto ou Ícone */}
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-100 border-2 border-rose-100 overflow-hidden flex items-center justify-center shrink-0">
+          {membro.foto ? (
+            <img src={membro.foto} alt={membro.nome} className={`w-full h-full object-cover ${membro.posicaoFoto || 'object-center'}`} />
+          ) : (
+            <User size={24} className="text-slate-400" />
+          )}
+        </div>
+        
+        {/* Informações */}
+        <div className="ml-3 flex-1">
+          <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider mb-0.5">{membro.papel}</p>
+          <h4 className="text-xs md:text-sm font-bold text-slate-800 leading-tight truncate">{membro.nome}</h4>
+          {membro.datas && <p className="text-[10px] text-slate-500 mt-0.5">{membro.datas}</p>}
+          {membro.doc && (
+            <a href={membro.doc} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 bg-slate-100 text-slate-600 font-medium text-[9px] px-2 py-0.5 rounded-full hover:bg-slate-200 transition-colors">
+              <FileText size={10} /> Ver Doc
+            </a>
+          )}
+        </div>
+
+        {/* Botão de Expandir (A "Setinha") */}
+        {temPais && (
+          <button 
+            onClick={() => setExpanded(!expanded)}
+            className="absolute -right-4 top-1/2 -translate-y-1/2 bg-white border border-slate-200 rounded-full p-1 shadow-md hover:bg-slate-50 text-slate-600 z-20 transition-transform hover:scale-110 cursor-pointer"
+          >
+            {expanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+          </button>
+        )}
+      </div>
+
+      {/* Renderização Recursiva dos Pais com Linha de Conexão */}
+      <AnimatePresence>
+        {expanded && temPais && (
+          <motion.div 
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col gap-2 relative"
+          >
+            {/* A linha conectora que liga o cartão filho aos pais */}
+            <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-6 h-[calc(100%-4rem)] border-l-2 border-t-2 border-b-2 border-slate-300 rounded-l-lg z-0"></div>
+            
+            {membro.pai && <NoArvore membro={membro.pai} defaultExpanded={false} />}
+            {membro.mae && <NoArvore membro={membro.mae} defaultExpanded={false} />}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-  </div>
-);
+  );
+};
 
 // ==========================================
 // PÁGINA PRINCIPAL
@@ -55,15 +127,15 @@ export default function Genealogia() {
         
         <div className="bg-slate-800 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
           <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
-          <h2 className="text-3xl font-serif font-bold mb-2 relative z-10">Família Kovalek & Felipe</h2>
+          <h2 className="text-3xl font-serif font-bold mb-2 relative z-10">Famílias Santos, Felipe & Kovalek</h2>
           <p className="text-slate-300 relative z-10 max-w-2xl leading-relaxed text-sm">
-            Uma jornada que atravessa fronteiras, desde as terras da Galícia até Prudentópolis no Paraná.
+            A convergência de histórias, desde a imigração europeia até à formação da nossa geração no Brasil.
           </p>
         </div>
 
         <div className="flex gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
           <button onClick={() => setActiveTab('arvore')} className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap flex items-center justify-center gap-2 transition-all cursor-pointer ${activeTab === 'arvore' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>
-            <User size={16} /> Árvore Visual
+            <User size={16} /> Árvore Interativa
           </button>
           <button onClick={() => setActiveTab('historia')} className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs md:text-sm whitespace-nowrap flex items-center justify-center gap-2 transition-all cursor-pointer ${activeTab === 'historia' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>
             <History size={16} /> Linha do Tempo
@@ -74,97 +146,18 @@ export default function Genealogia() {
         </div>
 
         {/* ========================================== */}
-        {/* ABA: ÁRVORE VISUAL                         */}
+        {/* ABA: ÁRVORE INTERATIVA (ESTILO FAMILYSEARCH) */}
         {/* ========================================== */}
         {activeTab === 'arvore' && (
           <div className={`${glassClasses} overflow-x-auto pb-8`}>
-            <div className="min-w-[800px] flex flex-col items-center pt-8">
-              
-              {/* LINHA 1: TETRAVÓS / TRISAVÓS (EUROPA) */}
-              <div className="flex justify-around w-full relative">
-                <MembroCard nome="Grzegorz Kowalyk" datas="Hulcze (Galícia)" doc="/docs/SanNicolauKowalyk.pdf" papel="Trisavô" />
-                <MembroCard nome="Andreas Zielinski" datas="1869-1919" doc="/images/certidaonascimentoandreaszielinski.png" papel="Trisavô" />
-                <MembroCard nome="Nicolaus Pylypiw" datas="Europa" papel="Trisavô" />
-                <MembroCard nome="Alexius Weresiuk" datas="Europa" doc="/images/certidaonascimentoalexiusweresiuk.png" papel="Trisavô" />
-              </div>
-
-              {/* CONECTORES LINHA 1 PARA 2 */}
-              <div className="flex justify-around w-full h-8 relative">
-                <div className="w-px h-full bg-slate-300 absolute left-[12%]"></div>
-                <div className="w-px h-full bg-slate-300 absolute left-[38%]"></div>
-                <div className="w-px h-full bg-slate-300 absolute left-[62%]"></div>
-                <div className="w-px h-full bg-slate-300 absolute left-[88%]"></div>
-                
-                <div className="absolute top-8 left-[12%] right-[38%] h-px bg-slate-300"></div>
-                <div className="absolute top-8 left-[62%] right-[88%] h-px bg-slate-300"></div>
-                
-                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[25%]"></div>
-                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[75%]"></div>
-              </div>
-
-              {/* LINHA 2: BISAVÓS */}
-              <div className="flex justify-around w-[80%] relative mt-8">
-                {/* Adicionado posicaoFoto="object-top" para focar no rosto */}
-                <MembroCard nome="Paulo Kovalek" datas="1900-1967" foto="/images/paulokovalek.jpg" papel="Bisavô" posicaoFoto="object-top" />
-                <MembroCard nome="Anastacia Gelinski" datas="1912-1981" foto="/images/anastasiazielinski.png" papel="Bisavó" posicaoFoto="object-top" />
-                <MembroCard nome="Theodoro Felipe" datas="1906-1991" doc="/docs/batismotheodorus.pdf" papel="Bisavô" />
-                <MembroCard nome="Maria Veresiuk" datas="1906-1977" doc="/docs/batismomaria.pdf" papel="Bisavó" />
-              </div>
-
-              {/* CONECTORES LINHA 2 PARA 3 */}
-              <div className="flex justify-around w-[80%] h-8 relative">
-                <div className="w-px h-full bg-slate-300 absolute left-[15%]"></div>
-                <div className="w-px h-full bg-slate-300 absolute left-[45%]"></div>
-                <div className="w-px h-full bg-slate-300 absolute left-[55%]"></div>
-                <div className="w-px h-full bg-slate-300 absolute left-[85%]"></div>
-                
-                <div className="absolute top-8 left-[15%] right-[45%] h-px bg-slate-300"></div>
-                <div className="absolute top-8 left-[55%] right-[85%] h-px bg-slate-300"></div>
-                
-                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[30%]"></div>
-                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[70%]"></div>
-              </div>
-
-              {/* LINHA 3: AVÓS */}
-              <div className="flex justify-around w-[60%] relative mt-8">
-                <MembroCard nome="Justina Kovalek" datas="1942-2015" foto="/images/justinakovalek.png" papel="Avó" posicaoFoto="object-top" />
-                
-                {/* Adicionado posicaoFoto="object-top" para salvar a cabeça do Eleutério! */}
-                <MembroCard nome="Eleutério Felipe" datas="Nasc: 1945" foto="/images/EleuterioFelipe.jpeg" papel="Avô" posicaoFoto="object-top" />
-              </div>
-
-              {/* CONECTORES LINHA 3 PARA 4 */}
-              <div className="flex justify-around w-[60%] h-8 relative">
-                <div className="w-px h-full bg-slate-300 absolute left-[25%]"></div>
-                <div className="w-px h-full bg-slate-300 absolute left-[75%]"></div>
-                <div className="absolute top-8 left-[25%] right-[75%] h-px bg-slate-300"></div>
-                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[50%]"></div>
-              </div>
-
-              {/* LINHA 4: PAIS */}
-              <div className="flex justify-center w-full relative mt-8">
-                <div className="flex gap-16">
-                  <MembroCard nome="Maria Juliana Felipe" datas="Nasc: 1980" papel="Mãe" />
-                  <MembroCard nome="Saint-Clair Santos" datas="Nasc: 1975" papel="Pai" />
-                </div>
-              </div>
-
-              {/* CONECTORES LINHA 4 PARA 5 */}
-              <div className="flex justify-center w-full h-8 relative">
-                <div className="w-px h-full bg-slate-300 absolute left-[45%]"></div>
-                <div className="w-px h-full bg-slate-300 absolute left-[55%]"></div>
-                <div className="absolute top-8 left-[45%] right-[55%] h-px bg-slate-300"></div>
-                <div className="w-px h-8 bg-slate-300 absolute top-8 left-[50%]"></div>
-              </div>
-
-              {/* LINHA 5: ANA CLARA */}
-              <div className="flex justify-center w-full relative mt-8 mb-4">
-                {/* Você pode ajustar a da Ana Clara também se precisar */}
-                <MembroCard nome="Ana Clara Kovalek" datas="Nasc: 2005" foto="/images/ana_e_eu_zoo.jpg" papel="Geração Atual" posicaoFoto="object-top" />
-              </div>
-
+            {/* O min-w-max permite que a árvore cresça infinitamente para a direita sem quebrar o layout */}
+            <div className="min-w-max pt-4 pr-10">
+              {/* O nó raiz (Ana Clara) vem com os pais expandidos por padrão */}
+              <NoArvore membro={arvoreData} defaultExpanded={true} />
             </div>
-            <p className="text-center text-xs text-slate-400 mt-4 italic">Deslize para os lados para ver a árvore completa.</p>
+            <p className="text-center text-xs text-slate-400 mt-8 italic">
+              Clique nas setinhas para expandir as gerações anteriores. Deslize para a direita para ver mais.
+            </p>
           </div>
         )}
 
@@ -192,9 +185,9 @@ export default function Genealogia() {
                 <span className="text-rose-500 font-bold text-sm">1890 a 1905</span>
                 <h3 className="text-xl font-bold text-slate-800 mt-1 mb-2">A Grande Imigração</h3>
                 <p className="text-slate-600 leading-relaxed mb-4">
-                  As famílias deixam o Império Austro-Húngaro rumo ao Brasil, estabelecendo-se em Prudentópolis, Paraná. Em 1906, nascem os primeiros brasileiros da linhagem: Theodoro e Maria.
+                  As famílias deixam o Império Austro-Húngaro rumo ao Brasil, estabelecendo-se no Paraná. Em 1906, nascem os primeiros brasileiros desta linhagem: Theodoro e Maria.
                 </p>
-                <a href="/docs/ListaDeEmbarqueRioDeJaneiro.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-rose-50 text-rose-600 font-bold text-sm px-4 py-2 rounded-xl hover:bg-rose-100 transition-colors">
+                <a href="/docs/ListaDeEmbarqueRioDeJaneiro.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-rose-50 text-rose-600 font-bold text-sm px-4 py-2 rounded-xl hover:bg-rose-100 transition-colors cursor-pointer">
                   <Download size={16} /> Lista de Embarque (Rio de Janeiro)
                 </a>
               </div>
@@ -263,9 +256,9 @@ export default function Genealogia() {
             <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-slate-800">Acervo: Stephanus Zielinski</h3>
-                <p className="text-sm text-slate-500">Certidão de nascimento resgatada dos arquivos históricos.</p>
+                <p className="text-sm text-slate-500">Certidão de nascimento resgatada dos arquivos históricos europeus.</p>
               </div>
-              <a href="/images/certidaonascimentostephanuszielinski.png" target="_blank" rel="noopener noreferrer" className="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">
+              <a href="/images/certidaonascimentostephanuszielinski.png" target="_blank" rel="noopener noreferrer" className="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors cursor-pointer">
                 Ver Imagem
               </a>
             </div>

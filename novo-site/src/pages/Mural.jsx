@@ -1,8 +1,16 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Send, Clock, LogOut } from 'lucide-react';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
-import db from '../firebase';
+import { User, Send, Clock, LogOut, Heart } from 'lucide-react';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { db } from '../firebase'; // Importando o banco de dados que você configurou
+
+const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
+
+// Configuração visual dos usuários
+const userProfiles = {
+  'Pablo': { color: 'from-blue-500 to-indigo-600', initial: 'P' },
+  'Ana Clara': { color: 'from-rose-400 to-rose-600', initial: 'A' }
+};
 
 export default function Mural() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -10,9 +18,9 @@ export default function Mural() {
   const [newPostText, setNewPostText] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Real-time listener for posts from Firestore
+  // 1. OUVINTE DE TEMPO REAL DO FIREBASE
   useEffect(() => {
-    if (!currentUser) return; // Only listen when user is selected
+    if (!currentUser) return; 
 
     const q = query(collection(db, 'mural'), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -23,16 +31,13 @@ export default function Mural() {
       setPosts(postsData);
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe(); 
   }, [currentUser]);
 
-  // Handle publish post
+  // 2. FUNÇÃO DE PUBLICAR TWEET
   const handlePublish = async (e) => {
     e.preventDefault();
-
-    if (!newPostText.trim()) {
-      return;
-    }
+    if (!newPostText.trim()) return;
 
     setLoading(true);
     try {
@@ -40,6 +45,7 @@ export default function Mural() {
         text: newPostText,
         author: currentUser,
         timestamp: serverTimestamp(),
+        likes: [] // Começa com zero curtidas
       });
       setNewPostText('');
     } catch (error) {
@@ -49,9 +55,25 @@ export default function Mural() {
     }
   };
 
-  // Format timestamp
+  // 3. FUNÇÃO DE CURTIR (LIKE)
+  const toggleLike = async (postId, currentLikes) => {
+    const postRef = doc(db, 'mural', postId);
+    const likesArray = currentLikes || [];
+    
+    try {
+      if (likesArray.includes(currentUser)) {
+        await updateDoc(postRef, { likes: arrayRemove(currentUser) });
+      } else {
+        await updateDoc(postRef, { likes: arrayUnion(currentUser) });
+      }
+    } catch (error) {
+      console.error("Erro ao curtir:", error);
+    }
+  };
+
+  // 4. FORMATADOR DE DATA/HORA
   const formatTimestamp = (timestamp) => {
-    if (!timestamp) return 'Agora';
+    if (!timestamp) return 'Enviando...';
 
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
@@ -60,56 +82,41 @@ export default function Mural() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMinutes < 1) return 'Agora';
+    if (diffMinutes < 1) return 'Agora mesmo';
     if (diffMinutes < 60) return `${diffMinutes}m`;
-    if (diffHours < 24) return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    if (diffHours < 24) return `${diffHours}h`;
     if (diffDays === 1) return 'Ontem';
     if (diffDays < 7) return `${diffDays}d`;
 
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   };
 
-  // User Selection Screen
+  // ==========================================
+  // TELA 1: LOGIN DO CASAL
+  // ==========================================
   if (!currentUser) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="min-h-screen bg-gradient-to-br from-rose-50 to-rose-100 flex items-center justify-center px-4"
-      >
-        <div className="text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-5xl font-bold text-rose-900 mb-4 font-serif"
-          >
-            Mural
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-rose-700 mb-12"
-          >
-            Quem está postando?
-          </motion.p>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[80vh] flex flex-col items-center justify-center px-4 relative z-50">
+        <div className="text-center w-full max-w-md">
+          <h1 className="text-5xl font-bold text-rose-600 mb-2 font-serif">Mural</h1>
+          <p className="text-lg text-slate-500 mb-10 italic">O nosso cantinho de pensamentos.</p>
 
-          <div className="flex gap-8 justify-center flex-wrap">
-            {['Pablo', 'Ana Clara'].map((user, index) => (
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            {Object.keys(userProfiles).map((user, index) => (
               <motion.button
                 key={user}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                whileHover={{ scale: 1.05, y: -5 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setCurrentUser(user)}
-                className="glass-panel px-12 py-8 rounded-2xl flex flex-col items-center gap-4 cursor-pointer hover:shadow-xl transition-all duration-300 min-w-max"
+                className={`${glassClasses} flex-1 py-8 rounded-3xl flex flex-col items-center gap-4 cursor-pointer hover:border-rose-300 transition-all`}
               >
-                <User size={48} className="text-rose-500" />
-                <span className="text-2xl font-semibold text-gray-800">{user}</span>
+                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${userProfiles[user].color} flex items-center justify-center shadow-lg text-white text-3xl font-bold`}>
+                  {userProfiles[user].initial}
+                </div>
+                <span className="text-xl font-bold text-slate-800">{user}</span>
               </motion.button>
             ))}
           </div>
@@ -118,116 +125,108 @@ export default function Mural() {
     );
   }
 
-  // Main Mural with Compose Box and Feed
+  // ==========================================
+  // TELA 2: O FEED (TWITTER DO CASAL)
+  // ==========================================
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen bg-gradient-to-br from-rose-50 to-rose-100 py-8 px-4"
-    >
-      <div className="max-w-2xl mx-auto">
-        {/* Header with User and Logout */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
-        >
-          <div className="flex items-center gap-3">
-            <User size={24} className="text-rose-500" />
-            <span className="text-lg font-semibold text-gray-800">
-              Postando como: <span className="text-rose-600">{currentUser}</span>
-            </span>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setCurrentUser(null)}
-            className="glass-panel px-4 py-2 rounded-lg flex items-center gap-2 text-gray-700 hover:text-rose-600 transition-colors"
-          >
-            <LogOut size={16} />
-            Sair
-          </motion.button>
-        </motion.div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen py-4 relative z-50">
+      <div className="max-w-xl mx-auto">
+        
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6 px-2">
+          <h1 className="text-3xl font-bold text-slate-800 font-serif">Linha do Tempo</h1>
+          <button onClick={() => setCurrentUser(null)} className="text-sm font-bold text-slate-400 hover:text-rose-500 flex items-center gap-1 transition-colors cursor-pointer">
+            <LogOut size={16} /> Sair
+          </button>
+        </div>
 
-        {/* Compose Box */}
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          onSubmit={handlePublish}
-          className="glass-panel rounded-2xl p-6 mb-8 shadow-lg"
-        >
-          <textarea
-            value={newPostText}
-            onChange={(e) => setNewPostText(e.target.value)}
-            placeholder="O que está acontecendo?"
-            className="w-full bg-transparent text-gray-800 placeholder-gray-500 text-lg resize-none focus:outline-none h-32"
-          />
-          <div className="flex justify-end mt-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              disabled={loading || !newPostText.trim()}
-              type="submit"
-              className="bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-6 rounded-lg flex items-center gap-2 transition-all duration-200"
-            >
-              <Send size={18} />
-              {loading ? 'Publicando...' : 'Publicar'}
-            </motion.button>
+        {/* CAIXA DE NOVO TWEET */}
+        <div className={`${glassClasses} rounded-3xl p-5 mb-8 flex gap-4`}>
+          <div className={`w-12 h-12 shrink-0 rounded-full bg-gradient-to-br ${userProfiles[currentUser].color} flex items-center justify-center shadow-inner text-white font-bold text-lg`}>
+            {userProfiles[currentUser].initial}
           </div>
-        </motion.form>
+          
+          <form onSubmit={handlePublish} className="flex-1 flex flex-col">
+            <textarea
+              value={newPostText}
+              onChange={(e) => setNewPostText(e.target.value)}
+              placeholder="O que você está pensando, amor?"
+              className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-lg resize-none focus:outline-none min-h-[80px] pt-2"
+            />
+            <div className="flex justify-end mt-2 pt-3 border-t border-slate-100">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={loading || !newPostText.trim()}
+                type="submit"
+                className="bg-rose-500 hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-all cursor-pointer shadow-md"
+              >
+                {loading ? 'Enviando...' : 'Publicar'} <Send size={16} />
+              </motion.button>
+            </div>
+          </form>
+        </div>
 
-        {/* Feed */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
+        {/* FEED DE POSTS */}
+        <div className="space-y-4">
           <AnimatePresence mode="popLayout">
             {posts.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="glass-panel rounded-2xl p-8 text-center text-gray-600"
-              >
-                <p className="text-lg">Nenhuma postagem ainda. Seja o primeiro a postar! 💕</p>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-slate-500 py-10 italic">
+                Nenhuma mensagem ainda. Mande o primeiro oi! 💕
               </motion.div>
             ) : (
-              posts.map((post) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4 }}
-                  className="glass-panel rounded-2xl p-6 mb-4 shadow-lg hover:shadow-xl transition-shadow duration-300"
-                >
-                  {/* Author and Timestamp */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-gradient-to-br from-rose-400 to-rose-500 rounded-full p-2">
-                        <User size={16} className="text-white" />
-                      </div>
-                      <span className="font-semibold text-gray-800">{post.author}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-600 text-sm">
-                      <Clock size={14} />
-                      {formatTimestamp(post.timestamp)}
-                    </div>
-                  </div>
+              posts.map((post) => {
+                const isMyPost = post.author === currentUser;
+                const likes = post.likes || [];
+                const iLiked = likes.includes(currentUser);
 
-                  {/* Post Text */}
-                  <p className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap break-words">
-                    {post.text}
-                  </p>
-                </motion.div>
-              ))
+                return (
+                  <motion.div
+                    key={post.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className={`${glassClasses} rounded-3xl p-5 hover:border-rose-200 transition-colors`}
+                  >
+                    <div className="flex gap-4">
+                      {/* Avatar do Autor */}
+                      <div className={`w-12 h-12 shrink-0 rounded-full bg-gradient-to-br ${userProfiles[post.author]?.color || 'from-slate-400 to-slate-500'} flex items-center justify-center shadow-sm text-white font-bold text-lg`}>
+                        {userProfiles[post.author]?.initial || <User size={20}/>}
+                      </div>
+
+                      {/* Conteúdo do Post */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-slate-800">{post.author}</span>
+                          <span className="text-slate-400 text-sm flex items-center gap-1">
+                            • {formatTimestamp(post.timestamp)}
+                          </span>
+                        </div>
+                        
+                        <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap break-words mb-3">
+                          {post.text}
+                        </p>
+
+                        {/* Botões de Interação (Like) */}
+                        <div className="flex items-center gap-1">
+                          <button 
+                            onClick={() => toggleLike(post.id, likes)}
+                            className={`flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer p-1.5 -ml-1.5 rounded-full hover:bg-rose-50 ${iLiked ? 'text-rose-500' : 'text-slate-400 hover:text-rose-400'}`}
+                          >
+                            <Heart size={18} className={iLiked ? "fill-rose-500" : ""} />
+                            {likes.length > 0 && <span>{likes.length}</span>}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
+        
       </div>
     </motion.div>
   );

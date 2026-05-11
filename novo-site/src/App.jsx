@@ -13,6 +13,7 @@ import Galeria from './pages/Galeria';
 import Retrospectiva from './pages/Retrospectiva'; 
 import Satisfacao from './pages/Satisfacao';
 import Humor from './pages/Humor';
+import Mural from './pages/Mural'; // ⬅️ IMPORTAÇÃO DO MURAL ADICIONADA AQUI!
 
 export default function App() {
   
@@ -24,7 +25,6 @@ export default function App() {
           appId: "5d8db7f8-b110-42af-a94d-96655cccd6ff", 
           allowLocalhostAsSecureOrigin: true, 
         });
-        // Dispara o prompt nativo pedindo permissão para enviar notificações
         OneSignal.Slidedown.promptPush(); 
       } catch (error) {
         console.error("Erro ao carregar o OneSignal:", error);
@@ -50,6 +50,7 @@ export default function App() {
             <Route path="/retrospectiva" element={<Retrospectiva />} />
             <Route path="/satisfacao" element={<Satisfacao />} />
             <Route path="/humor" element={<Humor />} />
+            <Route path="/mural" element={<Mural />} /> {/* ⬅️ ROTA DO MURAL ADICIONADA AQUI! */}
           </Routes>
         </main>
       </Router>

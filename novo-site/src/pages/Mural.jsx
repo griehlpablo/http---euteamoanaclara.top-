@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Heart } from 'lucide-react';
+import { Send, LogOut, Heart, Camera, Smile, X } from 'lucide-react';
 import {
   collection,
   addDoc,
@@ -13,15 +13,17 @@ import {
   arrayUnion,
   arrayRemove
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase';
 import OneSignal from 'react-onesignal';
+import EmojiPicker from 'emoji-picker-react';
 
 // ==========================================
 // CONSTANTES
 // ==========================================
 const GLASS_CLASSES = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
 const ONESIGNAL_APP_ID = '5d8db7f8-b110-42af-a94d-96655cccd6ff';
-const ONESIGNAL_API_KEY = 'j7gz65b2revye5nxv4rpknt7d'; // Sua chave oficial
+const ONESIGNAL_API_KEY = 'os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q';
 
 // ==========================================
 // USER PROFILES (COM .JPEG CORRIGIDO)
@@ -95,7 +97,7 @@ function AvatarWithFallback({ userHandle, size = 12 }) {
 }
 
 // ==========================================
-// HELPER: Enviar Notificação OneSignal
+// HELPER: Enviar Notificação OneSignal (COM TAGS)
 // ==========================================
 async function notifyPartner(currentUserHandle, messagePreview) {
   const partner = currentUserHandle === '@griehl_' ? '@anakov_' : '@griehl_';
@@ -112,14 +114,14 @@ async function notifyPartner(currentUserHandle, messagePreview) {
       },
       body: JSON.stringify({
         app_id: ONESIGNAL_APP_ID,
-        include_external_user_ids: [partner],
-        contents: {
-          en: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`,
-          pt: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`
-        },
+        filters: [{ field: "tag", key: "usuario", relation: "=", value: partner === '@anakov_' ? 'ana' : 'pablo' }],
         headings: {
           en: 'Novo Tweet no Mural! ❤️',
           pt: 'Novo Tweet no Mural! ❤️'
+        },
+        contents: {
+          en: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`,
+          pt: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`
         }
       })
     });
@@ -140,6 +142,11 @@ export default function Mural() {
   const [posts, setPosts] = useState([]);
   const [newPostText, setNewPostText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const fileInputRef = useRef(null);
+  const emojiPickerRef = useRef(null);
 
   useEffect(() => {
     if (currentUser && OneSignal) {
@@ -150,6 +157,15 @@ export default function Mural() {
       }
     }
   }, [currentUser]);
+
+  // Cleanup de URL de preview quando componente desmonta ou imagem é limpa
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -172,24 +188,59 @@ export default function Mural() {
     return () => unsubscribe();
   }, [currentUser]);
 
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const clearImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleEmojiClick = (emojiObject) => {
+    setNewPostText(prev => prev + emojiObject.emoji);
+  };
+
   const handlePublish = async (e) => {
     e.preventDefault();
-    if (!newPostText.trim()) return;
+    if (!newPostText.trim() && !selectedImage) return;
 
     setLoading(true);
     const textToSend = newPostText.trim();
+    let imageUrl = null;
 
     try {
+      // Upload image if selected
+      if (selectedImage) {
+        const storageRef = ref(storage, `mural_images/${Date.now()}_${selectedImage.name}`);
+        await uploadBytes(storageRef, selectedImage);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+
+      // Create post
       await addDoc(collection(db, 'mural'), {
         text: textToSend,
         author: currentUser,
+        imageUrl: imageUrl || null,
         timestamp: serverTimestamp(),
         likes: []
       });
 
       setNewPostText('');
+      clearImage();
 
-      const messagePreview = textToSend.substring(0, 50);
+      const messagePreview = textToSend.substring(0, 50) || '📸 Imagem';
       await notifyPartner(currentUser, messagePreview);
     } catch (error) {
       console.error('Erro ao publicar post:', error);
@@ -286,15 +337,87 @@ export default function Mural() {
 
         <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} onSubmit={handlePublish} className={`${GLASS_CLASSES} rounded-3xl p-6 mb-8 flex gap-4`}>
           <AvatarWithFallback userHandle={currentUser} size={14} />
-          <div className="flex-1 flex flex-col">
-            <textarea value={newPostText} onChange={(e) => setNewPostText(e.target.value)} placeholder={`O que está pensando, ${currentProfile?.nomeExibicao}?`} className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-lg resize-none focus:outline-none min-h-[100px] pt-2 leading-relaxed" />
-            <div className="flex justify-end mt-4 pt-4 border-t border-slate-200">
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} disabled={loading || !newPostText.trim()} type="submit" className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer">
+          <div className="flex-1 flex flex-col relative">
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="relative mb-4 rounded-lg overflow-hidden group">
+                <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-cover rounded-lg" />
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={clearImage}
+                  className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </motion.button>
+              </div>
+            )}
+
+            <textarea
+              value={newPostText}
+              onChange={(e) => setNewPostText(e.target.value)}
+              placeholder={`O que está pensando, ${currentProfile?.nomeExibicao}?`}
+              className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-lg resize-none focus:outline-none min-h-[100px] pt-2 leading-relaxed"
+            />
+
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200">
+              <div className="flex gap-2 relative">
+                {/* Camera Button */}
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center justify-center p-2 rounded-full text-slate-600 hover:bg-rose-50 hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  <Camera size={20} />
+                </motion.button>
+
+                {/* Emoji Button */}
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="flex items-center justify-center p-2 rounded-full text-slate-600 hover:bg-rose-50 hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  <Smile size={20} />
+                </motion.button>
+
+                {/* Emoji Picker Popup */}
+                {showEmojiPicker && (
+                  <div className="absolute bottom-12 left-0 z-50" ref={emojiPickerRef}>
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      theme="light"
+                      width={300}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={loading || (!newPostText.trim() && !selectedImage)}
+                type="submit"
+                className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer"
+              >
                 <Send size={18} />
                 {loading ? 'Enviando...' : 'Publicar'}
               </motion.button>
             </div>
           </div>
+
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
         </motion.form>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
@@ -323,6 +446,17 @@ export default function Mural() {
                         </div>
 
                         <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap break-words mb-4">{post.text}</p>
+
+                        {/* Image Display */}
+                        {post.imageUrl && (
+                          <div className="mb-4 rounded-xl overflow-hidden">
+                            <img
+                              src={post.imageUrl}
+                              alt="Post image"
+                              className="w-full max-h-96 object-cover rounded-xl"
+                            />
+                          </div>
+                        )}
 
                         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} onClick={() => toggleLike(post.id, likes)} className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer font-medium text-sm ${hasLiked ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-rose-400 hover:bg-rose-50'}`}>
                           <Heart size={18} className={hasLiked ? 'fill-rose-500' : ''} />

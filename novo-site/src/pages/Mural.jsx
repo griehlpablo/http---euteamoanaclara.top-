@@ -1,122 +1,263 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Send, Clock, LogOut, Heart } from 'lucide-react';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { db } from '../firebase'; // Importando o banco de dados que você configurou
+import { Send, LogOut, Heart } from 'lucide-react';
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove
+} from 'firebase/firestore';
+import { db } from '../firebase';
+import OneSignal from 'react-onesignal';
 
-const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
+// ==========================================
+// CONSTANTES
+// ==========================================
+const GLASS_CLASSES = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
+const ONESIGNAL_APP_ID = '5d8db7f8-b110-42af-a94d-96655cccd6ff';
 
-// Configuração visual dos usuários
-const userProfiles = {
-  'Pablo': { color: 'from-blue-500 to-indigo-600', initial: 'P' },
-  'Ana Clara': { color: 'from-rose-400 to-rose-600', initial: 'A' }
+// PLACEHOLDER: Replace with your actual OneSignal REST API Key in .env
+const ONESIGNAL_API_KEY = process.env.REACT_APP_ONESIGNAL_API_KEY || 'j7gz65b2revye5nxv4rpknt7d';
+
+// ==========================================
+// USER PROFILES COM @HANDLES E CORES
+// ==========================================
+const USER_PROFILES = {
+  '@griehl_': {
+    nomeExibicao: 'Pablo',
+    color: 'from-blue-500 to-indigo-600',
+    initial: 'P',
+    foto: '/images/pablo.jpg'
+  },
+  '@anakov_': {
+    nomeExibicao: 'Ana Clara',
+    color: 'from-rose-400 to-rose-600',
+    initial: 'A',
+    foto: '/images/ana.jpg'
+  }
 };
 
+// ==========================================
+// HELPER: Formatar Timestamp
+// ==========================================
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'Enviando...';
+
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const now = new Date();
+  const diffMinutes = Math.floor((now - date) / 60000);
+
+  if (diffMinutes < 1) return 'Agora';
+  if (diffMinutes < 60) return `${diffMinutes}m`;
+  if (diffMinutes < 1440) {
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+};
+
+// ==========================================
+// COMPONENTE: Avatar com Fallback
+// ==========================================
+function AvatarWithFallback({ userHandle, size = 12 }) {
+  const profile = USER_PROFILES[userHandle];
+  const sizeClass = `w-${size} h-${size}`;
+
+  if (!profile) {
+    return (
+      <div className={`${sizeClass} rounded-full bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+        ?
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${sizeClass} rounded-full overflow-hidden bg-gradient-to-br ${profile.color} flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm`}>
+      {profile.foto ? (
+        <img src={profile.foto} alt={userHandle} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+      ) : (
+        profile.initial
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// HELPER: Enviar Notificação OneSignal
+// ==========================================
+async function notifyPartner(currentUserHandle, messagePreview) {
+  const partner = currentUserHandle === '@griehl_' ? '@anakov_' : '@griehl_';
+  const currentProfile = USER_PROFILES[currentUserHandle];
+
+  if (!ONESIGNAL_API_KEY || ONESIGNAL_API_KEY === 'YOUR_ONESIGNAL_REST_API_KEY_HERE') {
+    console.warn('OneSignal API Key não configurado. Notificação não será enviada.');
+    return;
+  }
+
+  try {
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        Authorization: `Basic ${ONESIGNAL_API_KEY}`
+      },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        include_external_user_ids: [partner],
+        contents: {
+          en: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`,
+          pt: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`
+        },
+        headings: {
+          en: 'Novo Tweet no Mural! ❤️',
+          pt: 'Novo Tweet no Mural! ❤️'
+        }
+      })
+    });
+
+    if (!response.ok) {
+      console.error(`OneSignal API error: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Erro ao enviar notificação via OneSignal:', error);
+  }
+}
+
+// ==========================================
+// COMPONENTE PRINCIPAL: MURAL
+// ==========================================
 export default function Mural() {
   const [currentUser, setCurrentUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [newPostText, setNewPostText] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 1. OUVINTE DE TEMPO REAL DO FIREBASE
+  // Efeito: Login OneSignal
   useEffect(() => {
-    if (!currentUser) return; 
-
-    const q = query(collection(db, 'mural'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const postsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPosts(postsData);
-    });
-
-    return () => unsubscribe(); 
+    if (currentUser && OneSignal) {
+      try {
+        OneSignal.login(currentUser);
+      } catch (error) {
+        console.error('Erro ao fazer login no OneSignal:', error);
+      }
+    }
   }, [currentUser]);
 
-  // 2. FUNÇÃO DE PUBLICAR TWEET
+  // Efeito: Real-time Listener Firestore
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const q = query(collection(db, 'mural'), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const postsData = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        setPosts(postsData);
+      },
+      (error) => {
+        console.error('Erro ao carregar posts:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [currentUser]);
+
+  // Handler: Publicar Post
   const handlePublish = async (e) => {
     e.preventDefault();
     if (!newPostText.trim()) return;
 
     setLoading(true);
+    const textToSend = newPostText.trim();
+
     try {
       await addDoc(collection(db, 'mural'), {
-        text: newPostText,
+        text: textToSend,
         author: currentUser,
         timestamp: serverTimestamp(),
-        likes: [] // Começa com zero curtidas
+        likes: []
       });
+
       setNewPostText('');
+
+      // Enviar notificação
+      const messagePreview = textToSend.substring(0, 50);
+      await notifyPartner(currentUser, messagePreview);
     } catch (error) {
       console.error('Erro ao publicar post:', error);
+      alert('Erro ao publicar. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 3. FUNÇÃO DE CURTIR (LIKE)
+  // Handler: Toggle Like
   const toggleLike = async (postId, currentLikes) => {
+    if (!currentUser) return;
+
     const postRef = doc(db, 'mural', postId);
     const likesArray = currentLikes || [];
-    
+    const hasLiked = likesArray.includes(currentUser);
+
     try {
-      if (likesArray.includes(currentUser)) {
-        await updateDoc(postRef, { likes: arrayRemove(currentUser) });
+      if (hasLiked) {
+        await updateDoc(postRef, {
+          likes: arrayRemove(currentUser)
+        });
       } else {
-        await updateDoc(postRef, { likes: arrayUnion(currentUser) });
+        await updateDoc(postRef, {
+          likes: arrayUnion(currentUser)
+        });
       }
     } catch (error) {
-      console.error("Erro ao curtir:", error);
+      console.error('Erro ao atualizar curtida:', error);
     }
   };
 
-  // 4. FORMATADOR DE DATA/HORA
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return 'Enviando...';
-
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMinutes = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMinutes < 1) return 'Agora mesmo';
-    if (diffMinutes < 60) return `${diffMinutes}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays === 1) return 'Ontem';
-    if (diffDays < 7) return `${diffDays}d`;
-
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-  };
-
-  // ==========================================
-  // TELA 1: LOGIN DO CASAL
-  // ==========================================
+  // Tela 1: Seleção de Perfil
   if (!currentUser) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[80vh] flex flex-col items-center justify-center px-4 relative z-50">
-        <div className="text-center w-full max-w-md">
-          <h1 className="text-5xl font-bold text-rose-600 mb-2 font-serif">Mural</h1>
-          <p className="text-lg text-slate-500 mb-10 italic">O nosso cantinho de pensamentos.</p>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[80vh] flex flex-col items-center justify-center px-4">
+        <div className="text-center w-full max-w-2xl">
+          <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-5xl md:text-6xl font-bold text-slate-800 mb-2 font-serif">
+            Mural
+          </motion.h1>
+          <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-xl text-slate-500 mb-16 italic">
+            Quem está postando agora?
+          </motion.p>
 
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            {Object.keys(userProfiles).map((user, index) => (
+          <div className="flex flex-col md:flex-row gap-12 justify-center">
+            {Object.entries(USER_PROFILES).map(([handle, profile], index) => (
               <motion.button
-                key={user}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-                whileHover={{ scale: 1.05 }}
+                key={handle}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 + index * 0.1 }}
+                whileHover={{ scale: 1.08, y: -8 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setCurrentUser(user)}
-                className={`${glassClasses} flex-1 py-8 rounded-3xl flex flex-col items-center gap-4 cursor-pointer hover:border-rose-300 transition-all`}
+                onClick={() => setCurrentUser(handle)}
+                className="flex flex-col items-center gap-6 cursor-pointer group focus:outline-none"
               >
-                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${userProfiles[user].color} flex items-center justify-center shadow-lg text-white text-3xl font-bold`}>
-                  {userProfiles[user].initial}
+                <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-gradient-to-br ${profile.color} flex items-center justify-center text-white text-5xl font-bold transition-all group-hover:shadow-2xl`}>
+                  {profile.foto ? (
+                    <img src={profile.foto} alt={handle} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  ) : (
+                    profile.initial
+                  )}
                 </div>
-                <span className="text-xl font-bold text-slate-800">{user}</span>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-700 group-hover:text-rose-500 transition-colors">{profile.nomeExibicao}</p>
+                  <p className="text-sm text-slate-500 group-hover:text-slate-600 transition-colors">{handle}</p>
+                </div>
               </motion.button>
             ))}
           </div>
@@ -125,99 +266,76 @@ export default function Mural() {
     );
   }
 
-  // ==========================================
-  // TELA 2: O FEED (TWITTER DO CASAL)
-  // ==========================================
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen py-4 relative z-50">
-      <div className="max-w-xl mx-auto">
-        
-        {/* HEADER */}
-        <div className="flex items-center justify-between mb-6 px-2">
-          <h1 className="text-3xl font-bold text-slate-800 font-serif">Linha do Tempo</h1>
-          <button onClick={() => setCurrentUser(null)} className="text-sm font-bold text-slate-400 hover:text-rose-500 flex items-center gap-1 transition-colors cursor-pointer">
-            <LogOut size={16} /> Sair
-          </button>
-        </div>
+  // Tela 2: Timeline
+  const currentProfile = USER_PROFILES[currentUser];
 
-        {/* CAIXA DE NOVO TWEET */}
-        <div className={`${glassClasses} rounded-3xl p-5 mb-8 flex gap-4`}>
-          <div className={`w-12 h-12 shrink-0 rounded-full bg-gradient-to-br ${userProfiles[currentUser].color} flex items-center justify-center shadow-inner text-white font-bold text-lg`}>
-            {userProfiles[currentUser].initial}
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen bg-gradient-to-br from-rose-50 to-slate-50 py-6 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <AvatarWithFallback userHandle={currentUser} size={12} />
+            <div className="text-left">
+              <p className="text-sm text-slate-600">Postando como</p>
+              <p className="text-lg font-bold text-slate-800">{currentProfile?.nomeExibicao}</p>
+            </div>
           </div>
-          
-          <form onSubmit={handlePublish} className="flex-1 flex flex-col">
-            <textarea
-              value={newPostText}
-              onChange={(e) => setNewPostText(e.target.value)}
-              placeholder="O que você está pensando, amor?"
-              className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-lg resize-none focus:outline-none min-h-[80px] pt-2"
-            />
-            <div className="flex justify-end mt-2 pt-3 border-t border-slate-100">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                disabled={loading || !newPostText.trim()}
-                type="submit"
-                className="bg-rose-500 hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-all cursor-pointer shadow-md"
-              >
-                {loading ? 'Enviando...' : 'Publicar'} <Send size={16} />
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setCurrentUser(null)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-slate-600 hover:text-rose-500 font-medium text-sm shadow-sm hover:shadow-md transition-all cursor-pointer border border-slate-100">
+            <LogOut size={16} />
+            Sair
+          </motion.button>
+        </motion.div>
+
+        {/* Compose Box */}
+        <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} onSubmit={handlePublish} className={`${GLASS_CLASSES} rounded-3xl p-6 mb-8 flex gap-4`}>
+          <AvatarWithFallback userHandle={currentUser} size={14} />
+          <div className="flex-1 flex flex-col">
+            <textarea value={newPostText} onChange={(e) => setNewPostText(e.target.value)} placeholder={`O que está pensando, ${currentProfile?.nomeExibicao}?`} className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-lg resize-none focus:outline-none min-h-[100px] pt-2 leading-relaxed" />
+            <div className="flex justify-end mt-4 pt-4 border-t border-slate-200">
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} disabled={loading || !newPostText.trim()} type="submit" className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer">
+                <Send size={18} />
+                {loading ? 'Enviando...' : 'Publicar'}
               </motion.button>
             </div>
-          </form>
-        </div>
+          </div>
+        </motion.form>
 
-        {/* FEED DE POSTS */}
-        <div className="space-y-4">
+        {/* Feed */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <AnimatePresence mode="popLayout">
             {posts.length === 0 ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-slate-500 py-10 italic">
-                Nenhuma mensagem ainda. Mande o primeiro oi! 💕
+              <motion.div key="empty-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`${GLASS_CLASSES} rounded-3xl p-12 text-center`}>
+                <p className="text-lg text-slate-600">Nenhuma postagem ainda. Seja o primeiro a postar! 💕</p>
               </motion.div>
             ) : (
               posts.map((post) => {
-                const isMyPost = post.author === currentUser;
                 const likes = post.likes || [];
-                const iLiked = likes.includes(currentUser);
+                const hasLiked = likes.includes(currentUser);
+                const postProfile = USER_PROFILES[post.author];
 
                 return (
-                  <motion.div
-                    key={post.id}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className={`${glassClasses} rounded-3xl p-5 hover:border-rose-200 transition-colors`}
-                  >
+                  <motion.div key={post.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className={`${GLASS_CLASSES} rounded-3xl p-6 mb-4 hover:shadow-lg transition-shadow`}>
                     <div className="flex gap-4">
-                      {/* Avatar do Autor */}
-                      <div className={`w-12 h-12 shrink-0 rounded-full bg-gradient-to-br ${userProfiles[post.author]?.color || 'from-slate-400 to-slate-500'} flex items-center justify-center shadow-sm text-white font-bold text-lg`}>
-                        {userProfiles[post.author]?.initial || <User size={20}/>}
-                      </div>
+                      <AvatarWithFallback userHandle={post.author} size={12} />
 
-                      {/* Conteúdo do Post */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-slate-800">{post.author}</span>
-                          <span className="text-slate-400 text-sm flex items-center gap-1">
-                            • {formatTimestamp(post.timestamp)}
-                          </span>
+                      <div className="flex-1 min-w-0">
+                        {/* Author & Timestamp */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="font-bold text-slate-800">{postProfile?.nomeExibicao || post.author}</span>
+                          <span className="text-slate-400 text-sm">@{post.author}</span>
+                          <span className="text-slate-400 text-sm">•</span>
+                          <span className="text-slate-500 text-sm">{formatTimestamp(post.timestamp)}</span>
                         </div>
-                        
-                        <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap break-words mb-3">
-                          {post.text}
-                        </p>
 
-                        {/* Botões de Interação (Like) */}
-                        <div className="flex items-center gap-1">
-                          <button 
-                            onClick={() => toggleLike(post.id, likes)}
-                            className={`flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer p-1.5 -ml-1.5 rounded-full hover:bg-rose-50 ${iLiked ? 'text-rose-500' : 'text-slate-400 hover:text-rose-400'}`}
-                          >
-                            <Heart size={18} className={iLiked ? "fill-rose-500" : ""} />
-                            {likes.length > 0 && <span>{likes.length}</span>}
-                          </button>
-                        </div>
+                        {/* Post Text */}
+                        <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap break-words mb-4">{post.text}</p>
+
+                        {/* Like Button */}
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} onClick={() => toggleLike(post.id, likes)} className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer font-medium text-sm ${hasLiked ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-rose-400 hover:bg-rose-50'}`}>
+                          <Heart size={18} className={hasLiked ? 'fill-rose-500' : ''} />
+                          {likes.length > 0 && <span>{likes.length}</span>}
+                        </motion.button>
                       </div>
                     </div>
                   </motion.div>
@@ -225,8 +343,7 @@ export default function Mural() {
               })
             )}
           </AnimatePresence>
-        </div>
-        
+        </motion.div>
       </div>
     </motion.div>
   );

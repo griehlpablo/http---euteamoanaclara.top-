@@ -23,10 +23,10 @@ import EmojiPicker from 'emoji-picker-react';
 // ==========================================
 const GLASS_CLASSES = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
 const ONESIGNAL_APP_ID = '5d8db7f8-b110-42af-a94d-96655cccd6ff';
-const ONESIGNAL_API_KEY = 'os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q';
+const ONESIGNAL_API_KEY = 'j7gz65b2revye5nxv4rpknt7d'; 
 
 // ==========================================
-// USER PROFILES (COM .JPEG CORRIGIDO)
+// USER PROFILES
 // ==========================================
 const USER_PROFILES = {
   '@griehl_': {
@@ -39,7 +39,7 @@ const USER_PROFILES = {
     nomeExibicao: 'Ana Clara',
     color: 'from-rose-400 to-rose-600',
     initial: 'A',
-    foto: '/images/ana.jpeg' // <-- CORRIGIDO PARA .jpeg
+    foto: '/images/ana.jpeg' 
   }
 };
 
@@ -63,10 +63,9 @@ const formatTimestamp = (timestamp) => {
 };
 
 // ==========================================
-// COMPONENTE: Avatar com Fallback Inteligente
+// COMPONENTE: Avatar com Fallback
 // ==========================================
 function AvatarWithFallback({ userHandle, size = 12 }) {
-  // Compatibilidade com os posts antigos que salvavam o nome completo
   let profile = USER_PROFILES[userHandle];
   if (!profile) {
     if (userHandle === 'Pablo') profile = USER_PROFILES['@griehl_'];
@@ -75,7 +74,6 @@ function AvatarWithFallback({ userHandle, size = 12 }) {
 
   const sizeClass = `w-${size} h-${size}`;
 
-  // Se mesmo assim for alguém desconhecido, mostra o ? cinza
   if (!profile) {
     return (
       <div className={`${sizeClass} rounded-full bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
@@ -84,8 +82,6 @@ function AvatarWithFallback({ userHandle, size = 12 }) {
     );
   }
 
-  // Truque do "Sanduíche": A inicial fica no fundo, a imagem fica por cima (z-10). 
-  // Se a imagem der erro, ela se esconde e a inicial aparece!
   return (
     <div className={`${sizeClass} relative rounded-full overflow-hidden bg-gradient-to-br ${profile.color} flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm`}>
       <span className="absolute inset-0 flex items-center justify-center">{profile.initial}</span>
@@ -97,7 +93,7 @@ function AvatarWithFallback({ userHandle, size = 12 }) {
 }
 
 // ==========================================
-// HELPER: Enviar Notificação OneSignal (COM TAGS)
+// HELPER: Enviar Notificação OneSignal (MANTIDA A VERSÃO QUE FUNCIONA)
 // ==========================================
 async function notifyPartner(currentUserHandle, messagePreview) {
   const partner = currentUserHandle === '@griehl_' ? '@anakov_' : '@griehl_';
@@ -106,7 +102,7 @@ async function notifyPartner(currentUserHandle, messagePreview) {
   if (!ONESIGNAL_API_KEY) return;
 
   try {
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+    await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
@@ -114,7 +110,7 @@ async function notifyPartner(currentUserHandle, messagePreview) {
       },
       body: JSON.stringify({
         app_id: ONESIGNAL_APP_ID,
-        filters: [{ field: "tag", key: "usuario", relation: "=", value: partner === '@anakov_' ? 'ana' : 'pablo' }],
+        include_external_user_ids: [partner],
         headings: {
           en: 'Novo Tweet no Mural! ❤️',
           pt: 'Novo Tweet no Mural! ❤️'
@@ -125,10 +121,6 @@ async function notifyPartner(currentUserHandle, messagePreview) {
         }
       })
     });
-
-    if (!response.ok) {
-      console.error(`OneSignal API error: ${response.status}`);
-    }
   } catch (error) {
     console.error('Erro ao enviar notificação via OneSignal:', error);
   }
@@ -145,8 +137,20 @@ export default function Mural() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
+
+  // Fecha o picker de emoji se clicar fora
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (currentUser && OneSignal) {
@@ -158,7 +162,6 @@ export default function Mural() {
     }
   }, [currentUser]);
 
-  // Cleanup de URL de preview quando componente desmonta ou imagem é limpa
   useEffect(() => {
     return () => {
       if (imagePreview) {
@@ -210,6 +213,7 @@ export default function Mural() {
 
   const handleEmojiClick = (emojiObject) => {
     setNewPostText(prev => prev + emojiObject.emoji);
+    setShowEmojiPicker(false);
   };
 
   const handlePublish = async (e) => {
@@ -221,14 +225,12 @@ export default function Mural() {
     let imageUrl = null;
 
     try {
-      // Upload image if selected
       if (selectedImage) {
         const storageRef = ref(storage, `mural_images/${Date.now()}_${selectedImage.name}`);
         await uploadBytes(storageRef, selectedImage);
         imageUrl = await getDownloadURL(storageRef);
       }
 
-      // Create post
       await addDoc(collection(db, 'mural'), {
         text: textToSend,
         author: currentUser,
@@ -240,7 +242,7 @@ export default function Mural() {
       setNewPostText('');
       clearImage();
 
-      const messagePreview = textToSend.substring(0, 50) || '📸 Imagem';
+      const messagePreview = textToSend.substring(0, 50) || '📸 Imagem enviada';
       await notifyPartner(currentUser, messagePreview);
     } catch (error) {
       console.error('Erro ao publicar post:', error);
@@ -259,20 +261,15 @@ export default function Mural() {
 
     try {
       if (hasLiked) {
-        await updateDoc(postRef, {
-          likes: arrayRemove(currentUser)
-        });
+        await updateDoc(postRef, { likes: arrayRemove(currentUser) });
       } else {
-        await updateDoc(postRef, {
-          likes: arrayUnion(currentUser)
-        });
+        await updateDoc(postRef, { likes: arrayUnion(currentUser) });
       }
     } catch (error) {
       console.error('Erro ao atualizar curtida:', error);
     }
   };
 
-  // Tela 1: Seleção de Perfil
   if (!currentUser) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-[80vh] flex flex-col items-center justify-center px-4">
@@ -296,7 +293,6 @@ export default function Mural() {
                 onClick={() => setCurrentUser(handle)}
                 className="flex flex-col items-center gap-6 cursor-pointer group focus:outline-none"
               >
-                {/* Aqui está o "Sanduíche" da tela de Login! Inicial no fundo, imagem por cima. */}
                 <div className={`relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-gradient-to-br ${profile.color} flex items-center justify-center text-white text-5xl font-bold transition-all group-hover:shadow-2xl`}>
                   <span className="absolute inset-0 flex items-center justify-center">{profile.initial}</span>
                   {profile.foto && (
@@ -315,11 +311,10 @@ export default function Mural() {
     );
   }
 
-  // Tela 2: Timeline
   const currentProfile = USER_PROFILES[currentUser];
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen bg-gradient-to-br from-rose-50 to-slate-50 py-6 px-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen bg-gradient-to-br from-rose-50 to-slate-50 py-6 px-4 relative z-40">
       <div className="max-w-2xl mx-auto">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -338,16 +333,17 @@ export default function Mural() {
         <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} onSubmit={handlePublish} className={`${GLASS_CLASSES} rounded-3xl p-6 mb-8 flex gap-4`}>
           <AvatarWithFallback userHandle={currentUser} size={14} />
           <div className="flex-1 flex flex-col relative">
+            
             {/* Image Preview */}
             {imagePreview && (
-              <div className="relative mb-4 rounded-lg overflow-hidden group">
-                <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-cover rounded-lg" />
+              <div className="relative mb-4 rounded-xl overflow-hidden group shadow-md border border-white/40">
+                <img src={imagePreview} alt="Preview" className="w-full max-h-64 object-cover rounded-xl" />
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={clearImage}
-                  className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors cursor-pointer"
+                  className="absolute top-3 right-3 p-2 bg-slate-900/60 backdrop-blur-md hover:bg-rose-500 text-white rounded-full transition-colors cursor-pointer shadow-lg"
                 >
                   <X size={18} />
                 </motion.button>
@@ -358,43 +354,57 @@ export default function Mural() {
               value={newPostText}
               onChange={(e) => setNewPostText(e.target.value)}
               placeholder={`O que está pensando, ${currentProfile?.nomeExibicao}?`}
-              className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-lg resize-none focus:outline-none min-h-[100px] pt-2 leading-relaxed"
+              className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-lg resize-none focus:outline-none min-h-[90px] pt-2 leading-relaxed"
             />
 
             <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200">
-              <div className="flex gap-2 relative">
-                {/* Camera Button */}
+              <div className="flex gap-3 relative">
+                {/* Botão Câmera (Glassmorphism) */}
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center p-2 rounded-full text-slate-600 hover:bg-rose-50 hover:text-rose-500 transition-colors cursor-pointer"
+                  className="flex items-center justify-center p-2.5 rounded-full bg-white/50 backdrop-blur-sm border border-white/40 text-slate-500 hover:bg-rose-100 hover:text-rose-500 hover:border-rose-200 transition-all cursor-pointer shadow-sm"
+                  title="Anexar Imagem"
                 >
-                  <Camera size={20} />
+                  <Camera size={22} />
                 </motion.button>
 
-                {/* Emoji Button */}
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="flex items-center justify-center p-2 rounded-full text-slate-600 hover:bg-rose-50 hover:text-rose-500 transition-colors cursor-pointer"
-                >
-                  <Smile size={20} />
-                </motion.button>
+                {/* Botão Emoji (Glassmorphism) */}
+                <div ref={emojiPickerRef} className="relative">
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className={`flex items-center justify-center p-2.5 rounded-full backdrop-blur-sm border transition-all cursor-pointer shadow-sm ${showEmojiPicker ? 'bg-rose-100 text-rose-500 border-rose-200' : 'bg-white/50 border-white/40 text-slate-500 hover:bg-rose-100 hover:text-rose-500 hover:border-rose-200'}`}
+                    title="Adicionar Emoji"
+                  >
+                    <Smile size={22} />
+                  </motion.button>
 
-                {/* Emoji Picker Popup */}
-                {showEmojiPicker && (
-                  <div className="absolute bottom-12 left-0 z-50" ref={emojiPickerRef}>
-                    <EmojiPicker
-                      onEmojiClick={handleEmojiClick}
-                      theme="light"
-                      width={300}
-                    />
-                  </div>
-                )}
+                  {/* Teclado de Emojis */}
+                  <AnimatePresence>
+                    {showEmojiPicker && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute top-14 left-0 z-50 shadow-2xl rounded-2xl overflow-hidden border border-slate-100"
+                      >
+                        <EmojiPicker
+                          onEmojiClick={handleEmojiClick}
+                          theme="light"
+                          width={320}
+                          height={400}
+                          searchDisabled={false}
+                          skinTonesDisabled={true}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               <motion.button
@@ -402,7 +412,7 @@ export default function Mural() {
                 whileTap={{ scale: 0.95 }}
                 disabled={loading || (!newPostText.trim() && !selectedImage)}
                 type="submit"
-                className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full flex items-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer"
+                className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2.5 px-6 rounded-full flex items-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer"
               >
                 <Send size={18} />
                 {loading ? 'Enviando...' : 'Publicar'}
@@ -447,18 +457,17 @@ export default function Mural() {
 
                         <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap break-words mb-4">{post.text}</p>
 
-                        {/* Image Display */}
                         {post.imageUrl && (
-                          <div className="mb-4 rounded-xl overflow-hidden">
+                          <div className="mb-5 rounded-2xl overflow-hidden shadow-sm border border-slate-100">
                             <img
                               src={post.imageUrl}
-                              alt="Post image"
-                              className="w-full max-h-96 object-cover rounded-xl"
+                              alt="Post"
+                              className="w-full max-h-[500px] object-cover"
                             />
                           </div>
                         )}
 
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} onClick={() => toggleLike(post.id, likes)} className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer font-medium text-sm ${hasLiked ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-rose-400 hover:bg-rose-50'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} onClick={() => toggleLike(post.id, likes)} className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all cursor-pointer font-medium text-sm ${hasLiked ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-rose-400 hover:bg-rose-50'}`}>
                           <Heart size={18} className={hasLiked ? 'fill-rose-500' : ''} />
                           {likes.length > 0 && <span>{likes.length}</span>}
                         </motion.button>

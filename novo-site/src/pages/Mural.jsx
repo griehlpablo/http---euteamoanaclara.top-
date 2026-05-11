@@ -21,12 +21,10 @@ import OneSignal from 'react-onesignal';
 // ==========================================
 const GLASS_CLASSES = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
 const ONESIGNAL_APP_ID = '5d8db7f8-b110-42af-a94d-96655cccd6ff';
-
-// PLACEHOLDER: Replace with your actual OneSignal REST API Key in .env
-const ONESIGNAL_API_KEY = process.env.REACT_APP_ONESIGNAL_API_KEY || 'j7gz65b2revye5nxv4rpknt7d';
+const ONESIGNAL_API_KEY = 'j7gz65b2revye5nxv4rpknt7d'; // Sua chave oficial
 
 // ==========================================
-// USER PROFILES COM @HANDLES E CORES
+// USER PROFILES (COM .JPEG CORRIGIDO)
 // ==========================================
 const USER_PROFILES = {
   '@griehl_': {
@@ -39,7 +37,7 @@ const USER_PROFILES = {
     nomeExibicao: 'Ana Clara',
     color: 'from-rose-400 to-rose-600',
     initial: 'A',
-    foto: '/images/ana.jpg'
+    foto: '/images/ana.jpeg' // <-- CORRIGIDO PARA .jpeg
   }
 };
 
@@ -63,12 +61,19 @@ const formatTimestamp = (timestamp) => {
 };
 
 // ==========================================
-// COMPONENTE: Avatar com Fallback
+// COMPONENTE: Avatar com Fallback Inteligente
 // ==========================================
 function AvatarWithFallback({ userHandle, size = 12 }) {
-  const profile = USER_PROFILES[userHandle];
+  // Compatibilidade com os posts antigos que salvavam o nome completo
+  let profile = USER_PROFILES[userHandle];
+  if (!profile) {
+    if (userHandle === 'Pablo') profile = USER_PROFILES['@griehl_'];
+    else if (userHandle === 'Ana Clara') profile = USER_PROFILES['@anakov_'];
+  }
+
   const sizeClass = `w-${size} h-${size}`;
 
+  // Se mesmo assim for alguém desconhecido, mostra o ? cinza
   if (!profile) {
     return (
       <div className={`${sizeClass} rounded-full bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
@@ -77,12 +82,13 @@ function AvatarWithFallback({ userHandle, size = 12 }) {
     );
   }
 
+  // Truque do "Sanduíche": A inicial fica no fundo, a imagem fica por cima (z-10). 
+  // Se a imagem der erro, ela se esconde e a inicial aparece!
   return (
-    <div className={`${sizeClass} rounded-full overflow-hidden bg-gradient-to-br ${profile.color} flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm`}>
-      {profile.foto ? (
-        <img src={profile.foto} alt={userHandle} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-      ) : (
-        profile.initial
+    <div className={`${sizeClass} relative rounded-full overflow-hidden bg-gradient-to-br ${profile.color} flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm`}>
+      <span className="absolute inset-0 flex items-center justify-center">{profile.initial}</span>
+      {profile.foto && (
+        <img src={profile.foto} alt={userHandle} className="absolute inset-0 w-full h-full object-cover z-10" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
       )}
     </div>
   );
@@ -95,10 +101,7 @@ async function notifyPartner(currentUserHandle, messagePreview) {
   const partner = currentUserHandle === '@griehl_' ? '@anakov_' : '@griehl_';
   const currentProfile = USER_PROFILES[currentUserHandle];
 
-  if (!ONESIGNAL_API_KEY || ONESIGNAL_API_KEY === 'YOUR_ONESIGNAL_REST_API_KEY_HERE') {
-    console.warn('OneSignal API Key não configurado. Notificação não será enviada.');
-    return;
-  }
+  if (!ONESIGNAL_API_KEY) return;
 
   try {
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
@@ -138,7 +141,6 @@ export default function Mural() {
   const [newPostText, setNewPostText] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Efeito: Login OneSignal
   useEffect(() => {
     if (currentUser && OneSignal) {
       try {
@@ -149,7 +151,6 @@ export default function Mural() {
     }
   }, [currentUser]);
 
-  // Efeito: Real-time Listener Firestore
   useEffect(() => {
     if (!currentUser) return;
 
@@ -171,7 +172,6 @@ export default function Mural() {
     return () => unsubscribe();
   }, [currentUser]);
 
-  // Handler: Publicar Post
   const handlePublish = async (e) => {
     e.preventDefault();
     if (!newPostText.trim()) return;
@@ -189,7 +189,6 @@ export default function Mural() {
 
       setNewPostText('');
 
-      // Enviar notificação
       const messagePreview = textToSend.substring(0, 50);
       await notifyPartner(currentUser, messagePreview);
     } catch (error) {
@@ -200,7 +199,6 @@ export default function Mural() {
     }
   };
 
-  // Handler: Toggle Like
   const toggleLike = async (postId, currentLikes) => {
     if (!currentUser) return;
 
@@ -247,11 +245,11 @@ export default function Mural() {
                 onClick={() => setCurrentUser(handle)}
                 className="flex flex-col items-center gap-6 cursor-pointer group focus:outline-none"
               >
-                <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-gradient-to-br ${profile.color} flex items-center justify-center text-white text-5xl font-bold transition-all group-hover:shadow-2xl`}>
-                  {profile.foto ? (
-                    <img src={profile.foto} alt={handle} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                  ) : (
-                    profile.initial
+                {/* Aqui está o "Sanduíche" da tela de Login! Inicial no fundo, imagem por cima. */}
+                <div className={`relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-gradient-to-br ${profile.color} flex items-center justify-center text-white text-5xl font-bold transition-all group-hover:shadow-2xl`}>
+                  <span className="absolute inset-0 flex items-center justify-center">{profile.initial}</span>
+                  {profile.foto && (
+                    <img src={profile.foto} alt={handle} className="absolute inset-0 w-full h-full object-cover z-10" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                   )}
                 </div>
                 <div className="text-center">
@@ -272,7 +270,6 @@ export default function Mural() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen bg-gradient-to-br from-rose-50 to-slate-50 py-6 px-4">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <AvatarWithFallback userHandle={currentUser} size={12} />
@@ -287,7 +284,6 @@ export default function Mural() {
           </motion.button>
         </motion.div>
 
-        {/* Compose Box */}
         <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} onSubmit={handlePublish} className={`${GLASS_CLASSES} rounded-3xl p-6 mb-8 flex gap-4`}>
           <AvatarWithFallback userHandle={currentUser} size={14} />
           <div className="flex-1 flex flex-col">
@@ -301,7 +297,6 @@ export default function Mural() {
           </div>
         </motion.form>
 
-        {/* Feed */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <AnimatePresence mode="popLayout">
             {posts.length === 0 ? (
@@ -320,18 +315,15 @@ export default function Mural() {
                       <AvatarWithFallback userHandle={post.author} size={12} />
 
                       <div className="flex-1 min-w-0">
-                        {/* Author & Timestamp */}
                         <div className="flex items-center gap-2 mb-3">
                           <span className="font-bold text-slate-800">{postProfile?.nomeExibicao || post.author}</span>
-                          <span className="text-slate-400 text-sm">@{post.author}</span>
+                          <span className="text-slate-400 text-sm">{postProfile ? post.author : ''}</span>
                           <span className="text-slate-400 text-sm">•</span>
                           <span className="text-slate-500 text-sm">{formatTimestamp(post.timestamp)}</span>
                         </div>
 
-                        {/* Post Text */}
                         <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap break-words mb-4">{post.text}</p>
 
-                        {/* Like Button */}
                         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} onClick={() => toggleLike(post.id, likes)} className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer font-medium text-sm ${hasLiked ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-rose-400 hover:bg-rose-50'}`}>
                           <Heart size={18} className={hasLiked ? 'fill-rose-500' : ''} />
                           {likes.length > 0 && <span>{likes.length}</span>}

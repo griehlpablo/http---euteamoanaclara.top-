@@ -31,7 +31,7 @@ const USER_PROFILES = {
     nomeExibicao: 'Pablo',
     color: 'from-blue-500 to-indigo-600',
     initial: 'P',
-    foto: '/images/pablo.jpg'
+    foto: '/images/pablo.jpeg'
   },
   '@anakov_': {
     nomeExibicao: 'Ana Clara',

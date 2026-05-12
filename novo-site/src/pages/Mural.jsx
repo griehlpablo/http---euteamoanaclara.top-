@@ -22,7 +22,7 @@ import EmojiPicker from 'emoji-picker-react';
 // ==========================================
 // CONSTANTES
 // ==========================================
-const GLASS_CLASSES = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
+const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 const ONESIGNAL_APP_ID = '5d8db7f8-b110-42af-a94d-96655cccd6ff';
 const ONESIGNAL_API_KEY = 'os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q';
 
@@ -151,6 +151,7 @@ export default function Mural() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [pickerWidth, setPickerWidth] = useState(320);
   
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -166,6 +167,17 @@ export default function Mural() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+  }, []);
+
+  // Ajustar largura do picker de emoji
+  useEffect(() => {
+    const updatePickerWidth = () => {
+      const width = window.innerWidth < 640 ? Math.min(window.innerWidth - 40, 320) : 320;
+      setPickerWidth(width);
+    };
+    updatePickerWidth();
+    window.addEventListener('resize', updatePickerWidth);
+    return () => window.removeEventListener('resize', updatePickerWidth);
   }, []);
 
   // OneSignal Login
@@ -334,7 +346,7 @@ export default function Mural() {
             initial={{ opacity: 0, y: -20 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.1 }} 
-            className="text-5xl md:text-6xl font-bold text-slate-800 mb-2 font-serif"
+            className="text-5xl md:text-6xl font-bold text-slate-800 dark:text-slate-200 mb-2 font-serif"
           >
             Mural
           </motion.h1>
@@ -342,7 +354,7 @@ export default function Mural() {
             initial={{ opacity: 0, y: -10 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.2 }} 
-            className="text-xl text-slate-500 mb-16 italic"
+            className="text-xl text-slate-500 dark:text-slate-400 mb-16 italic"
           >
             Quem está postando agora?
           </motion.p>
@@ -375,10 +387,10 @@ export default function Mural() {
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-700 group-hover:text-rose-500 transition-colors">
+                  <p className="text-2xl font-bold text-slate-700 dark:text-slate-300 group-hover:text-rose-500 transition-colors">
                     {profile.nomeExibicao}
                   </p>
-                  <p className="text-sm text-slate-500 group-hover:text-slate-600 transition-colors">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                     {handle}
                   </p>
                 </div>
@@ -400,7 +412,7 @@ export default function Mural() {
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }} 
-      className="min-h-screen bg-gradient-to-br from-rose-50 to-slate-50 py-6 px-4 relative z-40"
+      className="min-h-screen bg-gradient-to-br from-rose-50 to-slate-50 dark:from-slate-900 dark:to-slate-800 py-4 md:py-6 px-4 md:px-6 relative z-40"
     >
       <div className="max-w-2xl mx-auto">
         
@@ -414,15 +426,15 @@ export default function Mural() {
           <div className="flex items-center gap-3">
             <AvatarWithFallback userHandle={currentUser} size={12} />
             <div className="text-left">
-              <p className="text-sm text-slate-600">Postando como</p>
-              <p className="text-lg font-bold text-slate-800">{currentProfile?.nomeExibicao}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Postando como</p>
+              <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{currentProfile?.nomeExibicao}</p>
             </div>
           </div>
           <motion.button 
             whileHover={{ scale: 1.05 }} 
             whileTap={{ scale: 0.95 }} 
             onClick={() => setCurrentUser(null)} 
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-slate-600 hover:text-rose-500 font-medium text-sm shadow-sm hover:shadow-md transition-all cursor-pointer border border-slate-100"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 dark:hover:text-rose-400 font-medium text-sm shadow-sm hover:shadow-md transition-all cursor-pointer border border-slate-100 dark:border-slate-600"
           >
             <LogOut size={16} />
             Sair
@@ -435,7 +447,7 @@ export default function Mural() {
           animate={{ opacity: 1, y: 0 }} 
           transition={{ delay: 0.2 }} 
           onSubmit={handlePublish} 
-          className={`${GLASS_CLASSES} rounded-3xl p-6 mb-8 flex gap-4`}
+          className={`${GLASS_CLASSES} rounded-3xl p-4 md:p-6 mb-8 flex gap-4`}
         >
           <AvatarWithFallback userHandle={currentUser} size={14} />
           
@@ -466,11 +478,11 @@ export default function Mural() {
               value={newPostText}
               onChange={(e) => setNewPostText(e.target.value)}
               placeholder={`O que está pensando, ${currentProfile?.nomeExibicao}?`}
-              className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-lg resize-none focus:outline-none min-h-[90px] pt-2 leading-relaxed"
+              className="w-full bg-transparent text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-lg resize-none focus:outline-none min-h-[90px] pt-2 leading-relaxed"
             />
 
             {/* Botões de Ação */}
-            <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200">
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 dark:border-slate-600">
               <div className="flex gap-3 relative">
                 
                 {/* Botão Câmera (Glassmorphism) */}
@@ -479,7 +491,7 @@ export default function Mural() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center p-2.5 rounded-full bg-white/50 backdrop-blur-sm border border-white/40 text-slate-500 hover:bg-rose-100 hover:text-rose-500 hover:border-rose-200 transition-all cursor-pointer shadow-sm"
+                  className="flex items-center justify-center p-2.5 rounded-full bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm border border-white/40 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-rose-100 dark:hover:bg-rose-900 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-700 transition-all cursor-pointer shadow-sm"
                   title="Anexar Imagem"
                 >
                   <Camera size={22} />
@@ -494,8 +506,8 @@ export default function Mural() {
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     className={`flex items-center justify-center p-2.5 rounded-full backdrop-blur-sm border transition-all cursor-pointer shadow-sm ${
                       showEmojiPicker 
-                        ? 'bg-rose-100 text-rose-500 border-rose-200' 
-                        : 'bg-white/50 border-white/40 text-slate-500 hover:bg-rose-100 hover:text-rose-500 hover:border-rose-200'
+                        ? 'bg-rose-100 dark:bg-rose-900 text-rose-500 dark:text-rose-400 border-rose-200 dark:border-rose-700' 
+                        : 'bg-white/50 dark:bg-slate-700/50 border-white/40 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-rose-100 dark:hover:bg-rose-900 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-700'
                     }`}
                     title="Adicionar Emoji"
                   >
@@ -509,12 +521,12 @@ export default function Mural() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute top-14 left-0 z-50 shadow-2xl rounded-2xl overflow-hidden border border-slate-100"
+                        className="absolute top-14 left-0 z-50 shadow-2xl rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-600"
                       >
                         <EmojiPicker
                           onEmojiClick={handleEmojiClick}
                           theme="light"
-                          width={320}
+                          width={pickerWidth}
                           height={400}
                           searchDisabled={false}
                           skinTonesDisabled={true}
@@ -564,7 +576,7 @@ export default function Mural() {
                 exit={{ opacity: 0 }} 
                 className={`${GLASS_CLASSES} rounded-3xl p-12 text-center`}
               >
-                <p className="text-lg text-slate-600">
+                <p className="text-lg text-slate-600 dark:text-slate-400">
                   Nenhuma postagem ainda. Seja o primeiro a postar! 💕
                 </p>
               </motion.div>
@@ -592,14 +604,14 @@ export default function Mural() {
                         {/* Header do Post */}
                         <div className="flex items-center justify-between gap-2 mb-3">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-bold text-slate-800">
+                            <span className="font-bold text-slate-800 dark:text-slate-200">
                               {postProfile?.nomeExibicao || post.author}
                             </span>
-                            <span className="text-slate-400 text-sm">
+                            <span className="text-slate-400 dark:text-slate-500 text-sm">
                               {postProfile ? post.author : ''}
                             </span>
-                            <span className="text-slate-400 text-sm">•</span>
-                            <span className="text-slate-500 text-sm">
+                            <span className="text-slate-400 dark:text-slate-500 text-sm">•</span>
+                            <span className="text-slate-500 dark:text-slate-400 text-sm">
                               {formatTimestamp(post.timestamp)}
                             </span>
                           </div>
@@ -608,7 +620,7 @@ export default function Mural() {
                             <button
                               type="button"
                               onClick={() => handleDelete(post.id, post.imageUrl)}
-                              className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"
+                              className="text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900 p-1.5 rounded-full transition-colors"
                               title="Apagar post"
                             >
                               <Trash2 size={18} />
@@ -617,13 +629,13 @@ export default function Mural() {
                         </div>
 
                         {/* Texto do Post */}
-                        <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap break-words mb-4">
+                        <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed whitespace-pre-wrap break-words mb-4">
                           {post.text}
                         </p>
 
                         {/* Imagem do Post (se houver) */}
                         {post.imageUrl && (
-                          <div className="mb-5 rounded-2xl overflow-hidden shadow-sm border border-slate-100">
+                          <div className="mb-5 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-600">
                             <img
                               src={post.imageUrl}
                               alt="Post"
@@ -639,8 +651,8 @@ export default function Mural() {
                           onClick={() => toggleLike(post.id, likes)} 
                           className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all cursor-pointer font-medium text-sm ${
                             hasLiked 
-                              ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' 
-                              : 'text-slate-400 hover:text-rose-400 hover:bg-rose-50'
+                              ? 'text-rose-500 bg-rose-50 dark:bg-rose-900 hover:bg-rose-100 dark:hover:bg-rose-800' 
+                              : 'text-slate-400 dark:text-slate-500 hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900'
                           }`}
                         >
                           <Heart size={18} className={hasLiked ? 'fill-rose-500' : ''} />

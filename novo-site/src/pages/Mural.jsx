@@ -125,8 +125,8 @@ async function notifyPartner(currentUserHandle, messagePreview) {
         app_id: ONESIGNAL_APP_ID,
         filters: [{ field: 'tag', key: 'usuario', relation: '=', value: partnerTag }],
         headings: {
-          en: 'Novo post no Mural! ❤️',
-          pt: 'Novo post no Mural! ❤️'
+          en: 'Novo Tweet no Mural! ❤️',
+          pt: 'Novo Tweet no Mural! ❤️'
         },
         contents: {
           en: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`,

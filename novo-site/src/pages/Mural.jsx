@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Heart, Camera, Smile, X } from 'lucide-react';
+import { Send, LogOut, Heart, Camera, Smile, X, Trash2 } from 'lucide-react';
 import {
   collection,
   addDoc,
@@ -10,10 +10,11 @@ import {
   serverTimestamp,
   doc,
   updateDoc,
+  deleteDoc,
   arrayUnion,
   arrayRemove
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import OneSignal from 'react-onesignal';
 import EmojiPicker from 'emoji-picker-react';
@@ -23,7 +24,7 @@ import EmojiPicker from 'emoji-picker-react';
 // ==========================================
 const GLASS_CLASSES = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
 const ONESIGNAL_APP_ID = '5d8db7f8-b110-42af-a94d-96655cccd6ff';
-const ONESIGNAL_API_KEY = 'j7gz65b2revye5nxv4rpknt7d'; 
+const ONESIGNAL_API_KEY = 'os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q';
 
 // ==========================================
 // USER PROFILES
@@ -108,7 +109,7 @@ function AvatarWithFallback({ userHandle, size = 12 }) {
 // HELPER: Enviar Notificação OneSignal 
 // ==========================================
 async function notifyPartner(currentUserHandle, messagePreview) {
-  const partner = currentUserHandle === '@griehl_' ? '@anakov_' : '@griehl_';
+  const partnerTag = currentUserHandle === '@griehl_' ? 'ana' : 'pablo';
   const currentProfile = USER_PROFILES[currentUserHandle];
 
   if (!ONESIGNAL_API_KEY) return;
@@ -117,15 +118,15 @@ async function notifyPartner(currentUserHandle, messagePreview) {
     await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Type': 'application/json',
         Authorization: `Basic ${ONESIGNAL_API_KEY}`
       },
       body: JSON.stringify({
         app_id: ONESIGNAL_APP_ID,
-        include_external_user_ids: [partner],
+        filters: [{ field: 'tag', key: 'usuario', relation: '=', value: partnerTag }],
         headings: {
-          en: 'Novo Tweet no Mural! ❤️',
-          pt: 'Novo Tweet no Mural! ❤️'
+          en: 'Novo post no Mural! ❤️',
+          pt: 'Novo post no Mural! ❤️'
         },
         contents: {
           en: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`,
@@ -290,6 +291,30 @@ export default function Mural() {
       }
     } catch (error) {
       console.error('Erro ao atualizar curtida:', error);
+    }
+  };
+
+  const handleDelete = async (postId, imageUrl) => {
+    const confirmed = window.confirm('Tem certeza que deseja apagar esta mensagem?');
+    if (!confirmed) return;
+
+    const postRef = doc(db, 'mural', postId);
+
+    try {
+      await deleteDoc(postRef);
+    } catch (error) {
+      console.error('Erro ao deletar post:', error);
+      alert('Não foi possível apagar a mensagem. Tente novamente.');
+      return;
+    }
+
+    if (imageUrl) {
+      try {
+        const imageRef = ref(storage, imageUrl);
+        await deleteObject(imageRef);
+      } catch (error) {
+        console.warn('Erro ao deletar imagem do post:', error);
+      }
     }
   };
 
@@ -565,17 +590,30 @@ export default function Mural() {
 
                       <div className="flex-1 min-w-0">
                         {/* Header do Post */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="font-bold text-slate-800">
-                            {postProfile?.nomeExibicao || post.author}
-                          </span>
-                          <span className="text-slate-400 text-sm">
-                            {postProfile ? post.author : ''}
-                          </span>
-                          <span className="text-slate-400 text-sm">•</span>
-                          <span className="text-slate-500 text-sm">
-                            {formatTimestamp(post.timestamp)}
-                          </span>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-bold text-slate-800">
+                              {postProfile?.nomeExibicao || post.author}
+                            </span>
+                            <span className="text-slate-400 text-sm">
+                              {postProfile ? post.author : ''}
+                            </span>
+                            <span className="text-slate-400 text-sm">•</span>
+                            <span className="text-slate-500 text-sm">
+                              {formatTimestamp(post.timestamp)}
+                            </span>
+                          </div>
+
+                          {post.author === currentUser && (
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(post.id, post.imageUrl)}
+                              className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"
+                              title="Apagar post"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
                         </div>
 
                         {/* Texto do Post */}

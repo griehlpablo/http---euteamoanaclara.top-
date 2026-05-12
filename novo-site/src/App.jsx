@@ -18,6 +18,7 @@ import CapsulaTempo from './pages/CapsulaTempo';
 import Cupons from './pages/Cupons';
 import BucketList from './pages/BucketList';
 import PotePapel from './pages/PotePapel';
+import Links from './pages/Links';
 
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -76,6 +77,7 @@ export default function App() {
             <Route path="/cupons" element={<Cupons />} />
             <Route path="/bucketlist" element={<BucketList />} />
             <Route path="/potepapel" element={<PotePapel />} />
+            <Route path="/links" element={<Links />} />
           </Routes>
         </main>
       </Router>

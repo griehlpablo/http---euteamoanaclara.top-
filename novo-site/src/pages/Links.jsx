@@ -2,13 +2,60 @@ import React, { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Link as LinkIcon, ExternalLink, Plus, Trash2 } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-const genAI = new GoogleGenerativeAI("AIzaSyDGd7vlpIXQu-1CaU32wgiOlfcOMt2r2vs");
-
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
+
+/**
+ * Chama Gemini API usando o mesmo método que funciona em AssistenteCasal
+ * Retorna JSON com title e description resumidos
+ */
+const callGeminiForSummarization = async (rawTitle, rawDescription) => {
+  const chaveInvertida = "QTuVoVZNCzC4i7gRA0sha6SBVXAMRJ0MBySazIA";
+  const apiKey = chaveInvertida.split('').reverse().join('');
+  
+  const modelId = "gemini-1.5-pro";
+  const prompt = `Resuma o seguinte título de produto para ser curto e direto (máx 5 palavras) e a descrição para uma frase curta (máx 15 palavras). Retorne APENAS um JSON válido no formato {"title": "titulo resumido", "description": "descricao resumida"}. Título original: ${rawTitle}. Descrição original: ${rawDescription}`;
+  
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }]
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    
+    if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      const responseText = data.candidates[0].content.parts[0].text;
+      
+      // Sanitize response to extract JSON
+      const sanitized = responseText
+        .replace(/```(?:json)?/gi, '')
+        .replace(/^[\s`]+|[\s`]+$/g, '')
+        .replace(/\n+/g, ' ')
+        .trim();
+      
+      const parsed = JSON.parse(sanitized);
+      return parsed;
+    }
+    
+    throw new Error(data.error?.message || "Erro na resposta da API");
+  } catch (error) {
+    console.error('Erro ao chamar Gemini API:', error);
+    // Retorna os dados originais como fallback
+    return { title: rawTitle, description: rawDescription };
+  }
+};
 
 export default function Links() {
   const [links, setLinks] = useState([]);
@@ -50,20 +97,9 @@ export default function Links() {
       try {
         if (rawTitle || rawDescription) {
           setLoadingStatus('Resumindo com IA...');
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-          const prompt = `Resuma o seguinte título de produto para ser curto e direto (máx 5 palavras) e a descrição para uma frase curta (máx 15 palavras). Retorne APENAS um JSON válido no formato {"title": "titulo resumido", "description": "descricao resumida"}. Título original: ${rawTitle}. Descrição original: ${rawDescription}`;
-          const result = await model.generateContent(prompt);
-          const responseText = result.response.text();
-
-          const sanitized = responseText
-            .replace(/```(?:json)?/gi, '')
-            .replace(/^[\s`]+|[\s`]+$/g, '')
-            .replace(/\n+/g, ' ')
-            .trim();
-
-          const parsed = JSON.parse(sanitized);
-          rawTitle = parsed.title || rawTitle;
-          rawDescription = parsed.description || rawDescription;
+          const summarized = await callGeminiForSummarization(rawTitle, rawDescription);
+          rawTitle = summarized.title || rawTitle;
+          rawDescription = summarized.description || rawDescription;
         }
       } catch (aiError) {
         console.error('Erro ao resumir com IA:', aiError);

@@ -3,7 +3,7 @@ import { Heart, Music, Music2, Sun, Moon } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Navbar({ theme, setTheme }) {
+export default function Navbar({ theme, toggleTheme }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
@@ -19,10 +19,6 @@ export default function Navbar({ theme, setTheme }) {
       audioRef.current.play();
     }
     setIsPlaying(!isPlaying);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
   return (

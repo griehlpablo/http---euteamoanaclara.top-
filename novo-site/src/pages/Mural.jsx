@@ -447,7 +447,7 @@ export default function Mural() {
           animate={{ opacity: 1, y: 0 }} 
           transition={{ delay: 0.2 }} 
           onSubmit={handlePublish} 
-          className={`${GLASS_CLASSES} rounded-3xl p-4 md:p-6 mb-8 flex gap-4`}
+          className={`${GLASS_CLASSES} rounded-3xl p-4 md:p-6 mb-8 flex gap-4 relative z-40`}
         >
           <AvatarWithFallback userHandle={currentUser} size={14} />
           
@@ -498,7 +498,7 @@ export default function Mural() {
                 </motion.button>
 
                 {/* Botão Emoji (Glassmorphism) */}
-                <div ref={emojiPickerRef} className="relative">
+                <div ref={emojiPickerRef} className="relative z-50">
                   <motion.button
                     type="button"
                     whileHover={{ scale: 1.05 }}
@@ -521,7 +521,7 @@ export default function Mural() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute top-14 left-0 z-50 shadow-2xl rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-600"
+                        className="absolute top-14 left-0 z-[999] shadow-2xl rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-600"
                       >
                         <EmojiPicker
                           onEmojiClick={handleEmojiClick}

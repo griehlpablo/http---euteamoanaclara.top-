@@ -521,7 +521,7 @@ export default function Mural() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute top-14 left-0 z-[999] shadow-2xl rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-600"
+                        className="absolute top-14 right-0 sm:right-auto sm:left-0 z-[999] shadow-2xl rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-600"
                       >
                         <EmojiPicker
                           onEmojiClick={handleEmojiClick}

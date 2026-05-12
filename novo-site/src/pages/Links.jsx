@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Link as LinkIcon, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
+
+const genAI = new GoogleGenerativeAI("AIzaSyDGd7vlpIXQu-1CaU32wgiOlfcOMt2r2vs");
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
@@ -12,6 +15,7 @@ export default function Links() {
   const [newUrl, setNewUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState('');
 
   useEffect(() => {
     const q = query(collection(db, 'links'), orderBy('timestamp', 'desc'));
@@ -32,20 +36,43 @@ export default function Links() {
     if (!newUrl.trim()) return;
 
     setSubmitting(true);
+    setLoadingStatus('Buscando link...');
+
     try {
       // Fetch metadata from Microlink API
       const response = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(newUrl)}`);
       const data = await response.json();
 
-      const title = data.data?.title || 'Link sem título';
-      const description = data.data?.description || 'Sem descrição';
+      let rawTitle = data.data?.title || 'Link sem título';
+      let rawDescription = data.data?.description || 'Sem descrição';
       const image = data.data?.image?.url || null;
+
+      try {
+        if (rawTitle || rawDescription) {
+          setLoadingStatus('Resumindo com IA...');
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const prompt = `Resuma o seguinte título de produto para ser curto e direto (máx 5 palavras) e a descrição para uma frase curta (máx 15 palavras). Retorne APENAS um JSON válido no formato {"title": "titulo resumido", "description": "descricao resumida"}. Título original: ${rawTitle}. Descrição original: ${rawDescription}`;
+          const result = await model.generateContent({ prompt });
+          const responseText = result.response.text();
+
+          const sanitized = responseText
+            .replace(/```(?:json)?/gi, '')
+            .replace(/\n/g, ' ')
+            .trim();
+
+          const parsed = JSON.parse(sanitized);
+          rawTitle = parsed.title || rawTitle;
+          rawDescription = parsed.description || rawDescription;
+        }
+      } catch (aiError) {
+        console.error('Erro ao resumir com IA:', aiError);
+      }
 
       // Save to Firestore
       await addDoc(collection(db, 'links'), {
         url: newUrl.trim(),
-        title,
-        description,
+        title: rawTitle,
+        description: rawDescription,
         image,
         timestamp: serverTimestamp()
       });
@@ -56,6 +83,7 @@ export default function Links() {
       alert('Erro ao adicionar link. Verifique a URL e tente novamente.');
     } finally {
       setSubmitting(false);
+      setLoadingStatus('');
     }
   };
 
@@ -139,7 +167,7 @@ export default function Links() {
             {submitting ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Adicionando...
+                {loadingStatus || 'Adicionando...'}
               </>
             ) : (
               <>

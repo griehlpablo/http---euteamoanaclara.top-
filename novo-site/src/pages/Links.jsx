@@ -52,12 +52,13 @@ export default function Links() {
           setLoadingStatus('Resumindo com IA...');
           const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
           const prompt = `Resuma o seguinte título de produto para ser curto e direto (máx 5 palavras) e a descrição para uma frase curta (máx 15 palavras). Retorne APENAS um JSON válido no formato {"title": "titulo resumido", "description": "descricao resumida"}. Título original: ${rawTitle}. Descrição original: ${rawDescription}`;
-          const result = await model.generateContent({ prompt });
+          const result = await model.generateContent(prompt);
           const responseText = result.response.text();
 
           const sanitized = responseText
             .replace(/```(?:json)?/gi, '')
-            .replace(/\n/g, ' ')
+            .replace(/^[\s`]+|[\s`]+$/g, '')
+            .replace(/\n+/g, ' ')
             .trim();
 
           const parsed = JSON.parse(sanitized);

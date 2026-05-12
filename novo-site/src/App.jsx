@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import OneSignal from 'react-onesignal';
 
@@ -14,8 +14,6 @@ import Retrospectiva from './pages/Retrospectiva';
 import Satisfacao from './pages/Satisfacao';
 import Humor from './pages/Humor';
 import Mural from './pages/Mural'; // ⬅️ IMPORTAÇÃO DO MURAL ADICIONADA AQUI!
-
-export const ThemeContext = createContext();
 
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -43,11 +41,10 @@ export default function App() {
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-slate-900 dark:to-slate-800 min-h-screen text-slate-700 dark:text-slate-300 antialiased overflow-x-hidden font-sans relative">
-        <HeartRain />
-        <Router>
-          <Navbar />
+    <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-slate-900 dark:to-slate-800 min-h-screen text-slate-700 dark:text-slate-300 antialiased overflow-x-hidden font-sans relative">
+      <HeartRain />
+      <Router>
+        <Navbar theme={theme} setTheme={setTheme} />
           <main className="pt-24 pb-12 px-4 max-w-5xl mx-auto relative z-10">
             <Routes>
               <Route path="/" element={<Home />} />
@@ -64,6 +61,5 @@ export default function App() {
           </main>
         </Router>
       </div>
-    </ThemeContext.Provider>
-  );
-}
+    );
+  }

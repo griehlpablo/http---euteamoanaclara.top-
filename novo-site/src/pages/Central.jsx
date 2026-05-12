@@ -5,7 +5,7 @@ import {
   Clock, ImageIcon, Mail, MessageCircleHeart, ArrowLeft, 
   TrendingUp, GitMerge, Link as LinkIcon, Sparkles, 
   SmilePlus, CalendarHeart, Film, Music, CheckSquare, 
-  Gift, HelpCircle, Bot, Activity 
+  Gift, HelpCircle, Bot, Activity, Ticket, ListChecks 
 } from 'lucide-react';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
@@ -23,6 +23,10 @@ const cards = [
   { path: "/mural", icon: MessageCircleHeart, title: "Mural", desc: "Recados e missões diárias." },
   { path: "/genealogia", icon: GitMerge, title: "Genealogia", desc: "As suas raízes." },
   { path: "/links", icon: LinkIcon, title: "Links Úteis", desc: "Acessos rápidos importantes." },
+  { path: "/capsula", icon: Clock, title: "Cápsula do Tempo", desc: "Mensagens para o futuro." },
+  { path: "/cupons", icon: Ticket, title: "Cupons", desc: "Recompensas especiais." },
+  { path: "/bucketlist", icon: ListChecks, title: "Bucket List", desc: "Nossos sonhos e metas." },
+  { path: "/potepapel", icon: MessageCircleHeart, title: "Pote de Papel", desc: "Mensagens doces aleatórias." },
 ];
 
 export default function Central() {

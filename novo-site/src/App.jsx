@@ -14,6 +14,10 @@ import Retrospectiva from './pages/Retrospectiva';
 import Satisfacao from './pages/Satisfacao';
 import Humor from './pages/Humor';
 import Mural from './pages/Mural';
+import CapsulaTempo from './pages/CapsulaTempo';
+import Cupons from './pages/Cupons';
+import BucketList from './pages/BucketList';
+import PotePapel from './pages/PotePapel';
 
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -68,6 +72,10 @@ export default function App() {
             <Route path="/satisfacao" element={<Satisfacao />} />
             <Route path="/humor" element={<Humor />} />
             <Route path="/mural" element={<Mural />} />
+            <Route path="/capsula" element={<CapsulaTempo />} />
+            <Route path="/cupons" element={<Cupons />} />
+            <Route path="/bucketlist" element={<BucketList />} />
+            <Route path="/potepapel" element={<PotePapel />} />
           </Routes>
         </main>
       </Router>

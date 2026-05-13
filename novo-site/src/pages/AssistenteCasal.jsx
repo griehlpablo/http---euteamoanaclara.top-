@@ -248,7 +248,7 @@ export default function AssistenteCasal() {
                 </div>
               )}
               <div className="flex items-center w-full gap-2">
-                <input type="file" accept="image/*,.pdf,.txt" ref={fileInputRef} onChange={(e) => {const f = e.target.files[0]; if(f){setSelectedFile(f); if(f.type.startsWith('image/')){setFilePreview(URL.createObjectURL(f));}else{setFilePreview(null);}}}} className="hidden" />
+                <input type="file" accept="image/*,.pdf,.txt,.docx" ref={fileInputRef} onChange={(e) => {const f = e.target.files[0]; if(f){setSelectedFile(f); if(f.type.startsWith('image/')){setFilePreview(URL.createObjectURL(f));}else{setFilePreview(null);}}}} className="hidden" />
                 <button onClick={() => fileInputRef.current.click()} className="text-rose-400 p-2 rounded-full hover:bg-rose-100"><ImageIcon size={24} /></button>
                 <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder="Fale com o Cupido..." className="flex-1 bg-transparent border-none px-2 py-2 text-sm focus:outline-none" />
                 <button onClick={handleSend} disabled={isLoading || (!input.trim() && !selectedFile)} className="bg-rose-500 text-white p-3 rounded-xl hover:bg-rose-600 disabled:opacity-50 transition-all flex-shrink-0"><Send size={20} /></button>

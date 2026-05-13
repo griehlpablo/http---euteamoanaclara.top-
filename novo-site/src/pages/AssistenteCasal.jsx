@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Bot, ArrowLeft, Plus, Trash2, MessageSquare, X, Image as ImageIcon, Cpu } from 'lucide-react';
+import { Send, Bot, ArrowLeft, Plus, Trash2, MessageSquare, X, Image as ImageIcon, Cpu, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -96,8 +96,8 @@ export default function AssistenteCasal() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
   const [currentModelName, setCurrentModelName] = useState(""); // Exibe qual modelo respondeu
   
   const chatEndRef = useRef(null);
@@ -138,17 +138,17 @@ export default function AssistenteCasal() {
 
   const handleSend = async () => {
     const prompt = input;
-    if ((!prompt.trim() && !selectedImage) || isLoading || !activeChatId) return;
+    if ((!prompt.trim() && !selectedFile) || isLoading || !activeChatId) return;
 
     setIsLoading(true);
     let imageUrlForFirebase = null, base64ForGemini = null, mimeTypeForGemini = null;
 
-    if (selectedImage) {
-      base64ForGemini = await fileToBase64(selectedImage);
-      mimeTypeForGemini = selectedImage.type;
-      const imageRef = ref(storage, `chats/${activeChatId}/${Date.now()}_${selectedImage.name}`);
-      await uploadBytes(imageRef, selectedImage);
-      imageUrlForFirebase = await getDownloadURL(imageRef);
+    if (selectedFile) {
+      base64ForGemini = await fileToBase64(selectedFile);
+      mimeTypeForGemini = selectedFile.type;
+      const fileRef = ref(storage, `chats/${activeChatId}/${Date.now()}_${selectedFile.name}`);
+      await uploadBytes(fileRef, selectedFile);
+      imageUrlForFirebase = await getDownloadURL(fileRef);
     }
 
     if (messages.length <= 1 && prompt) {
@@ -156,14 +156,14 @@ export default function AssistenteCasal() {
     }
 
     await addDoc(collection(db, "chats", activeChatId, "mensagens"), {
-      role: 'user', text: prompt || "Enviou uma imagem", imageUrl: imageUrlForFirebase, createdAt: serverTimestamp()
+      role: 'user', text: prompt || "Enviou um arquivo", imageUrl: imageUrlForFirebase, fileType: mimeTypeForGemini, createdAt: serverTimestamp()
     });
 
     setInput("");
-    setSelectedImage(null);
-    setImagePreview(null);
+    setSelectedFile(null);
+    setFilePreview(null);
 
-    const apiResult = await callGeminiAPI(messages, prompt || "Descreva esta imagem.", base64ForGemini, mimeTypeForGemini);
+    const apiResult = await callGeminiAPI(messages, prompt || "Analise este arquivo.", base64ForGemini, mimeTypeForGemini);
     let botResponse = apiResult.text;
     setCurrentModelName(apiResult.modelUsed);
 
@@ -174,7 +174,7 @@ export default function AssistenteCasal() {
       try {
         const phoneNumber = "+554497168417"; 
         const apiKey = "8762883";
-        const mensagem = `💘 O Cupido avisa: Novo pedido -> "${prompt || 'Enviou uma imagem'}"\n\nResposta do Bot: "${botResponse}"`;
+        const mensagem = `💘 O Cupido avisa: Novo pedido -> "${prompt || 'Enviou um arquivo'}"\n\nResposta do Bot: "${botResponse}"`;
         const url = `https://api.callmebot.com/whatsapp.php?phone=${phoneNumber}&text=${encodeURIComponent(mensagem)}&apikey=${apiKey}`;
 
         fetch(url, { mode: 'no-cors' }).catch(err => console.error('Erro na requisição do WhatsApp:', err));
@@ -218,7 +218,13 @@ export default function AssistenteCasal() {
               {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] p-4 rounded-2xl text-sm ${m.role === 'user' ? 'bg-rose-500 text-white rounded-br-none shadow-md' : 'bg-white border border-slate-100 shadow-sm'}`}>
-                    {m.imageUrl && <img src={m.imageUrl} alt="Anexo" className="w-full max-w-sm rounded-xl mb-2 object-cover" />}
+                    {m.fileType && !m.fileType.startsWith('image/') ? (
+                      <a href={m.imageUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-colors mb-2 text-white text-sm w-max">
+                        <FileText size={16} /> Documento Anexado
+                      </a>
+                    ) : (
+                      m.imageUrl && <img src={m.imageUrl} alt="Anexo" className="w-full max-w-sm rounded-xl mb-2 object-cover" />
+                    )}
                     {m.role === 'user' ? <span>{m.text}</span> : <div className="prose prose-sm prose-rose max-w-none"><ReactMarkdown>{m.text}</ReactMarkdown></div>}
                   </div>
                 </div>
@@ -228,17 +234,24 @@ export default function AssistenteCasal() {
             </div>
 
             <div className="flex flex-col gap-2 bg-white/40 p-2 rounded-2xl border border-rose-100">
-              {imagePreview && (
-                <div className="relative w-20 h-20 ml-2 mt-2">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-xl border-2 border-rose-200" />
-                  <button onClick={() => {setSelectedImage(null); setImagePreview(null);}} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md"><X size={14} /></button>
+              {selectedFile && (
+                <div className="relative ml-2 mt-2 inline-block">
+                  {selectedFile.type.startsWith('image/') ? (
+                    <img src={filePreview} alt="Preview" className="w-20 h-20 object-cover rounded-xl border-2 border-rose-200" />
+                  ) : (
+                    <div className="w-auto h-12 px-4 bg-white rounded-xl border-2 border-rose-200 flex items-center justify-center gap-2 text-rose-500 text-sm font-medium shadow-sm">
+                      <FileText size={18} />
+                      <span className="truncate max-w-[120px]">{selectedFile.name}</span>
+                    </div>
+                  )}
+                  <button onClick={() => {setSelectedFile(null); setFilePreview(null);}} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md"><X size={14} /></button>
                 </div>
               )}
               <div className="flex items-center w-full gap-2">
-                <input type="file" accept="image/*" ref={fileInputRef} onChange={(e) => {const f = e.target.files[0]; if(f){setSelectedImage(f); setImagePreview(URL.createObjectURL(f));}}} className="hidden" />
+                <input type="file" accept="image/*,.pdf,.txt" ref={fileInputRef} onChange={(e) => {const f = e.target.files[0]; if(f){setSelectedFile(f); if(f.type.startsWith('image/')){setFilePreview(URL.createObjectURL(f));}else{setFilePreview(null);}}}} className="hidden" />
                 <button onClick={() => fileInputRef.current.click()} className="text-rose-400 p-2 rounded-full hover:bg-rose-100"><ImageIcon size={24} /></button>
                 <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder="Fale com o Cupido..." className="flex-1 bg-transparent border-none px-2 py-2 text-sm focus:outline-none" />
-                <button onClick={handleSend} disabled={isLoading || (!input.trim() && !selectedImage)} className="bg-rose-500 text-white p-3 rounded-xl hover:bg-rose-600 disabled:opacity-50 transition-all flex-shrink-0"><Send size={20} /></button>
+                <button onClick={handleSend} disabled={isLoading || (!input.trim() && !selectedFile)} className="bg-rose-500 text-white p-3 rounded-xl hover:bg-rose-600 disabled:opacity-50 transition-all flex-shrink-0"><Send size={20} /></button>
               </div>
             </div>
           </>

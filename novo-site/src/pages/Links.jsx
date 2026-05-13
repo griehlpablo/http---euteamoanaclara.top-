@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Link as LinkIcon, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Link as LinkIcon, ExternalLink, Plus, Trash2, ShieldCheck, ShieldAlert, Shield } from 'lucide-react';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
-const callGeminiForSummarization = async (rawTitle, rawDescription) => {
+const callGeminiForSummarization = async (rawUrl, rawTitle, rawDescription) => {
   const chaveInvertida = "sv2r2tMOcflOigw23UaC1-uQXIplv7dGDySazIA";
   const apiKey = chaveInvertida.split('').reverse().join('');
   
   const modelId = "gemini-flash-latest";
   
-  // Usando aspas duplas normais para evitar que o chat corte o código
-  const prompt = "Resuma o seguinte título de produto para ser curto e direto (máx 5 palavras) e a descrição para uma frase curta (máx 15 palavras). Retorne APENAS um JSON válido no formato {\"title\": \"titulo resumido\", \"description\": \"descricao resumida\"}. Título original: " + rawTitle + ". Descrição original: " + rawDescription;
+  // O prompt agora pede o resumo E a análise de confiabilidade baseada na URL
+  const prompt = "Analise o seguinte produto e o link de onde ele vem. 1) Resuma o título (máx 5 palavras). 2) Resuma a descrição (máx 15 palavras). 3) Classifique a confiabilidade do domínio do link para compras online como 'high' (sites famosos, oficiais e seguros como Amazon, MercadoLivre, Shopee oficial, etc), 'medium' (marketplaces genéricos, lojas menores mas legítimas) ou 'low' (sites suspeitos, desconhecidos, com nomes estranhos ou com cara de golpe). Retorne APENAS um JSON válido no formato {\"title\": \"titulo resumido\", \"description\": \"descricao resumida\", \"trust\": \"high\"}. Link: " + rawUrl + " Título: " + rawTitle + " Descrição: " + rawDescription;
   
   try {
     const url = "https://generativelanguage.googleapis.com/v1beta/models/" + modelId + ":generateContent";
@@ -38,7 +38,6 @@ const callGeminiForSummarization = async (rawTitle, rawDescription) => {
     if (response.ok && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
       const responseText = data.candidates[0].content.parts[0].text;
       
-      // Código 96 representa a crase. Usamos isso para não digitar a crase e o chat não apagar o arquivo.
       const caractereCrase = String.fromCharCode(96);
       const regexCrases = new RegExp(caractereCrase, 'g');
       
@@ -55,7 +54,7 @@ const callGeminiForSummarization = async (rawTitle, rawDescription) => {
     throw new Error(data.error ? data.error.message : "Erro na resposta da API");
   } catch (error) {
     console.error('Erro ao chamar Gemini API:', error);
-    return { title: rawTitle, description: rawDescription };
+    return { title: rawTitle, description: rawDescription, trust: 'medium' }; // Fallback
   }
 };
 
@@ -95,6 +94,7 @@ export default function Links() {
       let rawTitle = 'Link sem título';
       let rawDescription = 'Sem descrição';
       let image = null;
+      let trustLevel = 'medium'; // Padrão se a IA falhar
 
       if (data && data.data) {
         rawTitle = data.data.title || rawTitle;
@@ -105,14 +105,23 @@ export default function Links() {
       }
 
       try {
-        if (rawTitle !== 'Link sem título' || rawDescription !== 'Sem descrição') {
-          setLoadingStatus('Resumindo com IA...');
-          const summarized = await callGeminiForSummarization(rawTitle, rawDescription);
-          rawTitle = summarized.title || rawTitle;
-          rawDescription = summarized.description || rawDescription;
-        }
+        setLoadingStatus('Analisando segurança...');
+        const summarized = await callGeminiForSummarization(newUrl, rawTitle, rawDescription);
+        rawTitle = summarized.title || rawTitle;
+        rawDescription = summarized.description || rawDescription;
+        trustLevel = summarized.trust || 'medium';
       } catch (aiError) {
         console.error('Erro ao resumir com IA:', aiError);
+      }
+
+      // Trava de segurança para sites perigosos!
+      if (trustLevel === 'low') {
+        const proceed = window.confirm("⚠️ ALERTA DE SEGURANÇA ⚠️\n\nA Inteligência Artificial detectou que este site tem BAIXA confiabilidade (pode ser golpe ou loja falsa).\n\nTem certeza que deseja adicionar esse link à sua lista?");
+        if (!proceed) {
+          setSubmitting(false);
+          setLoadingStatus('');
+          return; // Aborta a adição
+        }
       }
 
       await addDoc(collection(db, 'links'), {
@@ -120,6 +129,7 @@ export default function Links() {
         title: rawTitle,
         description: rawDescription,
         image: image,
+        trust: trustLevel,
         timestamp: serverTimestamp()
       });
 
@@ -139,6 +149,29 @@ export default function Links() {
     } catch (error) {
       console.error('Erro ao deletar link:', error);
     }
+  };
+
+  // Função para renderizar a etiqueta de segurança correta
+  const renderTrustBadge = (trust) => {
+    if (trust === 'high') {
+      return (
+        <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full w-max">
+          <ShieldCheck size={12} /> Site Confiável
+        </span>
+      );
+    }
+    if (trust === 'low') {
+      return (
+        <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full w-max">
+          <ShieldAlert size={12} /> Suspeito
+        </span>
+      );
+    }
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-bold text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded-full w-max">
+        <Shield size={12} /> Atenção
+      </span>
+    );
   };
 
   if (loading) {
@@ -177,7 +210,7 @@ export default function Links() {
           transition={{ delay: 0.2 }}
           className="text-slate-500 dark:text-slate-400"
         >
-          Colecione e organize seus links favoritos com metadados automáticos e IA ✨
+          Colecione links favoritos com metadados e análise de segurança IA ✨
         </motion.p>
       </div>
 
@@ -248,10 +281,10 @@ export default function Links() {
                 animate={{ opacity: 1, y: 0 }} 
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: index * 0.05 }}
-                className={GLASS_CLASSES + " rounded-3xl p-5 overflow-hidden flex flex-col h-full"}
+                className={GLASS_CLASSES + " rounded-3xl p-5 overflow-hidden flex flex-col h-full relative"}
               >
                 {link.image && (
-                  <div className="w-full h-40 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                  <div className="w-full h-40 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 relative">
                     <img 
                       src={link.image} 
                       alt={link.title} 
@@ -262,9 +295,17 @@ export default function Links() {
                 )}
 
                 <div className="flex-1 flex flex-col min-w-0">
-                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 mb-2 leading-tight">
-                    {link.title}
-                  </h3>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 leading-tight">
+                      {link.title}
+                    </h3>
+                  </div>
+                  
+                  {/* Badge de segurança fica logo abaixo do título */}
+                  <div className="mb-3">
+                    {renderTrustBadge(link.trust)}
+                  </div>
+
                   <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4 flex-1">
                     {link.description}
                   </p>
@@ -277,7 +318,7 @@ export default function Links() {
                       className="inline-flex items-center gap-2 text-rose-500 hover:text-rose-600 font-bold text-sm transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Ver Produto
+                      Ir para o site
                     </a>
 
                     <motion.button

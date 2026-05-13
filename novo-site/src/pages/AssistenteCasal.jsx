@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, Bot, ArrowLeft, Plus, Trash2, MessageSquare, X, Image as ImageIcon, Cpu } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import emailjs from '@emailjs/browser'; 
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
@@ -170,7 +169,18 @@ export default function AssistenteCasal() {
 
     if (botResponse.includes('[AVISAR_PABLO]')) {
       botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
-      emailjs.send('service_m4p5rzl', 'template_nz2c3cf', { mensagem_ana: prompt || "Enviou uma imagem", resposta_cupido: botResponse }, '_vmorr0K9MFFhLsoz');
+      
+      // Envia Push Notification via WhatsApp (CallMeBot)
+      try {
+        const phoneNumber = "+554497168417"; 
+        const apiKey = "8762883";
+        const mensagem = `💘 O Cupido avisa: Novo pedido -> "${prompt || 'Enviou uma imagem'}"\n\nResposta do Bot: "${botResponse}"`;
+        const url = `https://api.callmebot.com/whatsapp.php?phone=${phoneNumber}&text=${encodeURIComponent(mensagem)}&apikey=${apiKey}`;
+
+        fetch(url).catch(err => console.error('Erro na requisição do WhatsApp:', err));
+      } catch (error) {
+        console.error('Erro ao montar o aviso do WhatsApp:', error);
+      }
     }
     
     await addDoc(collection(db, "chats", activeChatId, "mensagens"), {

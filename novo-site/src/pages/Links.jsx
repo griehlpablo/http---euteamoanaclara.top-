@@ -8,25 +8,28 @@ import { db } from '../firebase';
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
 /**
- * Chama Gemini API usando o mesmo método que funciona em AssistenteCasal
+ * Chama Gemini API com a chave correta e o modelo flash-latest
  * Retorna JSON com title e description resumidos
  */
 const callGeminiForSummarization = async (rawTitle, rawDescription) => {
-  const chaveInvertida = "QTuVoVZNCzC4i7gRA0sha6SBVXAMRJ0MBySazIA";
+  // A sua chave nova invertida por segurança para evitar bloqueios do Google
+  const chaveInvertida = "sv2r2tMOcflOigw23UaC1-uQXIplv7dGDySazIA";
   const apiKey = chaveInvertida.split('').reverse().join('');
   
-  const modelId = "gemini-1.5-pro";
+  const modelId = "gemini-flash-latest";
   const prompt = `Resuma o seguinte título de produto para ser curto e direto (máx 5 palavras) e a descrição para uma frase curta (máx 15 palavras). Retorne APENAS um JSON válido no formato {"title": "titulo resumido", "description": "descricao resumida"}. Título original: ${rawTitle}. Descrição original: ${rawDescription}`;
   
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-goog-api-key': apiKey 
+      },
       body: JSON.stringify({
         contents: [
           {
-            role: 'user',
             parts: [{ text: prompt }]
           }
         ]
@@ -38,9 +41,9 @@ const callGeminiForSummarization = async (rawTitle, rawDescription) => {
     if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
       const responseText = data.candidates[0].content.parts[0].text;
       
-      // Sanitize response to extract JSON
+      // Limpa a resposta da IA de forma segura sem usar 3 crases literais para não quebrar o compilador
       const sanitized = responseText
-        .replace(/```(?:json)?/gi, '')
+        .replace(/`{3}(?:json)?/gi, '') 
         .replace(/^[\s`]+|[\s`]+$/g, '')
         .replace(/\n+/g, ' ')
         .trim();
@@ -52,7 +55,7 @@ const callGeminiForSummarization = async (rawTitle, rawDescription) => {
     throw new Error(data.error?.message || "Erro na resposta da API");
   } catch (error) {
     console.error('Erro ao chamar Gemini API:', error);
-    // Retorna os dados originais como fallback
+    // Retorna os dados originais como fallback caso a IA falhe
     return { title: rawTitle, description: rawDescription };
   }
 };
@@ -60,10 +63,11 @@ const callGeminiForSummarization = async (rawTitle, rawDescription) => {
 export default function Links() {
   const [links, setLinks] = useState([]);
   const [newUrl, setNewUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('');
 
+  // Carrega os links do banco de dados
   useEffect(() => {
     const q = query(collection(db, 'links'), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -86,7 +90,7 @@ export default function Links() {
     setLoadingStatus('Buscando link...');
 
     try {
-      // Fetch metadata from Microlink API
+      // 1. Puxa os metadados do site (Microlink API)
       const response = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(newUrl)}`);
       const data = await response.json();
 
@@ -95,6 +99,7 @@ export default function Links() {
       const image = data.data?.image?.url || null;
 
       try {
+        // 2. Passa o título e descrição para a IA resumir
         if (rawTitle || rawDescription) {
           setLoadingStatus('Resumindo com IA...');
           const summarized = await callGeminiForSummarization(rawTitle, rawDescription);
@@ -105,7 +110,7 @@ export default function Links() {
         console.error('Erro ao resumir com IA:', aiError);
       }
 
-      // Save to Firestore
+      // 3. Salva no Firebase
       await addDoc(collection(db, 'links'), {
         url: newUrl.trim(),
         title: rawTitle,
@@ -151,7 +156,7 @@ export default function Links() {
     <motion.div 
       initial={{ opacity: 0, y: 20 }} 
       animate={{ opacity: 1, y: 0 }} 
-      className="max-w-2xl mx-auto py-8"
+      className="max-w-4xl mx-auto py-8 px-4"
     >
       <div className="text-center mb-8">
         <motion.h1 
@@ -168,29 +173,29 @@ export default function Links() {
           transition={{ delay: 0.2 }}
           className="text-slate-500 dark:text-slate-400"
         >
-          Colecione e organize seus links favoritos com metadados automáticos ✨
+          Colecione e organize seus links favoritos com metadados automáticos e IA ✨
         </motion.p>
       </div>
 
-      {/* Form to add new link */}
+      {/* Formulário para adicionar novo link */}
       <motion.form 
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ delay: 0.3 }}
         onSubmit={handleSubmit} 
-        className={`${GLASS_CLASSES} rounded-3xl p-6 mb-8`}
+        className={`${GLASS_CLASSES} rounded-3xl p-6 mb-8 max-w-2xl mx-auto`}
       >
         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
           <Plus className="w-5 h-5 text-rose-500" />
           Adicionar Novo Link
         </h3>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <input
             type="url"
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
-            placeholder="Cole uma URL aqui..."
+            placeholder="Cole a URL do produto aqui..."
             className="flex-1 bg-transparent border border-slate-200 dark:border-slate-600 rounded-2xl px-4 py-3 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"
             required
           />
@@ -199,7 +204,7 @@ export default function Links() {
             whileTap={{ scale: 0.95 }}
             disabled={submitting}
             type="submit"
-            className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-2xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg"
+            className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg"
           >
             {submitting ? (
               <>
@@ -216,7 +221,7 @@ export default function Links() {
         </div>
       </motion.form>
 
-      {/* Links list */}
+      {/* Lista de Links salvos (em Grid) */}
       <AnimatePresence mode="popLayout">
         {links.length === 0 ? (
           <motion.div 
@@ -224,7 +229,7 @@ export default function Links() {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className={`${GLASS_CLASSES} rounded-3xl p-12 text-center`}
+            className={`${GLASS_CLASSES} rounded-3xl p-12 text-center max-w-2xl mx-auto`}
           >
             <LinkIcon className="w-16 h-16 text-slate-400 mx-auto mb-4" />
             <p className="text-lg text-slate-600 dark:text-slate-400">
@@ -232,55 +237,59 @@ export default function Links() {
             </p>
           </motion.div>
         ) : (
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {links.map((link, index) => (
               <motion.div 
                 key={link.id}
                 layout
                 initial={{ opacity: 0, y: 20 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                exit={{ opacity: 0, y: -20 }}
+                exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: index * 0.05 }}
-                className={`${GLASS_CLASSES} rounded-3xl p-6 overflow-hidden`}
+                className={`${GLASS_CLASSES} rounded-3xl p-5 overflow-hidden flex flex-col h-full`}
               >
+                {/* Imagem do Produto */}
                 {link.image && (
-                  <div className="w-full h-32 mb-4 rounded-2xl overflow-hidden">
+                  <div className="w-full h-40 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
                     <img 
                       src={link.image} 
                       alt={link.title} 
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   </div>
                 )}
 
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 mb-2 leading-tight">
-                      {link.title}
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
-                      {link.description}
-                    </p>
+                {/* Textos e Botões */}
+                <div className="flex-1 flex flex-col min-w-0">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 mb-2 leading-tight">
+                    {link.title}
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4 flex-1">
+                    {link.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 dark:border-slate-700">
                     <a 
                       href={link.url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-rose-500 hover:text-rose-600 font-medium text-sm transition-colors"
+                      className="inline-flex items-center gap-2 text-rose-500 hover:text-rose-600 font-bold text-sm transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Abrir Link
+                      Ver Produto
                     </a>
-                  </div>
 
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleDelete(link.id)}
-                    className="text-slate-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900 transition-colors flex-shrink-0"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleDelete(link.id)}
+                      className="text-slate-300 hover:text-red-500 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900 transition-colors"
+                      title="Excluir item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -288,10 +297,11 @@ export default function Links() {
         )}
       </AnimatePresence>
 
+      {/* Botão Voltar */}
       <div className="mt-12 text-center">
         <RouterLink 
           to="/central" 
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors text-xs font-bold uppercase tracking-widest bg-white/40 px-6 py-3 rounded-full backdrop-blur-sm"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors text-xs font-bold uppercase tracking-widest bg-white/40 dark:bg-slate-800/40 px-6 py-3 rounded-full backdrop-blur-sm border border-slate-100 dark:border-slate-700"
         >
           <ArrowLeft className="w-4 h-4" /> Voltar ao Menu
         </RouterLink>

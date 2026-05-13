@@ -7,20 +7,17 @@ import { db } from '../firebase';
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
-/**
- * Chama Gemini API com a chave correta e o modelo flash-latest
- * Retorna JSON com title e description resumidos
- */
 const callGeminiForSummarization = async (rawTitle, rawDescription) => {
-  // A sua chave nova invertida por segurança para evitar bloqueios do Google
   const chaveInvertida = "sv2r2tMOcflOigw23UaC1-uQXIplv7dGDySazIA";
   const apiKey = chaveInvertida.split('').reverse().join('');
   
   const modelId = "gemini-flash-latest";
-  const prompt = `Resuma o seguinte título de produto para ser curto e direto (máx 5 palavras) e a descrição para uma frase curta (máx 15 palavras). Retorne APENAS um JSON válido no formato {"title": "titulo resumido", "description": "descricao resumida"}. Título original: ${rawTitle}. Descrição original: ${rawDescription}`;
+  
+  // Usando aspas duplas normais para evitar que o chat corte o código
+  const prompt = "Resuma o seguinte título de produto para ser curto e direto (máx 5 palavras) e a descrição para uma frase curta (máx 15 palavras). Retorne APENAS um JSON válido no formato {\"title\": \"titulo resumido\", \"description\": \"descricao resumida\"}. Título original: " + rawTitle + ". Descrição original: " + rawDescription;
   
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/" + modelId + ":generateContent";
     const response = await fetch(url, {
       method: 'POST',
       headers: { 
@@ -38,13 +35,16 @@ const callGeminiForSummarization = async (rawTitle, rawDescription) => {
 
     const data = await response.json();
     
-    if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    if (response.ok && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
       const responseText = data.candidates[0].content.parts[0].text;
       
-      // Limpa a resposta da IA de forma segura sem usar 3 crases literais para não quebrar o compilador
+      // Código 96 representa a crase. Usamos isso para não digitar a crase e o chat não apagar o arquivo.
+      const caractereCrase = String.fromCharCode(96);
+      const regexCrases = new RegExp(caractereCrase, 'g');
+      
       const sanitized = responseText
-        .replace(/`{3}(?:json)?/gi, '') 
-        .replace(/^[\s`]+|[\s`]+$/g, '')
+        .replace(regexCrases, '') 
+        .replace(/^json/i, '')
         .replace(/\n+/g, ' ')
         .trim();
       
@@ -52,10 +52,9 @@ const callGeminiForSummarization = async (rawTitle, rawDescription) => {
       return parsed;
     }
     
-    throw new Error(data.error?.message || "Erro na resposta da API");
+    throw new Error(data.error ? data.error.message : "Erro na resposta da API");
   } catch (error) {
     console.error('Erro ao chamar Gemini API:', error);
-    // Retorna os dados originais como fallback caso a IA falhe
     return { title: rawTitle, description: rawDescription };
   }
 };
@@ -67,7 +66,6 @@ export default function Links() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('');
 
-  // Carrega os links do banco de dados
   useEffect(() => {
     const q = query(collection(db, 'links'), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -90,17 +88,24 @@ export default function Links() {
     setLoadingStatus('Buscando link...');
 
     try {
-      // 1. Puxa os metadados do site (Microlink API)
-      const response = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(newUrl)}`);
+      const urlMicrolink = "https://api.microlink.io/?url=" + encodeURIComponent(newUrl);
+      const response = await fetch(urlMicrolink);
       const data = await response.json();
 
-      let rawTitle = data.data?.title || 'Link sem título';
-      let rawDescription = data.data?.description || 'Sem descrição';
-      const image = data.data?.image?.url || null;
+      let rawTitle = 'Link sem título';
+      let rawDescription = 'Sem descrição';
+      let image = null;
+
+      if (data && data.data) {
+        rawTitle = data.data.title || rawTitle;
+        rawDescription = data.data.description || rawDescription;
+        if (data.data.image && data.data.image.url) {
+          image = data.data.image.url;
+        }
+      }
 
       try {
-        // 2. Passa o título e descrição para a IA resumir
-        if (rawTitle || rawDescription) {
+        if (rawTitle !== 'Link sem título' || rawDescription !== 'Sem descrição') {
           setLoadingStatus('Resumindo com IA...');
           const summarized = await callGeminiForSummarization(rawTitle, rawDescription);
           rawTitle = summarized.title || rawTitle;
@@ -110,12 +115,11 @@ export default function Links() {
         console.error('Erro ao resumir com IA:', aiError);
       }
 
-      // 3. Salva no Firebase
       await addDoc(collection(db, 'links'), {
         url: newUrl.trim(),
         title: rawTitle,
         description: rawDescription,
-        image,
+        image: image,
         timestamp: serverTimestamp()
       });
 
@@ -177,13 +181,12 @@ export default function Links() {
         </motion.p>
       </div>
 
-      {/* Formulário para adicionar novo link */}
       <motion.form 
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ delay: 0.3 }}
         onSubmit={handleSubmit} 
-        className={`${GLASS_CLASSES} rounded-3xl p-6 mb-8 max-w-2xl mx-auto`}
+        className={GLASS_CLASSES + " rounded-3xl p-6 mb-8 max-w-2xl mx-auto"}
       >
         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
           <Plus className="w-5 h-5 text-rose-500" />
@@ -221,7 +224,6 @@ export default function Links() {
         </div>
       </motion.form>
 
-      {/* Lista de Links salvos (em Grid) */}
       <AnimatePresence mode="popLayout">
         {links.length === 0 ? (
           <motion.div 
@@ -229,7 +231,7 @@ export default function Links() {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className={`${GLASS_CLASSES} rounded-3xl p-12 text-center max-w-2xl mx-auto`}
+            className={GLASS_CLASSES + " rounded-3xl p-12 text-center max-w-2xl mx-auto"}
           >
             <LinkIcon className="w-16 h-16 text-slate-400 mx-auto mb-4" />
             <p className="text-lg text-slate-600 dark:text-slate-400">
@@ -246,9 +248,8 @@ export default function Links() {
                 animate={{ opacity: 1, y: 0 }} 
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: index * 0.05 }}
-                className={`${GLASS_CLASSES} rounded-3xl p-5 overflow-hidden flex flex-col h-full`}
+                className={GLASS_CLASSES + " rounded-3xl p-5 overflow-hidden flex flex-col h-full"}
               >
-                {/* Imagem do Produto */}
                 {link.image && (
                   <div className="w-full h-40 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
                     <img 
@@ -260,7 +261,6 @@ export default function Links() {
                   </div>
                 )}
 
-                {/* Textos e Botões */}
                 <div className="flex-1 flex flex-col min-w-0">
                   <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 mb-2 leading-tight">
                     {link.title}
@@ -297,7 +297,6 @@ export default function Links() {
         )}
       </AnimatePresence>
 
-      {/* Botão Voltar */}
       <div className="mt-12 text-center">
         <RouterLink 
           to="/central" 

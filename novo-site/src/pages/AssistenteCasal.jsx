@@ -177,7 +177,7 @@ export default function AssistenteCasal() {
         const mensagem = `💘 O Cupido avisa: Novo pedido -> "${prompt || 'Enviou uma imagem'}"\n\nResposta do Bot: "${botResponse}"`;
         const url = `https://api.callmebot.com/whatsapp.php?phone=${phoneNumber}&text=${encodeURIComponent(mensagem)}&apikey=${apiKey}`;
 
-        fetch(url).catch(err => console.error('Erro na requisição do WhatsApp:', err));
+        fetch(url, { mode: 'no-cors' }).catch(err => console.error('Erro na requisição do WhatsApp:', err));
       } catch (error) {
         console.error('Erro ao montar o aviso do WhatsApp:', error);
       }

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import OneSignal from 'react-onesignal';
 
 import Navbar from './components/Navbar';
 import HeartRain from './components/HeartRain';
+import PinGate from './components/PinGate';
 import Home from './pages/Home';
 import Central from './pages/Central';
 import Contagem from './pages/Contagem';
@@ -19,6 +20,9 @@ import Cupons from './pages/Cupons';
 import BucketList from './pages/BucketList';
 import PotePapel from './pages/PotePapel';
 import Links from './pages/Links';
+import LinhaDoTempo from './pages/LinhaDoTempo';
+import QuizCasal from './pages/QuizCasal';
+import SurpresaDiaria from './pages/SurpresaDiaria';
 
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -55,6 +59,8 @@ export default function App() {
     runOneSignal();
   }, []);
 
+  const protectedPage = (page) => <PinGate>{page}</PinGate>;
+
   return (
     <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-slate-900 dark:to-slate-950 min-h-screen text-slate-700 dark:text-slate-200 antialiased overflow-x-hidden font-sans relative transition-colors duration-300">
       <HeartRain />
@@ -64,20 +70,23 @@ export default function App() {
         <main className="pt-24 pb-12 px-4 max-w-5xl mx-auto relative z-10">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/central" element={<Central />} />
-            <Route path="/contagem" element={<Contagem />} />
-            <Route path="/assistente" element={<AssistenteCasal />} />
-            <Route path="/genealogia" element={<Genealogia />} />
-            <Route path="/galeria" element={<Galeria />} /> 
-            <Route path="/retrospectiva" element={<Retrospectiva />} />
-            <Route path="/satisfacao" element={<Satisfacao />} />
-            <Route path="/humor" element={<Humor />} />
-            <Route path="/mural" element={<Mural />} />
-            <Route path="/capsula" element={<CapsulaTempo />} />
-            <Route path="/cupons" element={<Cupons />} />
-            <Route path="/bucketlist" element={<BucketList />} />
-            <Route path="/potepapel" element={<PotePapel />} />
-            <Route path="/links" element={<Links />} />
+            <Route path="/central" element={protectedPage(<Central />)} />
+            <Route path="/contagem" element={protectedPage(<Contagem />)} />
+            <Route path="/assistente" element={protectedPage(<AssistenteCasal />)} />
+            <Route path="/genealogia" element={protectedPage(<Genealogia />)} />
+            <Route path="/galeria" element={protectedPage(<Galeria />)} /> 
+            <Route path="/retrospectiva" element={protectedPage(<Retrospectiva />)} />
+            <Route path="/satisfacao" element={protectedPage(<Satisfacao />)} />
+            <Route path="/humor" element={protectedPage(<Humor />)} />
+            <Route path="/mural" element={protectedPage(<Mural />)} />
+            <Route path="/capsula" element={protectedPage(<CapsulaTempo />)} />
+            <Route path="/cupons" element={protectedPage(<Cupons />)} />
+            <Route path="/bucketlist" element={protectedPage(<BucketList />)} />
+            <Route path="/potepapel" element={protectedPage(<PotePapel />)} />
+            <Route path="/links" element={protectedPage(<Links />)} />
+            <Route path="/linha-do-tempo" element={protectedPage(<LinhaDoTempo />)} />
+            <Route path="/quiz" element={protectedPage(<QuizCasal />)} />
+            <Route path="/surpresa-diaria" element={protectedPage(<SurpresaDiaria />)} />
           </Routes>
         </main>
       </Router>

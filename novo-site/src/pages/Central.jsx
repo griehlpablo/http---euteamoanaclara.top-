@@ -1,18 +1,20 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Clock, ImageIcon, Mail, MessageCircleHeart, ArrowLeft, 
+  Clock, ImageIcon, MessageCircleHeart, ArrowLeft, 
   TrendingUp, GitMerge, Link as LinkIcon, Sparkles, 
-  SmilePlus, CalendarHeart, Film, Music, CheckSquare, 
-  Gift, HelpCircle, Bot, Activity, Ticket, ListChecks 
+  SmilePlus, Gift, Activity, Ticket, ListChecks,
+  CalendarDays, Gamepad2, LockKeyhole
 } from 'lucide-react';
+import { ACCESS_STORAGE_KEY } from '../config/access';
 
 const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg";
 
 const cards = [
   { path: "/contagem", icon: Clock, title: "O Nosso Tempo", desc: "Contagem oficial desde o início." },
-  { path: "/carta", icon: Mail, title: "Carta de Amor", desc: "Palavras vindas do coração." },
+  { path: "/linha-do-tempo", icon: CalendarDays, title: "Linha do Tempo", desc: "Os capítulos mais bonitos da nossa história." },
+  { path: "/quiz", icon: Gamepad2, title: "Quiz do Casal", desc: "Perguntas para testar a sintonia." },
+  { path: "/surpresa-diaria", icon: Gift, title: "Surpresa Diária", desc: "Uma missão, cupom ou carinho por dia." },
   { path: "/galeria", icon: ImageIcon, title: "Memórias", desc: "Os nossos melhores momentos." },
   { path: "/assistente", icon: Sparkles, title: "Cupido Virtual ✨", desc: "IA para dicas de encontros." },
   { path: "/retrospectiva", icon: TrendingUp, title: "Retrospectiva", desc: "A nossa história em números." },
@@ -30,6 +32,11 @@ const cards = [
 ];
 
 export default function Central() {
+  const lockAgain = () => {
+    localStorage.removeItem(ACCESS_STORAGE_KEY);
+    window.dispatchEvent(new Event('site-lock'));
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative z-10 pt-6">
       <div className="text-center mb-12">
@@ -47,10 +54,13 @@ export default function Central() {
           </Link>
         ))}
       </div>
-      <div className="mt-12 text-center">
+      <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
         <Link to="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors text-xs font-bold uppercase tracking-widest bg-white/40 px-6 py-3 rounded-full backdrop-blur-sm">
           <ArrowLeft className="w-4 h-4" /> Voltar ao Início
         </Link>
+        <button onClick={lockAgain} className="inline-flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors text-xs font-bold uppercase tracking-widest bg-white/40 px-6 py-3 rounded-full backdrop-blur-sm">
+          <LockKeyhole className="w-4 h-4" /> Bloquear novamente
+        </button>
       </div>
     </motion.div>
   );

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../supabase';
 import OneSignal from 'react-onesignal';
+import { sendPartnerNotification } from '../services/notifications';
 
 const LEVELS = {
   perfect: { 
@@ -107,31 +108,22 @@ export default function Satisfacao() {
   }, []);
 
   const enviarNotificacaoProAmor = async (levelKey, msgManual = null) => {
-    const APP_ID = "5d8db7f8-b110-42af-a94d-96655cccd6ff"; 
-    const REST_API_KEY = "os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q"; 
     const alvo = currentUser === 'pablo' ? 'ana' : 'pablo';
     const meuNome = currentUser === 'pablo' ? 'Pablo' : 'Ana Clara';
     
     // Se tiver msgManual (como na fiança), envia ela. Senão, envia o resumo do nível.
     const msg = msgManual || `${meuNome} diz: ${LEVELS[levelKey].resumo}`;
 
-    const body = {
-      app_id: APP_ID,
-      filters: [{ field: "tag", key: "usuario", relation: "=", value: alvo }],
-      headings: { en: "Termômetro do Amor 🌡️", pt: "Termômetro do Amor 🌡️" },
-      contents: { en: msg, pt: msg }
-    };
-
-    try {
-      await fetch("https://onesignal.com/api/v1/notifications", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          "Authorization": `Basic ${REST_API_KEY}` 
-        },
-        body: JSON.stringify(body)
-      });
-    } catch (error) { console.error(error); }
+    await sendPartnerNotification({
+      targetUser: alvo,
+      title: "Termômetro do Amor 🌡️",
+      message: msg,
+      data: {
+        source: 'satisfacao',
+        author: currentUser,
+        level: levelKey
+      }
+    });
   };
 
   const handleVote = async (levelKey) => {

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../supabase';
 import OneSignal from 'react-onesignal';
+import { sendPartnerNotification } from '../services/notifications';
 
 export default function Humor() {
   const [currentUser, setCurrentUser] = useState(localStorage.getItem('satCurrentUser') || null);
@@ -157,34 +158,18 @@ export default function Humor() {
 
   // FUNÇÃO DE NOTIFICAÇÃO (ENVIA RESUMIDO)
   const dispararNotificacaoRadar = async () => {
-    const APP_ID = "5d8db7f8-b110-42af-a94d-96655cccd6ff"; 
-    const REST_API_KEY = "os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q"; 
-    
     // Pega as frases baseadas no MEU humor atual para avisar o outro
     const info = calcularManual(myMood, myName, currentUser === 'ana');
-    
-    const body = {
-      app_id: APP_ID,
-      filters: [{ field: "tag", key: "usuario", relation: "=", value: targetUser }],
-      headings: { en: info.titulo, pt: info.titulo },
-      contents: { 
-        en: info.resumo, 
-        pt: info.resumo 
-      }
-    };
 
-    try {
-      await fetch("https://onesignal.com/api/v1/notifications", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          "Authorization": `Basic ${REST_API_KEY}` 
-        },
-        body: JSON.stringify(body)
-      });
-    } catch (error) {
-      console.error("Erro ao enviar notificação", error);
-    }
+    await sendPartnerNotification({
+      targetUser,
+      title: info.titulo,
+      message: info.resumo,
+      data: {
+        source: 'humor',
+        author: currentUser
+      }
+    });
   };
 
   const manual = calcularManual(partnerMood, targetName, targetUser === 'ana');

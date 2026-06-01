@@ -4,13 +4,12 @@ import { Send, LogOut, Heart, Camera, Smile, X, Trash2 } from 'lucide-react';
 import { supabase } from '../supabase';
 import OneSignal from 'react-onesignal';
 import EmojiPicker from 'emoji-picker-react';
+import { sendPartnerNotification } from '../services/notifications';
 
 // ==========================================
 // CONSTANTES
 // ==========================================
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
-const ONESIGNAL_APP_ID = '5d8db7f8-b110-42af-a94d-96655cccd6ff';
-const ONESIGNAL_API_KEY = 'os_v2_app_lwg3p6frcbbk7kknszsvztgw75j7gz65b2revye5nxv4rpknt7dwlwguahwat2arasb4ug2wnflzlxmdfiugzywmnqckyyyz2j7th5q';
 
 // ==========================================
 // USER PROFILES
@@ -89,40 +88,6 @@ function AvatarWithFallback({ userHandle, size = 12 }) {
       )}
     </div>
   );
-}
-
-// ==========================================
-// HELPER: Enviar Notificação OneSignal 
-// ==========================================
-async function notifyPartner(currentUserHandle, messagePreview) {
-  const partnerTag = currentUserHandle === '@griehl_' ? 'ana' : 'pablo';
-  const currentProfile = USER_PROFILES[currentUserHandle];
-
-  if (!ONESIGNAL_API_KEY) return;
-
-  try {
-    await fetch('https://onesignal.com/api/v1/notifications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${ONESIGNAL_API_KEY}`
-      },
-      body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
-        filters: [{ field: 'tag', key: 'usuario', relation: '=', value: partnerTag }],
-        headings: {
-          en: 'Novo Tweet no Mural! ❤️',
-          pt: 'Novo Tweet no Mural! ❤️'
-        },
-        contents: {
-          en: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`,
-          pt: `${currentProfile?.nomeExibicao || currentUserHandle} postou: "${messagePreview}"`
-        }
-      })
-    });
-  } catch (error) {
-    console.error('Erro ao enviar notificação via OneSignal:', error);
-  }
 }
 
 // ==========================================
@@ -268,7 +233,18 @@ export default function Mural() {
       clearImage();
 
       const messagePreview = textToSend.substring(0, 50) || '📸 Imagem enviada';
-      await notifyPartner(currentUser, messagePreview);
+      const partnerTag = currentUser === '@griehl_' ? 'ana' : 'pablo';
+      const currentProfile = USER_PROFILES[currentUser];
+
+      await sendPartnerNotification({
+        targetUser: partnerTag,
+        title: 'Novo Tweet no Mural! ❤️',
+        message: `${currentProfile?.nomeExibicao || currentUser} postou: "${messagePreview}"`,
+        data: {
+          source: 'mural',
+          author: currentUser
+        }
+      });
     } catch (error) {
       console.error('Erro ao publicar post:', error);
       alert('Erro ao publicar. Tente novamente.');

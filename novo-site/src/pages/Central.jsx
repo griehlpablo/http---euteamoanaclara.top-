@@ -4,7 +4,7 @@ import {
   Clock, ImageIcon, MessageCircleHeart, ArrowLeft, 
   TrendingUp, GitMerge, Link as LinkIcon, Sparkles, 
   SmilePlus, Gift, Activity, Ticket, ListChecks,
-  CalendarDays, Gamepad2, LockKeyhole
+  CalendarDays, Gamepad2, LockKeyhole, HeartPulse
 } from 'lucide-react';
 import { ACCESS_STORAGE_KEY } from '../config/access';
 
@@ -15,6 +15,7 @@ const cards = [
   { path: "/linha-do-tempo", icon: CalendarDays, title: "Linha do Tempo", desc: "Os capítulos mais bonitos da nossa história." },
   { path: "/quiz", icon: Gamepad2, title: "Quiz do Casal", desc: "Perguntas para testar a sintonia." },
   { path: "/surpresa-diaria", icon: Gift, title: "Surpresa Diária", desc: "Uma missão, cupom ou carinho por dia." },
+  { path: "/dieta", icon: HeartPulse, title: "Plano do Casal", desc: "Dieta, rotina, treino e água do dia." },
   { path: "/galeria", icon: ImageIcon, title: "Memórias", desc: "Os nossos melhores momentos." },
   { path: "/assistente", icon: Sparkles, title: "Cupido Virtual ✨", desc: "IA para dicas de encontros." },
   { path: "/retrospectiva", icon: TrendingUp, title: "Retrospectiva", desc: "A nossa história em números." },

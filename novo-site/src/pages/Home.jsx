@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Sparkles, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { ArrowRight, X, Sparkles, Play, Pause, SkipBack, SkipForward, HeartPulse } from 'lucide-react';
 
 const glassClasses = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
 const YOUTUBE_VIDEO_ID = 'TJrY-iqxopY';
@@ -508,6 +508,13 @@ const Home = () => {
             className="inline-flex items-center justify-center rounded-full bg-rose-500 px-10 py-4 text-white font-bold shadow-lg hover:bg-rose-600 transition-all"
           >
             Entrar no Nosso Mundo
+          </Link>
+
+          <Link
+            to="/dieta"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-cyan-700 font-bold border border-cyan-100 shadow-md hover:shadow-lg transition-all"
+          >
+            <HeartPulse size={18} /> Plano do Casal
           </Link>
 
           <button

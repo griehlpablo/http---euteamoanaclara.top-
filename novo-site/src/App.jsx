@@ -23,6 +23,7 @@ import Links from './pages/Links';
 import LinhaDoTempo from './pages/LinhaDoTempo';
 import QuizCasal from './pages/QuizCasal';
 import SurpresaDiaria from './pages/SurpresaDiaria';
+import Dieta from './pages/Dieta';
 
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -87,6 +88,7 @@ export default function App() {
             <Route path="/linha-do-tempo" element={protectedPage(<LinhaDoTempo />)} />
             <Route path="/quiz" element={protectedPage(<QuizCasal />)} />
             <Route path="/surpresa-diaria" element={protectedPage(<SurpresaDiaria />)} />
+            <Route path="/dieta" element={protectedPage(<Dieta />)} />
           </Routes>
         </main>
       </Router>

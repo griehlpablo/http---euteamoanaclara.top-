@@ -164,3 +164,221 @@ CREATE INDEX IF NOT EXISTS idx_cupons_created_at ON cupons(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_gallery_created_at ON gallery(created_at DESC);
 
 -- End of schema
+
+-- GENERAL SCHEMA REPAIR - SAFE TO RUN MULTIPLE TIMES
+-- Does not delete data. Does not touch humor/satisfacao tables.
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE IF NOT EXISTS chats (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  "createdAt" timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS mensagens (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  chat_id uuid,
+  role text,
+  content text,
+  text text,
+  image_url text,
+  "imageUrl" text,
+  file_type text,
+  "fileType" text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  "createdAt" timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  url text,
+  title text,
+  description text,
+  image text,
+  trust integer DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  timestamp timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS mural (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  content text,
+  text text,
+  author text,
+  image_url text,
+  "imageUrl" text,
+  likes text[] DEFAULT ARRAY[]::text[],
+  created_at timestamptz NOT NULL DEFAULT now(),
+  timestamp timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS bucketlist (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  content text,
+  text text,
+  completed boolean DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  "createdAt" timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS capsula (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  message text,
+  unlock_date timestamptz,
+  "unlockDate" timestamptz,
+  unlocked boolean DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  "createdAt" timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS potepapel (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  message text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  "createdAt" timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS cupons (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text,
+  description text,
+  reward text,
+  redeemed boolean DEFAULT false,
+  source text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  "createdAt" timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS gallery (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  url text,
+  album text DEFAULT 'Memórias',
+  title text,
+  description text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS "createdAt" timestamptz DEFAULT now();
+ALTER TABLE chats ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE chats ALTER COLUMN "createdAt" SET DEFAULT now();
+
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS chat_id uuid;
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS role text;
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS content text;
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS text text;
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS "imageUrl" text;
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS file_type text;
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS "fileType" text;
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE mensagens ADD COLUMN IF NOT EXISTS "createdAt" timestamptz DEFAULT now();
+ALTER TABLE mensagens ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE mensagens ALTER COLUMN "createdAt" SET DEFAULT now();
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'mensagens_chat_id_fkey'
+      AND conrelid = 'mensagens'::regclass
+  ) THEN
+    ALTER TABLE mensagens
+      ADD CONSTRAINT mensagens_chat_id_fkey
+      FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Skipping mensagens.chat_id foreign key: %', SQLERRM;
+END $$;
+
+ALTER TABLE links ADD COLUMN IF NOT EXISTS url text;
+ALTER TABLE links ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE links ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE links ADD COLUMN IF NOT EXISTS image text;
+ALTER TABLE links ADD COLUMN IF NOT EXISTS trust integer DEFAULT 0;
+ALTER TABLE links ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE links ADD COLUMN IF NOT EXISTS timestamp timestamptz DEFAULT now();
+ALTER TABLE links ALTER COLUMN trust SET DEFAULT 0;
+ALTER TABLE links ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE links ALTER COLUMN timestamp SET DEFAULT now();
+
+ALTER TABLE mural ADD COLUMN IF NOT EXISTS content text;
+ALTER TABLE mural ADD COLUMN IF NOT EXISTS text text;
+ALTER TABLE mural ADD COLUMN IF NOT EXISTS author text;
+ALTER TABLE mural ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE mural ADD COLUMN IF NOT EXISTS "imageUrl" text;
+ALTER TABLE mural ADD COLUMN IF NOT EXISTS likes text[] DEFAULT ARRAY[]::text[];
+ALTER TABLE mural ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE mural ADD COLUMN IF NOT EXISTS timestamp timestamptz DEFAULT now();
+ALTER TABLE mural ALTER COLUMN likes SET DEFAULT ARRAY[]::text[];
+ALTER TABLE mural ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE mural ALTER COLUMN timestamp SET DEFAULT now();
+
+ALTER TABLE bucketlist ADD COLUMN IF NOT EXISTS content text;
+ALTER TABLE bucketlist ADD COLUMN IF NOT EXISTS text text;
+ALTER TABLE bucketlist ADD COLUMN IF NOT EXISTS completed boolean DEFAULT false;
+ALTER TABLE bucketlist ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE bucketlist ADD COLUMN IF NOT EXISTS "createdAt" timestamptz DEFAULT now();
+ALTER TABLE bucketlist ALTER COLUMN completed SET DEFAULT false;
+ALTER TABLE bucketlist ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE bucketlist ALTER COLUMN "createdAt" SET DEFAULT now();
+
+ALTER TABLE capsula ADD COLUMN IF NOT EXISTS message text;
+ALTER TABLE capsula ADD COLUMN IF NOT EXISTS unlock_date timestamptz;
+ALTER TABLE capsula ADD COLUMN IF NOT EXISTS "unlockDate" timestamptz;
+ALTER TABLE capsula ADD COLUMN IF NOT EXISTS unlocked boolean DEFAULT false;
+ALTER TABLE capsula ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE capsula ADD COLUMN IF NOT EXISTS "createdAt" timestamptz DEFAULT now();
+ALTER TABLE capsula ALTER COLUMN unlocked SET DEFAULT false;
+ALTER TABLE capsula ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE capsula ALTER COLUMN "createdAt" SET DEFAULT now();
+
+ALTER TABLE potepapel ADD COLUMN IF NOT EXISTS message text;
+ALTER TABLE potepapel ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE potepapel ADD COLUMN IF NOT EXISTS "createdAt" timestamptz DEFAULT now();
+ALTER TABLE potepapel ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE potepapel ALTER COLUMN "createdAt" SET DEFAULT now();
+
+ALTER TABLE cupons ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE cupons ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE cupons ADD COLUMN IF NOT EXISTS reward text;
+ALTER TABLE cupons ADD COLUMN IF NOT EXISTS redeemed boolean DEFAULT false;
+ALTER TABLE cupons ADD COLUMN IF NOT EXISTS source text;
+ALTER TABLE cupons ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE cupons ADD COLUMN IF NOT EXISTS "createdAt" timestamptz DEFAULT now();
+ALTER TABLE cupons ALTER COLUMN redeemed SET DEFAULT false;
+ALTER TABLE cupons ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE cupons ALTER COLUMN "createdAt" SET DEFAULT now();
+
+ALTER TABLE gallery ADD COLUMN IF NOT EXISTS url text;
+ALTER TABLE gallery ADD COLUMN IF NOT EXISTS album text DEFAULT 'Memórias';
+ALTER TABLE gallery ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE gallery ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE gallery ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE gallery ALTER COLUMN album SET DEFAULT 'Memórias';
+ALTER TABLE gallery ALTER COLUMN created_at SET DEFAULT now();
+
+CREATE INDEX IF NOT EXISTS idx_chats_created_at ON chats(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mensagens_chat_created_at ON mensagens(chat_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_links_created_at ON links(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mural_created_at ON mural(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bucketlist_created_at ON bucketlist(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_capsula_created_at ON capsula(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_potepapel_created_at ON potepapel(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cupons_created_at ON cupons(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gallery_created_at ON gallery(created_at DESC);
+
+ALTER TABLE IF EXISTS chats DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS mensagens DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS links DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS mural DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS bucketlist DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS capsula DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS potepapel DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS cupons DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS gallery DISABLE ROW LEVEL SECURITY;

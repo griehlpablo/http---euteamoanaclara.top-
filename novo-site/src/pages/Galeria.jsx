@@ -1,35 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Heart, Maximize2, X, ChevronLeft, ChevronRight, Loader2, LayoutGrid, Image as ImageIcon } from 'lucide-react';
-import { ref, onValue } from 'firebase/database';
-import { rtdb } from '../firebase';
+import { supabase } from '../supabase';
 
 const albums = ['Todos', 'Memórias', 'Nós dois', 'Datas especiais', 'Prints', 'Família', 'Viagens'];
-
-const findImageLink = (data) => {
-  if (typeof data === 'string') {
-    if (data.startsWith('http') || data.startsWith('data:image')) return data;
-    return null;
-  }
-  if (data && typeof data === 'object') {
-    if (typeof data.url === 'string') return data.url;
-    if (typeof data.image === 'string') return data.image;
-    if (typeof data.imageUrl === 'string') return data.imageUrl;
-    if (typeof data.link === 'string') return data.link;
-    for (let key in data) {
-      const found = findImageLink(data[key]);
-      if (found) return found;
-    }
-  }
-  return null;
-};
-
-const findAlbum = (data) => {
-  if (data && typeof data === 'object') {
-    return data.album || data.category || data.categoria || 'Memórias';
-  }
-  return 'Memórias';
-};
 
 export default function Galeria() {
   const [fotos, setFotos] = useState([]);
@@ -42,24 +16,41 @@ export default function Galeria() {
   const [viewMode, setViewMode] = useState('carousel');
 
   useEffect(() => {
-    const galleryRef = ref(rtdb, 'gallery/pablo-ana');
-    const unsubscribe = onValue(galleryRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const listaBruta = Object.values(data);
-        const listaTratada = listaBruta
-          .map(item => ({
-            url: findImageLink(item),
-            album: findAlbum(item),
-          }))
-          .filter(item => typeof item.url === 'string' && item.url.length > 10); 
-        
-        setFotos(listaTratada.reverse());
-      }
-      setLoading(false);
-    });
+    const loadGallery = async () => {
+      const fallback = [
+        { url: '/images/us_beach.jpg', album: 'Viagens' },
+        { url: '/images/us_zoo.jpg', album: 'Nós dois' },
+        { url: '/images/wedding.jpg', album: 'Datas especiais' },
+        { url: '/images/ana.jpeg', album: 'Memórias' },
+        { url: '/images/pablo.jpeg', album: 'Memórias' }
+      ];
 
-    return () => unsubscribe();
+      try {
+        const { data, error } = await supabase
+          .from('gallery')
+          .select('url, album')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Erro ao carregar galeria:', error);
+          setFotos(fallback);
+        } else if (data && data.length > 0) {
+          const lista = data
+            .map(item => ({ url: item.url, album: item.album || 'Memórias' }))
+            .filter(item => typeof item.url === 'string' && item.url.length > 10);
+          setFotos(lista.length > 0 ? lista : fallback);
+        } else {
+          setFotos(fallback);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar galeria:', error);
+        setFotos(fallback);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGallery();
   }, []);
 
   const filteredFotos = activeAlbum === 'Todos'

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { ref, onValue } from 'firebase/database';
-import { rtdb } from '../firebase'; 
+import { supabase } from '../supabase';
 
 export default function Retrospectiva() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -49,36 +48,39 @@ export default function Retrospectiva() {
 
   // 2. BUSCAR FOTOS DA GALERIA
   useEffect(() => {
-    const findImageLink = (data) => {
-      if (typeof data === 'string') {
-        if (data.startsWith('http') || data.startsWith('data:image')) return data;
-        return null;
-      }
-      if (data && typeof data === 'object') {
-        if (typeof data.url === 'string') return data.url;
-        if (typeof data.image === 'string') return data.image;
-        if (typeof data.imageUrl === 'string') return data.imageUrl;
-        if (typeof data.link === 'string') return data.link;
-        for (let key in data) {
-          const found = findImageLink(data[key]);
-          if (found) return found;
+    const fallbackFotos = [
+      '/images/us_beach.jpg',
+      '/images/us_zoo.jpg',
+      '/images/wedding.jpg',
+      '/images/ana.jpeg',
+      '/images/pablo.jpeg'
+    ];
+
+    const loadFotos = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('gallery')
+          .select('url')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Erro ao carregar fotos da retrospectiva:', error);
+          setFotos(fallbackFotos);
+        } else if (data && data.length > 0) {
+          const lista = data
+            .map(item => item.url)
+            .filter(url => typeof url === 'string' && url.length > 10);
+          setFotos(lista.length > 0 ? lista.sort(() => Math.random() - 0.5) : fallbackFotos);
+        } else {
+          setFotos(fallbackFotos);
         }
+      } catch (error) {
+        console.error('Erro ao carregar fotos da retrospectiva:', error);
+        setFotos(fallbackFotos);
       }
-      return null;
     };
 
-    const galleryRef = ref(rtdb, 'gallery/pablo-ana');
-    onValue(galleryRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const listaBruta = Object.values(data);
-        const listaTratada = listaBruta
-          .map(item => findImageLink(item))
-          .filter(url => typeof url === 'string' && url.length > 10); 
-        
-        setFotos(listaTratada.sort(() => Math.random() - 0.5));
-      }
-    });
+    loadFotos();
   }, []);
 
   // NOVO: PRÉ-CARREGAMENTO (Image Preloading)
@@ -294,7 +296,7 @@ export default function Retrospectiva() {
                 2025
               </div>
 
-              {/* FOTO CENTRAL COM O EFEITO SLIDESHOW DO FIREBASE */}
+              {/* FOTO CENTRAL COM O EFEITO SLIDESHOW */}
               <div className="w-full aspect-square bg-[#90A8FF] border-4 border-black mb-6 overflow-hidden relative group shadow-inner">
                  {fotos.length > 0 ? (
                    <img 

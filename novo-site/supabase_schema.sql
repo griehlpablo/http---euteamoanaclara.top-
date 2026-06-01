@@ -76,6 +76,16 @@ CREATE TABLE IF NOT EXISTS cupons (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Table: gallery (Galeria de fotos para páginas de imagem)
+CREATE TABLE IF NOT EXISTS gallery (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  url text NOT NULL,
+  album text DEFAULT 'Memórias',
+  title text,
+  description text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- Table: humor (Radar de Humor - armazena carencia, estresse, energia)
 CREATE TABLE IF NOT EXISTS humor (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -138,6 +148,7 @@ ALTER TABLE IF EXISTS bucketlist DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS capsula DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS potepapel DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS cupons DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS gallery DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS humor DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS satisfacao_current DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS satisfacao_notes DISABLE ROW LEVEL SECURITY;
@@ -150,5 +161,6 @@ CREATE INDEX IF NOT EXISTS idx_links_created_at ON links(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_mural_created_at ON mural(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bucketlist_created_at ON bucketlist(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_cupons_created_at ON cupons(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gallery_created_at ON gallery(created_at DESC);
 
 -- End of schema

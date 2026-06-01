@@ -90,7 +90,7 @@ export default function AssistenteCasal() {
     if ((!prompt.trim() && !selectedFile) || isLoading || !activeChatId) return;
 
     setIsLoading(true);
-    let imageUrlForFirebase = null, base64ForGemini = null, mimeTypeForGemini = null;
+    let imageUrl = null, base64ForGemini = null, mimeTypeForGemini = null;
 
     if (selectedFile) {
       base64ForGemini = await fileToBase64(selectedFile);
@@ -102,7 +102,7 @@ export default function AssistenteCasal() {
         console.error('Erro ao fazer upload do arquivo:', uploadError);
       } else {
         const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath);
-        imageUrlForFirebase = publicData?.publicUrl || null;
+        imageUrl = publicData?.publicUrl || null;
       }
     }
 
@@ -116,7 +116,7 @@ export default function AssistenteCasal() {
         chat_id: activeChatId,
         role: 'user',
         text: prompt || "Enviou um arquivo",
-        imageUrl: imageUrlForFirebase,
+        imageUrl,
         fileType: mimeTypeForGemini,
         createdAt: new Date().toISOString()
       }

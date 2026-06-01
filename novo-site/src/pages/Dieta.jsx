@@ -78,6 +78,33 @@ const DEFAULT_REMINDER_SETTINGS = {
   },
 };
 
+const DEVICE_NOTIFICATION_STORAGE_KEY = 'healthNotificationDeviceSettings';
+const NOTIFICATION_DEBUG_LOG_KEY = 'notificationDebugLog';
+const LAST_NOTIFICATION_AT_KEY = 'healthNotificationLastAt';
+const DEFAULT_DEVICE_NOTIFICATION_SETTINGS = {
+  enabled: true,
+  people: {
+    pablo: true,
+    ana_clara: true,
+  },
+  water: true,
+  meals: true,
+  goals: true,
+  workout: true,
+  quietHours: {
+    enabled: true,
+    start: '23:30',
+    end: '07:00',
+  },
+};
+const NOTIFICATION_COOLDOWNS = {
+  water: 30,
+  meals: 60,
+  goals: 60,
+  workout: 120,
+  test: 0,
+};
+
 const FOOD_CATEGORIES = [
   ['caseiro', 'caseiro/comida de verdade'],
   ['processado', 'processado'],
@@ -553,6 +580,70 @@ function timeToMinutes(value) {
   return (hours || 0) * 60 + (minutes || 0);
 }
 
+function cloneDeviceNotificationSettings(settings = DEFAULT_DEVICE_NOTIFICATION_SETTINGS) {
+  return {
+    ...DEFAULT_DEVICE_NOTIFICATION_SETTINGS,
+    ...settings,
+    people: {
+      ...DEFAULT_DEVICE_NOTIFICATION_SETTINGS.people,
+      ...(settings.people || {}),
+    },
+    quietHours: {
+      ...DEFAULT_DEVICE_NOTIFICATION_SETTINGS.quietHours,
+      ...(settings.quietHours || {}),
+    },
+  };
+}
+
+function loadDeviceNotificationSettings() {
+  try {
+    return cloneDeviceNotificationSettings(JSON.parse(localStorage.getItem(DEVICE_NOTIFICATION_STORAGE_KEY) || 'null') || DEFAULT_DEVICE_NOTIFICATION_SETTINGS);
+  } catch {
+    return cloneDeviceNotificationSettings();
+  }
+}
+
+function saveDeviceNotificationSettings(settings) {
+  const next = cloneDeviceNotificationSettings(settings);
+  localStorage.setItem(DEVICE_NOTIFICATION_STORAGE_KEY, JSON.stringify(next));
+  return next;
+}
+
+function isInsideQuietHours(quietHours, now = new Date()) {
+  if (!quietHours?.enabled) return false;
+  const start = timeToMinutes(quietHours.start);
+  const end = timeToMinutes(quietHours.end);
+  const current = now.getHours() * 60 + now.getMinutes();
+  if (start === end) return false;
+  if (start < end) return current >= start && current < end;
+  return current >= start || current < end;
+}
+
+function readNotificationDebugLog() {
+  try {
+    return JSON.parse(localStorage.getItem(NOTIFICATION_DEBUG_LOG_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function readLastNotificationAt() {
+  try {
+    return JSON.parse(localStorage.getItem(LAST_NOTIFICATION_AT_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function formatEnabledPeople(settings) {
+  if (!settings.enabled) return 'Notificacoes desativadas neste dispositivo';
+  const enabled = Object.entries(settings.people || {})
+    .filter(([, value]) => value)
+    .map(([person]) => PEOPLE[person]?.short)
+    .filter(Boolean);
+  return enabled.length ? `Este dispositivo recebe notificacoes de: ${enabled.join(' e ')}` : 'Nenhuma pessoa ativada neste dispositivo';
+}
+
 function isInsideReminderWindow(settings, now = new Date()) {
   const current = now.getHours() * 60 + now.getMinutes();
   return current >= timeToMinutes(settings.startTime) && current <= timeToMinutes(settings.endTime);
@@ -765,6 +856,13 @@ export default function Dieta() {
   const [dirtyVersion, setDirtyVersion] = useState(0);
   const [notificationStatus, setNotificationStatus] = useState('idle');
   const [lastReminder, setLastReminder] = useState(null);
+  const [lastBlockedNotification, setLastBlockedNotification] = useState(null);
+  const [notificationDebugLog, setNotificationDebugLog] = useState(() => readNotificationDebugLog());
+  const [deviceNotificationSettings, setDeviceNotificationSettings] = useState(() => loadDeviceNotificationSettings());
+  const [deviceSetupNeeded, setDeviceSetupNeeded] = useState(() => !localStorage.getItem(DEVICE_NOTIFICATION_STORAGE_KEY));
+  const [testCountdown, setTestCountdown] = useState('');
+  const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
+  const [isStandalonePwa] = useState(() => Boolean(window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone));
   const [settingsSaveState, setSettingsSaveState] = useState('local');
   const [actionMessage, setActionMessage] = useState('');
   const [reminderSettings, setReminderSettings] = useState(() => {
@@ -777,6 +875,10 @@ export default function Dieta() {
   const didLoadRef = useRef(false);
   const saveTimerRef = useRef(null);
   const reminderMinuteRef = useRef('');
+  const waterReminderTimersRef = useRef([]);
+  const timedReminderIntervalRef = useRef(null);
+  const testNotificationTimersRef = useRef([]);
+  const notifyUserRef = useRef(null);
 
   const monthDays = useMemo(() => getMonthDays(monthDate), [monthDate]);
 
@@ -899,6 +1001,13 @@ export default function Dieta() {
   }, []);
 
   useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.ready
+      .then(() => setServiceWorkerReady(true))
+      .catch(() => setServiceWorkerReady(false));
+  }, []);
+
+  useEffect(() => {
     if (!didLoadRef.current || dirtyVersion === 0) return;
     window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => {
@@ -992,6 +1101,8 @@ export default function Dieta() {
   const history = getMonthHistory(logsByDate, activePerson);
   const streak = getStreak(logsByDate);
   const dayScore = getDayScore(activeLog, activeTotals);
+  const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
+  const deviceStatusText = formatEnabledPeople(deviceNotificationSettings);
 
   async function persistReminderSettings(nextSettings) {
     const payload = Object.entries(nextSettings).map(([person, settings]) => settingsToRow(person, settings));
@@ -1014,6 +1125,70 @@ export default function Dieta() {
       persistReminderSettings(next);
       return next;
     });
+  }
+
+  function updateDeviceNotificationSetting(patch) {
+    setDeviceNotificationSettings((previous) => {
+      const next = saveDeviceNotificationSettings({
+        ...previous,
+        ...patch,
+        people: {
+          ...previous.people,
+          ...(patch.people || {}),
+        },
+        quietHours: {
+          ...previous.quietHours,
+          ...(patch.quietHours || {}),
+        },
+      });
+      setDeviceSetupNeeded(false);
+      return next;
+    });
+  }
+
+  function chooseDeviceOwner(mode) {
+    const people = {
+      pablo: mode === 'pablo' || mode === 'both',
+      ana_clara: mode === 'ana_clara' || mode === 'both',
+    };
+    updateDeviceNotificationSetting({ enabled: true, people });
+    setActionMessage('Preferencia deste dispositivo salva.');
+  }
+
+  function logNotificationEvent(event) {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      ...event,
+    };
+    const next = [entry, ...readNotificationDebugLog()].slice(0, 20);
+    localStorage.setItem(NOTIFICATION_DEBUG_LOG_KEY, JSON.stringify(next));
+    setNotificationDebugLog(next);
+    if (entry.action === 'sent') setLastReminder({ title: entry.title, body: entry.reason, time: new Date(entry.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) });
+    if (entry.action === 'blocked' || entry.action === 'error') setLastBlockedNotification(entry);
+    return entry;
+  }
+
+  function shouldNotify(person, type, options = {}) {
+    const settings = deviceNotificationSettings;
+    if (!settings.enabled) return { ok: false, reason: 'Notificacoes desativadas neste dispositivo' };
+    if (!settings.people?.[person]) return { ok: false, reason: `${PEOPLE[person]?.short || person} nao esta ativado neste dispositivo` };
+    if (type === 'water' && !settings.water) return { ok: false, reason: 'Tipo agua desativado' };
+    if (type === 'meals' && !settings.meals) return { ok: false, reason: 'Tipo refeicoes desativado' };
+    if (type === 'goals' && !settings.goals) return { ok: false, reason: 'Tipo metas desativado' };
+    if (type === 'workout' && !settings.workout) return { ok: false, reason: 'Tipo treino desativado' };
+    if (!options.ignoreQuietHours && isInsideQuietHours(settings.quietHours)) return { ok: false, reason: 'Horario silencioso' };
+    if (!('Notification' in window)) return { ok: false, reason: 'Este navegador nao suporta notificacoes web' };
+    if (Notification.permission !== 'granted') return { ok: false, reason: 'Permissao do navegador nao concedida' };
+
+    const cooldownMinutes = options.ignoreCooldown ? 0 : NOTIFICATION_COOLDOWNS[type] ?? 60;
+    const lastAt = readLastNotificationAt();
+    const cooldownKey = `${person}:${type}`;
+    const previous = lastAt[cooldownKey] ? new Date(lastAt[cooldownKey]).getTime() : 0;
+    if (cooldownMinutes && previous && Date.now() - previous < cooldownMinutes * 60 * 1000) {
+      return { ok: false, reason: `Cooldown ativo para ${type}` };
+    }
+
+    return { ok: true, reason: 'ok' };
   }
 
   async function activateReminders() {
@@ -1040,12 +1215,50 @@ export default function Dieta() {
     }
   }
 
-  function showDietNotification(title, body) {
-    setLastReminder({ title, body, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) });
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  function notifyUser(person, type, title, body, options = {}) {
+    const check = shouldNotify(person, type, options);
+    if (!check.ok) {
+      const reason = `Bloqueada: ${check.reason}`;
+      logNotificationEvent({ person, type, action: 'blocked', title, reason });
+      setActionMessage(reason);
+      return false;
+    }
+
+    const lastAt = readLastNotificationAt();
+    lastAt[`${person}:${type}`] = new Date().toISOString();
+    localStorage.setItem(LAST_NOTIFICATION_AT_KEY, JSON.stringify(lastAt));
+
     navigator.serviceWorker?.ready
-      ?.then((registration) => registration.showNotification(title, { body, icon: '/images/icon-192.png', tag: 'dieta-reminder' }))
+      ?.then((registration) => registration.showNotification(title, { body, icon: '/images/icon-192.png', tag: `dieta-${person}-${type}` }))
       .catch(() => new Notification(title, { body }));
+    logNotificationEvent({ person, type, action: 'sent', title, reason: body });
+    setActionMessage('Notificacao enviada com sucesso.');
+    return true;
+  }
+
+  function testNotification(person, type = 'test', delayMs = 0) {
+    const title = person === 'pablo' ? 'Teste - Pablo' : 'Teste - Ana Clara';
+    const body = person === 'pablo'
+      ? 'Se voce recebeu isso, os lembretes do Pablo estao funcionando neste dispositivo.'
+      : 'Se voce recebeu isso, os lembretes da Ana Clara estao funcionando neste dispositivo.';
+
+    if (!delayMs) {
+      notifyUserRef.current?.(person, type, title, body, { ignoreCooldown: true, ignoreQuietHours: true });
+      return;
+    }
+
+    setActionMessage(`Teste agendado. Aguarde ${Math.round(delayMs / 1000)} segundos.`);
+    let remaining = Math.round(delayMs / 1000);
+    setTestCountdown(`Notificacao de teste em ${remaining}s...`);
+    const countdown = window.setInterval(() => {
+      remaining -= 1;
+      setTestCountdown(remaining > 0 ? `Notificacao de teste em ${remaining}s...` : '');
+      if (remaining <= 0) window.clearInterval(countdown);
+    }, 1000);
+    const timer = window.setTimeout(() => {
+      notifyUserRef.current?.(person, type, 'Teste agendado da dieta', 'Se voce recebeu isso, o teste agendado funcionou neste dispositivo.', { ignoreCooldown: true, ignoreQuietHours: true });
+    }, delayMs);
+    testNotificationTimersRef.current.push(timer, countdown);
   }
 
   function addCustomItem(person, meal, custom = {}) {
@@ -1126,8 +1339,57 @@ export default function Dieta() {
     setActionMessage('Almoco anterior repetido.');
   }
 
+  function resetDeviceNotifications() {
+    const confirmed = window.confirm('Resetar notificacoes deste dispositivo? Isso limpa preferencias locais da dieta e cancela lembretes ativos desta sessao.');
+    if (!confirmed) return;
+
+    waterReminderTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    waterReminderTimersRef.current = [];
+    if (timedReminderIntervalRef.current) {
+      window.clearInterval(timedReminderIntervalRef.current);
+      timedReminderIntervalRef.current = null;
+    }
+    testNotificationTimersRef.current.forEach((timer) => {
+      window.clearTimeout(timer);
+      window.clearInterval(timer);
+    });
+    testNotificationTimersRef.current = [];
+    reminderMinuteRef.current = '';
+
+    [
+      DEVICE_NOTIFICATION_STORAGE_KEY,
+      NOTIFICATION_DEBUG_LOG_KEY,
+      LAST_NOTIFICATION_AT_KEY,
+      'diet-reminder-settings',
+      'diet-notification-diagnostics',
+      'diet-reminder-diagnostics',
+      'diet-last-reminder',
+      'diet-reminder-log',
+    ].forEach((key) => localStorage.removeItem(key));
+
+    setReminderSettings(DEFAULT_REMINDER_SETTINGS);
+    setDeviceNotificationSettings(cloneDeviceNotificationSettings());
+    setDeviceSetupNeeded(true);
+    setNotificationDebugLog([]);
+    setLastReminder(null);
+    setLastBlockedNotification(null);
+    setTestCountdown('');
+    setNotificationStatus('idle');
+    setSettingsSaveState('local');
+    setActionMessage('Notificacoes deste dispositivo resetadas. Recarregue a pagina para iniciar limpo.');
+
+    const reloadNow = window.confirm('Reset concluido. Recarregar a pagina agora?');
+    if (reloadNow) window.location.reload();
+  }
+
+  useEffect(() => {
+    notifyUserRef.current = notifyUser;
+  });
+
   useEffect(() => {
     if (selectedDate !== todayKey) return undefined;
+    waterReminderTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    waterReminderTimersRef.current = [];
 
     const timers = Object.entries(reminderSettings)
       .filter(([, settings]) => settings.enabled && settings.water)
@@ -1136,16 +1398,21 @@ export default function Dieta() {
         const interval = getSmartWaterInterval(log, settings);
         if (!interval) return null;
         return window.setTimeout(() => {
-          showDietNotification('Lembrete da dieta', buildReminderMessage(log));
+          notifyUserRef.current?.(person, 'water', 'Lembrete de agua', buildReminderMessage(log));
         }, interval * 60 * 1000);
       })
       .filter(Boolean);
+    waterReminderTimersRef.current = timers;
 
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      waterReminderTimersRef.current = [];
+    };
   }, [selectedDate, todayKey, selectedLogs, reminderSettings]);
 
   useEffect(() => {
     if (selectedDate !== todayKey) return undefined;
+    if (timedReminderIntervalRef.current) window.clearInterval(timedReminderIntervalRef.current);
     const interval = window.setInterval(() => {
       const now = new Date();
       const minuteKey = now.toISOString().slice(0, 16);
@@ -1158,13 +1425,26 @@ export default function Dieta() {
         const totals = calculateTotals(log);
         const message = getTimedReminder(log, totals, now);
         if (message && (settings.meals || settings.goals || settings.workout)) {
-          showDietNotification('Lembrete da dieta', message);
+          const type = message.toLowerCase().includes('treino') ? 'workout' : message.toLowerCase().includes('proteina') || message.toLowerCase().includes('caloria') ? 'goals' : 'meals';
+          notifyUserRef.current?.(person, type, 'Lembrete da dieta', message);
         }
       });
     }, 60 * 1000);
+    timedReminderIntervalRef.current = interval;
 
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearInterval(interval);
+      timedReminderIntervalRef.current = null;
+    };
   }, [selectedDate, todayKey, selectedLogs, reminderSettings]);
+
+  useEffect(() => () => {
+    testNotificationTimersRef.current.forEach((timer) => {
+      window.clearTimeout(timer);
+      window.clearInterval(timer);
+    });
+    testNotificationTimersRef.current = [];
+  }, []);
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-6xl space-y-6 pb-16">
@@ -1283,9 +1563,14 @@ export default function Dieta() {
               <h2 className="font-serif text-3xl font-bold text-slate-900">Configuracoes de lembretes</h2>
               <p className="text-sm text-slate-500">Usa o OneSignal ja configurado no site e lembretes locais enquanto esta pagina/PWA estiver aberta.</p>
             </div>
-            <button onClick={activateReminders} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-lg">
-              <Bell className="h-4 w-4" /> Ativar lembretes
-            </button>
+            <div className="flex flex-col gap-2 sm:items-end">
+              <button onClick={activateReminders} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-lg">
+                <Bell className="h-4 w-4" /> Ativar lembretes
+              </button>
+              <button onClick={resetDeviceNotifications} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 shadow-sm">
+                <RotateCcw className="h-4 w-4" /> Resetar notificacoes deste dispositivo
+              </button>
+            </div>
           </div>
 
           <div className="mb-4 rounded-2xl bg-white/75 p-4 text-xs font-bold leading-5 text-slate-600">
@@ -1298,6 +1583,128 @@ export default function Dieta() {
             <span className="mt-1 block text-slate-400">
               Preferencias: {settingsSaveState === 'supabase' ? 'salvas no Supabase' : 'salvas localmente; rode a migration para sincronizar no Supabase'}.
             </span>
+          </div>
+
+          <div className="mb-4 rounded-3xl border border-cyan-100 bg-cyan-50/70 p-4">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="font-serif text-2xl font-bold text-slate-900">Notificacoes deste dispositivo</h3>
+                <p className="text-xs font-bold text-cyan-900">{deviceStatusText}</p>
+              </div>
+              <button
+                onClick={() => updateDeviceNotificationSetting({ enabled: !deviceNotificationSettings.enabled })}
+                className={`rounded-2xl px-4 py-3 text-sm font-bold shadow-sm ${deviceNotificationSettings.enabled ? 'bg-red-50 text-red-700' : 'bg-slate-900 text-white'}`}
+              >
+                {deviceNotificationSettings.enabled ? 'Desativar notificacoes neste dispositivo' : 'Ativar notificacoes neste dispositivo'}
+              </button>
+            </div>
+
+            {deviceSetupNeeded && (
+              <div className="mb-4 rounded-2xl bg-white/85 p-3">
+                <p className="mb-2 text-sm font-bold text-slate-800">Quem usa este dispositivo?</p>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => chooseDeviceOwner('pablo')} className="rounded-2xl bg-cyan-600 px-4 py-2 text-sm font-bold text-white">Sou Pablo</button>
+                  <button onClick={() => chooseDeviceOwner('ana_clara')} className="rounded-2xl bg-pink-600 px-4 py-2 text-sm font-bold text-white">Sou Ana Clara</button>
+                  <button onClick={() => chooseDeviceOwner('both')} className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-bold text-white">Nos dois</button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl bg-white/80 p-3">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Pessoas</p>
+                {Object.keys(PEOPLE).map((person) => (
+                  <label key={person} className="flex items-center justify-between gap-3 py-2 text-sm font-bold text-slate-700">
+                    {PEOPLE[person].label}
+                    <input
+                      type="checkbox"
+                      checked={Boolean(deviceNotificationSettings.people?.[person])}
+                      onChange={(event) => updateDeviceNotificationSetting({ people: { [person]: event.target.checked } })}
+                      className="h-5 w-5 accent-cyan-600"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <div className="rounded-2xl bg-white/80 p-3">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Tipos</p>
+                {[
+                  ['water', 'Agua'],
+                  ['meals', 'Refeicoes'],
+                  ['goals', 'Metas de proteina/caloria'],
+                  ['workout', 'Treino'],
+                ].map(([key, label]) => (
+                  <label key={key} className="flex items-center justify-between gap-3 py-2 text-sm font-bold text-slate-700">
+                    {label}
+                    <input
+                      type="checkbox"
+                      checked={Boolean(deviceNotificationSettings[key])}
+                      onChange={(event) => updateDeviceNotificationSetting({ [key]: event.target.checked })}
+                      className="h-5 w-5 accent-emerald-600"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-white/80 p-3">
+              <label className="mb-3 flex items-center justify-between gap-3 text-sm font-bold text-slate-700">
+                Horario silencioso
+                <input
+                  type="checkbox"
+                  checked={Boolean(deviceNotificationSettings.quietHours?.enabled)}
+                  onChange={(event) => updateDeviceNotificationSetting({ quietHours: { enabled: event.target.checked } })}
+                  className="h-5 w-5 accent-violet-600"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Inicio"><TextInput type="time" value={deviceNotificationSettings.quietHours?.start || '23:30'} onChange={(event) => updateDeviceNotificationSetting({ quietHours: { start: event.target.value } })} /></Field>
+                <Field label="Fim"><TextInput type="time" value={deviceNotificationSettings.quietHours?.end || '07:00'} onChange={(event) => updateDeviceNotificationSetting({ quietHours: { end: event.target.value } })} /></Field>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-white/80 p-3">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Testar notificacoes</p>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => testNotification('pablo')} className="rounded-2xl bg-cyan-600 px-4 py-2 text-sm font-bold text-white">Testar Pablo</button>
+                <button onClick={() => testNotification('ana_clara')} className="rounded-2xl bg-pink-600 px-4 py-2 text-sm font-bold text-white">Testar Ana Clara</button>
+                <button onClick={() => testNotification(activePerson, 'water')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">Testar agua</button>
+                <button onClick={() => testNotification(activePerson, 'goals')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">Testar meta</button>
+                <button onClick={() => testNotification(activePerson, 'meals')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">Testar refeicao</button>
+                <button onClick={() => testNotification(activePerson, 'test', 10000)} className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-bold text-white">Testar em 10s</button>
+                <button onClick={() => testNotification(activePerson, 'test', 60000)} className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-bold text-white">Testar em 1 min</button>
+              </div>
+              {testCountdown && <p className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm font-bold text-amber-800">{testCountdown}</p>}
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-white/80 p-3">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Diagnostico de notificacoes</p>
+              <div className="grid gap-2 text-xs font-bold text-slate-600 sm:grid-cols-2">
+                <span>Permissao do navegador: {notificationPermission}</span>
+                <span>Service Worker registrado: {serviceWorkerReady ? 'sim' : 'nao'}</span>
+                <span>PWA instalada: {isStandalonePwa ? 'sim' : 'nao'}</span>
+                <span>Ativadas neste dispositivo: {deviceNotificationSettings.enabled ? 'sim' : 'nao'}</span>
+                <span>Pessoas ativadas: {Object.keys(PEOPLE).filter((person) => deviceNotificationSettings.people?.[person]).map((person) => PEOPLE[person].short).join(' / ') || '-'}</span>
+                <span>Ultima enviada: {lastReminder ? `${lastReminder.title} (${lastReminder.time})` : '-'}</span>
+                <span className="sm:col-span-2">Ultima bloqueada: {lastBlockedNotification ? lastBlockedNotification.reason : '-'}</span>
+              </div>
+              <div className="mt-3 max-h-40 overflow-auto rounded-2xl bg-slate-50 p-3 text-[11px] font-bold leading-5 text-slate-500">
+                {notificationDebugLog.length ? notificationDebugLog.map((entry) => (
+                  <div key={`${entry.timestamp}-${entry.person}-${entry.type}-${entry.action}`}>
+                    {new Date(entry.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {entry.person || '-'} / {entry.type || '-'} / {entry.action}: {entry.reason}
+                  </div>
+                )) : 'Nenhum evento registrado ainda.'}
+              </div>
+            </div>
+
+            <p className="mt-4 rounded-2xl bg-white/80 p-3 text-xs font-bold leading-5 text-cyan-900">
+              No celular, as notificacoes funcionam melhor com o site instalado como aplicativo/PWA. No iPhone, abra no Safari, toque em Compartilhar e depois em Adicionar a Tela de Inicio. Depois abra pelo icone criado e permita notificacoes.
+            </p>
+            {!('Notification' in window) && (
+              <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs font-bold text-amber-800">
+                Este navegador nao permite notificacoes web. Os lembretes aparecerao apenas dentro da pagina enquanto ela estiver aberta.
+              </p>
+            )}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

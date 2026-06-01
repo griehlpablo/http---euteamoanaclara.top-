@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, Bot, ArrowLeft, Plus, Trash2, MessageSquare, X, Image as ImageIcon, Cpu, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { supabase } from '../supabase';
 import { callGeminiAPI } from '../services/gemini';
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -30,12 +28,20 @@ export default function AssistenteCasal() {
   useEffect(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
 
   useEffect(() => {
-    const q = query(collection(db, "chats"), orderBy("createdAt", "desc"));
-    return onSnapshot(q, (snapshot) => {
-      const chatsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setChats(chatsData);
-      if (chatsData.length > 0 && !activeChatId) setActiveChatId(chatsData[0].id);
-    });
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase.from('chats').select('*').order('createdAt', { ascending: false });
+      if (error) {
+        console.error('Supabase error fetching chats:', error);
+        return;
+      }
+      if (mounted) {
+        setChats(data || []);
+        if (data && data.length > 0 && !activeChatId) setActiveChatId(data[0].id);
+      }
+    })();
+
+    return () => { mounted = false; };
   }, [activeChatId]);
 
   useEffect(() => {
@@ -43,24 +49,40 @@ export default function AssistenteCasal() {
       const timeoutId = window.setTimeout(() => setMessages([]), 0);
       return () => window.clearTimeout(timeoutId);
     }
-    const q = query(collection(db, "chats", activeChatId, "mensagens"), orderBy("createdAt", "asc"));
-    return onSnapshot(q, (snapshot) => {
-      const msgsFirebase = snapshot.docs.map(doc => doc.data());
-      setMessages(msgsFirebase.length === 0 ? [{ role: 'assistant', text: "Olá, Ana Clara! 💕 Como posso ajudar o casal hoje?" }] : msgsFirebase);
-    });
+
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase.from('mensagens').select('*').eq('chat_id', activeChatId).order('createdAt', { ascending: true });
+      if (error) {
+        console.error('Supabase error fetching mensagens:', error);
+        return;
+      }
+      if (mounted) setMessages((data && data.length > 0) ? data : [{ role: 'assistant', text: "Olá, Ana Clara! 💕 Como posso ajudar o casal hoje?" }]);
+    })();
+
+    return () => { mounted = false; };
   }, [activeChatId]);
 
   const criarNovoChat = async () => {
-    const docRef = await addDoc(collection(db, "chats"), { title: "Nova Conversa", createdAt: serverTimestamp() });
-    setActiveChatId(docRef.id);
+    const { data, error } = await supabase.from('chats').insert([{ title: 'Nova Conversa', createdAt: new Date().toISOString() }]).select().single();
+    if (error) {
+      console.error('Erro ao criar chat:', error);
+      return;
+    }
+    setActiveChatId(data.id);
   };
 
   const deletarChatAtivo = async () => {
     if (!activeChatId || !window.confirm("Quer mesmo apagar essa conversa inteira? 🧹")) return;
-    const querySnapshot = await getDocs(query(collection(db, "chats", activeChatId, "mensagens")));
-    await Promise.all(querySnapshot.docs.map(d => deleteDoc(doc(db, "chats", activeChatId, "mensagens", d.id))));
-    await deleteDoc(doc(db, "chats", activeChatId));
-    setActiveChatId(null);
+    try {
+      const { error: delMsgError } = await supabase.from('mensagens').delete().eq('chat_id', activeChatId);
+      if (delMsgError) throw delMsgError;
+      const { error: delChatError } = await supabase.from('chats').delete().eq('id', activeChatId);
+      if (delChatError) throw delChatError;
+      setActiveChatId(null);
+    } catch (error) {
+      console.error('Erro ao deletar conversa:', error);
+    }
   };
 
   const handleSend = async () => {
@@ -73,18 +95,33 @@ export default function AssistenteCasal() {
     if (selectedFile) {
       base64ForGemini = await fileToBase64(selectedFile);
       mimeTypeForGemini = selectedFile.type;
-      const fileRef = ref(storage, `chats/${activeChatId}/${Date.now()}_${selectedFile.name}`);
-      await uploadBytes(fileRef, selectedFile);
-      imageUrlForFirebase = await getDownloadURL(fileRef);
+      const bucket = 'chats';
+      const filePath = `chats/${activeChatId}/${Date.now()}_${selectedFile.name}`;
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, selectedFile);
+      if (uploadError) {
+        console.error('Erro ao fazer upload do arquivo:', uploadError);
+      } else {
+        const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+        imageUrlForFirebase = publicData?.publicUrl || null;
+      }
     }
 
     if (messages.length <= 1 && prompt) {
-      await updateDoc(doc(db, "chats", activeChatId), { title: prompt.substring(0, 25) + (prompt.length > 25 ? "..." : "") });
+      const { error: updateError } = await supabase.from('chats').update({ title: prompt.substring(0, 25) + (prompt.length > 25 ? "..." : "") }).eq('id', activeChatId);
+      if (updateError) console.error('Erro ao atualizar título do chat:', updateError);
     }
 
-    await addDoc(collection(db, "chats", activeChatId, "mensagens"), {
-      role: 'user', text: prompt || "Enviou um arquivo", imageUrl: imageUrlForFirebase, fileType: mimeTypeForGemini, createdAt: serverTimestamp()
-    });
+    const { error: insertError } = await supabase.from('mensagens').insert([
+      {
+        chat_id: activeChatId,
+        role: 'user',
+        text: prompt || "Enviou um arquivo",
+        imageUrl: imageUrlForFirebase,
+        fileType: mimeTypeForGemini,
+        createdAt: new Date().toISOString()
+      }
+    ]);
+    if (insertError) console.error('Erro ao inserir mensagem:', insertError);
 
     setInput("");
     setSelectedFile(null);
@@ -110,9 +147,10 @@ export default function AssistenteCasal() {
       }
     }
     
-    await addDoc(collection(db, "chats", activeChatId, "mensagens"), {
-      role: 'assistant', text: botResponse, createdAt: serverTimestamp()
-    });
+    const { error: insertAssistantError } = await supabase.from('mensagens').insert([
+      { chat_id: activeChatId, role: 'assistant', text: botResponse, createdAt: new Date().toISOString() }
+    ]);
+    if (insertAssistantError) console.error('Erro ao inserir resposta do assistente:', insertAssistantError);
     setIsLoading(false);
   };
 

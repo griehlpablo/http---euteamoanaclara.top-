@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Link as LinkIcon, ExternalLink, Plus, Trash2, ShieldCheck, ShieldAlert, Shield } from 'lucide-react';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
@@ -66,17 +65,22 @@ export default function Links() {
   const [loadingStatus, setLoadingStatus] = useState('');
 
   useEffect(() => {
-    const q = query(collection(db, 'links'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const linksData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setLinks(linksData);
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from('links')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Supabase error fetching links:', error);
+        setLoading(false);
+        return;
+      }
+      if (mounted) setLinks(data || []);
       setLoading(false);
-    });
+    })();
 
-    return () => unsubscribe();
+    return () => { mounted = false; };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -124,14 +128,16 @@ export default function Links() {
         }
       }
 
-      await addDoc(collection(db, 'links'), {
-        url: newUrl.trim(),
-        title: rawTitle,
-        description: rawDescription,
-        image: image,
-        trust: trustLevel,
-        timestamp: serverTimestamp()
-      });
+      const { error: insertError } = await supabase.from('links').insert([
+        {
+          url: newUrl.trim(),
+          title: rawTitle,
+          description: rawDescription,
+          image: image,
+          trust: trustLevel
+        }
+      ]);
+      if (insertError) throw insertError;
 
       setNewUrl('');
     } catch (error) {
@@ -145,7 +151,9 @@ export default function Links() {
 
   const handleDelete = async (id) => {
     try {
-      await deleteDoc(doc(db, 'links', id));
+      const { error } = await supabase.from('links').delete().eq('id', id);
+      if (error) throw error;
+      setLinks(prev => prev.filter(l => l.id !== id));
     } catch (error) {
       console.error('Erro ao deletar link:', error);
     }

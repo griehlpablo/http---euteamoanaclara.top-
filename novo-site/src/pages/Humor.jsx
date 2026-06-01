@@ -4,8 +4,7 @@ import {
   ArrowLeft, Activity, Heart, Flame, Battery, 
   ShieldAlert, CheckCircle2, BellRing, Smartphone, Zap 
 } from 'lucide-react';
-import { ref, onValue, set } from 'firebase/database';
-import { rtdb } from '../firebase';
+import { supabase } from '../supabase';
 import OneSignal from 'react-onesignal';
 
 export default function Humor() {
@@ -28,28 +27,43 @@ export default function Humor() {
     if (currentUser) localStorage.setItem('satCurrentUser', currentUser);
   }, [currentUser]);
 
-  // Busca os dados do Firebase
+  // Busca os dados do Supabase
   useEffect(() => {
     if (!currentUser) return;
 
-    // Busca o MEU humor para deixar os sliders onde eu parei
-    const myRef = ref(rtdb, `radar/${currentUser}`);
-    onValue(myRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) setMyMood(data);
-    });
+    let mounted = true;
+    (async () => {
+      // Busca MEU humor
+      const { data: myData, error: myError } = await supabase
+        .from('humor')
+        .select('*')
+        .eq('user_id', currentUser)
+        .single();
+      
+      if (myError && myError.code !== 'PGRST116') {
+        console.error('Erro ao buscar meu humor:', myError);
+      } else if (myData && mounted) {
+        setMyMood({ carencia: myData.carencia, estresse: myData.estresse, energia: myData.energia });
+      }
 
-    // Busca o humor do PARCEIRO para gerar o manual
-    const partnerRef = ref(rtdb, `radar/${targetUser}`);
-    onValue(partnerRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setPartnerMood(data);
+      // Busca humor do PARCEIRO
+      const { data: partnerData, error: partnerError } = await supabase
+        .from('humor')
+        .select('*')
+        .eq('user_id', targetUser)
+        .single();
+      
+      if (partnerError && partnerError.code !== 'PGRST116') {
+        console.error('Erro ao buscar humor do parceiro:', partnerError);
+      } else if (partnerData && mounted) {
+        setPartnerMood({ carencia: partnerData.carencia, estresse: partnerData.estresse, energia: partnerData.energia });
         setPartnerHasData(true);
-      } else {
+      } else if (mounted) {
         setPartnerHasData(false);
       }
-    });
+    })();
+
+    return () => { mounted = false; };
   }, [currentUser, targetUser]);
 
   // ==========================================
@@ -124,10 +138,21 @@ export default function Humor() {
     };
   };
 
-  const handleMoodChange = (eixo, valor) => {
+  const handleMoodChange = async (eixo, valor) => {
     const newMood = { ...myMood, [eixo]: Number(valor) };
     setMyMood(newMood);
-    set(ref(rtdb, `radar/${currentUser}`), newMood);
+    
+    try {
+      const { error: upsertError } = await supabase
+        .from('humor')
+        .upsert(
+          { user_id: currentUser, carencia: newMood.carencia, estresse: newMood.estresse, energia: newMood.energia, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        );
+      if (upsertError) console.error('Erro ao salvar humor:', upsertError);
+    } catch (error) {
+      console.error('Erro ao atualizar humor:', error);
+    }
   };
 
   // FUNÇÃO DE NOTIFICAÇÃO (ENVIA RESUMIDO)

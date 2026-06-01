@@ -1,21 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, LogOut, Heart, Camera, Smile, X, Trash2 } from 'lucide-react';
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp,
-  doc,
-  updateDoc,
-  deleteDoc,
-  arrayUnion,
-  arrayRemove
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { supabase } from '../supabase';
 import OneSignal from 'react-onesignal';
 import EmojiPicker from 'emoji-picker-react';
 
@@ -200,26 +186,24 @@ export default function Mural() {
     };
   }, [imagePreview]);
 
-  // Buscar posts no Firestore
+  // Buscar posts (Supabase)
   useEffect(() => {
     if (!currentUser) return;
 
-    const q = query(collection(db, 'mural'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const postsData = snapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data()
-        }));
-        setPosts(postsData);
-      },
-      (error) => {
-        console.error('Erro ao carregar posts:', error);
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from('mural')
+        .select('*')
+        .order('timestamp', { ascending: false });
+      if (error) {
+        console.error('Supabase error fetching mural:', error);
+        return;
       }
-    );
+      if (mounted) setPosts(data || []);
+    })();
 
-    return () => unsubscribe();
+    return () => { mounted = false; };
   }, [currentUser]);
 
   // Manipular seleção de imagem
@@ -261,18 +245,24 @@ export default function Mural() {
 
     try {
       if (selectedImage) {
-        const storageRef = ref(storage, `mural_images/${Date.now()}_${selectedImage.name}`);
-        await uploadBytes(storageRef, selectedImage);
-        imageUrl = await getDownloadURL(storageRef);
+        const bucket = 'mural';
+        const filePath = `mural_images/${Date.now()}_${selectedImage.name}`;
+        const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, selectedImage);
+        if (uploadError) throw uploadError;
+        const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+        imageUrl = publicData?.publicUrl || null;
       }
 
-      await addDoc(collection(db, 'mural'), {
-        text: textToSend,
-        author: currentUser,
-        imageUrl: imageUrl || null,
-        timestamp: serverTimestamp(),
-        likes: []
-      });
+      const { error: insertError } = await supabase.from('mural').insert([
+        {
+          text: textToSend,
+          author: currentUser,
+          imageUrl: imageUrl || null,
+          timestamp: new Date().toISOString(),
+          likes: []
+        }
+      ]);
+      if (insertError) throw insertError;
 
       setNewPostText('');
       clearImage();
@@ -291,16 +281,14 @@ export default function Mural() {
   const toggleLike = async (postId, currentLikes) => {
     if (!currentUser) return;
 
-    const postRef = doc(db, 'mural', postId);
     const likesArray = currentLikes || [];
     const hasLiked = likesArray.includes(currentUser);
+    const newLikes = hasLiked ? likesArray.filter(u => u !== currentUser) : [...likesArray, currentUser];
 
     try {
-      if (hasLiked) {
-        await updateDoc(postRef, { likes: arrayRemove(currentUser) });
-      } else {
-        await updateDoc(postRef, { likes: arrayUnion(currentUser) });
-      }
+      const { error } = await supabase.from('mural').update({ likes: newLikes }).eq('id', postId);
+      if (error) throw error;
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: newLikes } : p));
     } catch (error) {
       console.error('Erro ao atualizar curtida:', error);
     }
@@ -310,10 +298,10 @@ export default function Mural() {
     const confirmed = window.confirm('Tem certeza que deseja apagar esta mensagem?');
     if (!confirmed) return;
 
-    const postRef = doc(db, 'mural', postId);
-
     try {
-      await deleteDoc(postRef);
+      const { error } = await supabase.from('mural').delete().eq('id', postId);
+      if (error) throw error;
+      setPosts(prev => prev.filter(p => p.id !== postId));
     } catch (error) {
       console.error('Erro ao deletar post:', error);
       alert('Não foi possível apagar a mensagem. Tente novamente.');
@@ -322,10 +310,16 @@ export default function Mural() {
 
     if (imageUrl) {
       try {
-        const imageRef = ref(storage, imageUrl);
-        await deleteObject(imageRef);
+        const supabasePathMatch = imageUrl.match(/\/storage\/v1\/object\/public\/(.*?)\/(.*)$/);
+        if (supabasePathMatch) {
+          const bucket = supabasePathMatch[1];
+          const filePath = supabasePathMatch[2];
+          await supabase.storage.from(bucket).remove([filePath]);
+        } else {
+          console.warn('Imagem não parece ser do Supabase, não foi removida:', imageUrl);
+        }
       } catch (error) {
-        console.warn('Erro ao deletar imagem do post:', error);
+        console.warn('Erro ao deletar imagem do storage Supabase:', error);
       }
     }
   };

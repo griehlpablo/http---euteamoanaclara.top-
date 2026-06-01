@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ListChecks, Plus, Check, X, Trash2 } from 'lucide-react';
-import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
@@ -12,16 +11,19 @@ export default function BucketList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'bucketlist'), (snapshot) => {
-      const itemsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setItems(itemsData);
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase.from('bucketlist').select('*').order('createdAt', { ascending: true });
+      if (error) {
+        console.error('Supabase error fetching bucketlist:', error);
+        setLoading(false);
+        return;
+      }
+      if (mounted) setItems(data || []);
       setLoading(false);
-    });
+    })();
 
-    return () => unsubscribe();
+    return () => { mounted = false; };
   }, []);
 
   const handleAddItem = async (e) => {
@@ -29,11 +31,8 @@ export default function BucketList() {
     if (!newItem.trim()) return;
 
     try {
-      await addDoc(collection(db, 'bucketlist'), {
-        text: newItem.trim(),
-        completed: false,
-        createdAt: new Date()
-      });
+      const { error } = await supabase.from('bucketlist').insert([{ text: newItem.trim(), completed: false, createdAt: new Date().toISOString() }]);
+      if (error) throw error;
       setNewItem('');
     } catch (error) {
       console.error('Erro ao adicionar item:', error);
@@ -42,9 +41,9 @@ export default function BucketList() {
 
   const handleToggleComplete = async (itemId, completed) => {
     try {
-      await updateDoc(doc(db, 'bucketlist', itemId), {
-        completed: !completed
-      });
+      const { error } = await supabase.from('bucketlist').update({ completed: !completed }).eq('id', itemId);
+      if (error) throw error;
+      setItems(prev => prev.map(it => it.id === itemId ? { ...it, completed: !completed } : it));
     } catch (error) {
       console.error('Erro ao atualizar item:', error);
     }
@@ -52,7 +51,9 @@ export default function BucketList() {
 
   const handleDeleteItem = async (itemId) => {
     try {
-      await deleteDoc(doc(db, 'bucketlist', itemId));
+      const { error } = await supabase.from('bucketlist').delete().eq('id', itemId);
+      if (error) throw error;
+      setItems(prev => prev.filter(i => i.id !== itemId));
     } catch (error) {
       console.error('Erro ao deletar item:', error);
     }

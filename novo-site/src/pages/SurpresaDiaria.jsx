@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { ArrowLeft, CheckCircle2, Gift, Loader2, Sparkles, Ticket } from 'lucide-react';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 import { callGeminiAPI } from '../services/gemini';
 
 const STORAGE_PREFIX = 'surpresaDiaria';
@@ -114,18 +113,19 @@ export default function SurpresaDiaria() {
     if (!surprise) return;
 
     try {
-      await addDoc(collection(db, 'cupons'), {
+      const { error } = await supabase.from('cupons').insert([{
         title: surprise.titulo,
         description: surprise.descricao,
         reward: surprise.recompensa || '',
         redeemed: false,
         source: 'surpresa-diaria',
-        createdAt: serverTimestamp(),
-      });
+        createdAt: new Date().toISOString(),
+      }]);
+      if (error) throw error;
       setMessage('Cupom salvo na página de Cupons.');
     } catch (error) {
       console.error('Erro ao salvar cupom:', error);
-      setMessage('Não consegui salvar no Firebase agora. A surpresa continua salva aqui para hoje.');
+      setMessage('Não consegui salvar no Supabase agora. A surpresa continua salva aqui para hoje.');
     }
   };
 

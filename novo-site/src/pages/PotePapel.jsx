@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircleHeart, Plus, Shuffle, Heart } from 'lucide-react';
-import { collection, onSnapshot, addDoc, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
@@ -14,16 +13,19 @@ export default function PotePapel() {
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'potepapel'), (snapshot) => {
-      const messagesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setMessages(messagesData);
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase.from('potepapel').select('*').order('createdAt', { ascending: false });
+      if (error) {
+        console.error('Supabase error fetching potepapel:', error);
+        setLoading(false);
+        return;
+      }
+      if (mounted) setMessages(data || []);
       setLoading(false);
-    });
+    })();
 
-    return () => unsubscribe();
+    return () => { mounted = false; };
   }, []);
 
   const handleAddMessage = async (e) => {
@@ -32,10 +34,8 @@ export default function PotePapel() {
 
     setAdding(true);
     try {
-      await addDoc(collection(db, 'potepapel'), {
-        message: newMessage.trim(),
-        createdAt: new Date()
-      });
+      const { error } = await supabase.from('potepapel').insert([{ message: newMessage.trim(), createdAt: new Date().toISOString() }]);
+      if (error) throw error;
       setNewMessage('');
     } catch (error) {
       console.error('Erro ao adicionar mensagem:', error);

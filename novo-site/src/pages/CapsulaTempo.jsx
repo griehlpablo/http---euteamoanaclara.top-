@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Lock, Unlock, Send, Calendar } from 'lucide-react';
-import { collection, onSnapshot, addDoc, query, where } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
@@ -14,16 +13,19 @@ export default function CapsulaTempo() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'capsula'), (snapshot) => {
-      const capsulasData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setCapsulas(capsulasData);
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase.from('capsula').select('*').order('createdAt', { ascending: false });
+      if (error) {
+        console.error('Supabase error fetching capsulas:', error);
+        setLoading(false);
+        return;
+      }
+      if (mounted) setCapsulas(data || []);
       setLoading(false);
-    });
+    })();
 
-    return () => unsubscribe();
+    return () => { mounted = false; };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -32,12 +34,13 @@ export default function CapsulaTempo() {
 
     setSubmitting(true);
     try {
-      await addDoc(collection(db, 'capsula'), {
+      const { error } = await supabase.from('capsula').insert([{
         message: newMessage.trim(),
         unlockDate: new Date(unlockDate).toISOString(),
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         unlocked: false
-      });
+      }]);
+      if (error) throw error;
       setNewMessage('');
       setUnlockDate('');
     } catch (error) {

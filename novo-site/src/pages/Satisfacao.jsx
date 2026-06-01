@@ -4,8 +4,7 @@ import {
   ArrowLeft, Heart, Star, Coffee, Snowflake, Lock, 
   TrendingUp, User, PenSquare, Smartphone, Zap, BellRing 
 } from 'lucide-react';
-import { ref, onValue, set, push } from 'firebase/database';
-import { rtdb } from '../firebase';
+import { supabase } from '../supabase';
 import OneSignal from 'react-onesignal';
 
 const LEVELS = {
@@ -59,23 +58,52 @@ export default function Satisfacao() {
   }, [currentUser]);
 
   useEffect(() => {
-    const currentRef = ref(rtdb, 'satisfaction/pablo-ana/current');
-    onValue(currentRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        if (data.levels) setCurrentLevels(data.levels);
-        if (data.notes) setJailNote(data.notes);
+    let mounted = true;
+    (async () => {
+      // Busca níveis atuais (pablo e ana)
+      const { data: levelData, error: levelError } = await supabase
+        .from('satisfacao_current')
+        .select('*');
+      
+      if (!levelError && levelData && mounted) {
+        const levels = {};
+        levelData.forEach(row => {
+          levels[row.user_id] = row.level;
+        });
+        setCurrentLevels(prev => ({ ...prev, ...levels }));
       }
-    });
 
-    const historyRef = ref(rtdb, 'satisfaction/pablo-ana/history');
-    onValue(historyRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const historyArray = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+      // Busca notas de cadeia
+      const { data: noteData, error: noteError } = await supabase
+        .from('satisfacao_notes')
+        .select('*');
+      
+      if (!noteError && noteData && mounted) {
+        const notes = {};
+        noteData.forEach(row => {
+          notes[row.user_id] = row.note;
+        });
+        setJailNote(prev => ({ ...prev, ...notes }));
+      }
+
+      // Busca histórico
+      const { data: historyData, error: historyError } = await supabase
+        .from('satisfacao_history')
+        .select('*')
+        .order('created_at', { ascending: true });
+      
+      if (!historyError && historyData && mounted) {
+        const historyArray = historyData.map(h => ({
+          target: h.target_user,
+          level: h.level,
+          val: h.val,
+          timestamp: new Date(h.created_at).getTime()
+        }));
         setHistory(historyArray);
       }
-    });
+    })();
+
+    return () => { mounted = false; };
   }, []);
 
   const enviarNotificacaoProAmor = async (levelKey, msgManual = null) => {
@@ -106,36 +134,71 @@ export default function Satisfacao() {
     } catch (error) { console.error(error); }
   };
 
-  const handleVote = (levelKey) => {
+  const handleVote = async (levelKey) => {
     if (!currentUser) return;
     const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
-    set(ref(rtdb, `satisfaction/pablo-ana/current/levels/${targetUser}`), levelKey);
     
-    const newEntry = { 
-      target: targetUser, 
-      level: levelKey, 
-      val: LEVELS[levelKey].val, 
-      timestamp: Date.now() 
-    };
-    push(ref(rtdb, 'satisfaction/pablo-ana/history'), newEntry);
-    
-    // Notificação Curta Automática
-    enviarNotificacaoProAmor(levelKey);
+    try {
+      // Atualiza/insere o nível atual
+      const { error: upsertError } = await supabase
+        .from('satisfacao_current')
+        .upsert(
+          { user_id: targetUser, level: levelKey, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        );
+      if (upsertError) throw upsertError;
+
+      // Insere no histórico
+      const { error: historyError } = await supabase
+        .from('satisfacao_history')
+        .insert([
+          {
+            target_user: targetUser,
+            level: levelKey,
+            val: LEVELS[levelKey].val,
+            created_at: new Date().toISOString()
+          }
+        ]);
+      if (historyError) throw historyError;
+
+      // Atualiza estado local
+      setCurrentLevels(prev => ({ ...prev, [targetUser]: levelKey }));
+      setHistory(prev => [...prev, { target: targetUser, level: levelKey, val: LEVELS[levelKey].val, timestamp: Date.now() }]);
+
+      // Notificação Automática
+      enviarNotificacaoProAmor(levelKey);
+    } catch (error) {
+      console.error('Erro ao salvar voto:', error);
+    }
   };
 
-  const saveJailNote = () => {
+  const saveJailNote = async () => {
     if (!jailInput.trim()) return;
     const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
     
-    // Salva no banco de dados
-    set(ref(rtdb, `satisfaction/pablo-ana/current/notes/${targetUser}`), jailInput);
-    
-    // Envia a notificação com O TEXTO DA FIANÇA!
-    const msgCadeia = `🚨 Missão da Cadeia: "${jailInput}"`;
-    enviarNotificacaoProAmor('jail', msgCadeia); 
-    
-    setJailInput('');
-    alert("Missão enviada com sucesso!");
+    try {
+      // Salva no banco de dados
+      const { error: upsertError } = await supabase
+        .from('satisfacao_notes')
+        .upsert(
+          { user_id: targetUser, note: jailInput, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        );
+      if (upsertError) throw upsertError;
+
+      // Atualiza estado local
+      setJailNote(prev => ({ ...prev, [targetUser]: jailInput }));
+
+      // Envia a notificação com O TEXTO DA FIANÇA!
+      const msgCadeia = `🚨 Missão da Cadeia: "${jailInput}"`;
+      enviarNotificacaoProAmor('jail', msgCadeia); 
+      
+      setJailInput('');
+      alert("Missão enviada com sucesso!");
+    } catch (error) {
+      console.error('Erro ao salvar missão da cadeia:', error);
+      alert('Erro ao enviar missão. Tente novamente.');
+    }
   };
 
   const renderChart = () => {

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Ticket, CheckCircle, X } from 'lucide-react';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
@@ -11,23 +10,26 @@ export default function Cupons() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'cupons'), (snapshot) => {
-      const cuponsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setCupons(cuponsData);
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase.from('cupons').select('*').order('createdAt', { ascending: false });
+      if (error) {
+        console.error('Supabase error fetching cupons:', error);
+        setLoading(false);
+        return;
+      }
+      if (mounted) setCupons(data || []);
       setLoading(false);
-    });
+    })();
 
-    return () => unsubscribe();
+    return () => { mounted = false; };
   }, []);
 
   const handleRedeem = async (cupomId) => {
     try {
-      await updateDoc(doc(db, 'cupons', cupomId), {
-        redeemed: true
-      });
+      const { error } = await supabase.from('cupons').update({ redeemed: true }).eq('id', cupomId);
+      if (error) throw error;
+      setCupons(prev => prev.map(c => c.id === cupomId ? { ...c, redeemed: true } : c));
     } catch (error) {
       console.error('Erro ao resgatar cupom:', error);
     }

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import OneSignal from 'react-onesignal';
 import {
   Activity,
   AlertTriangle,
+  BarChart3,
+  Bell,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
@@ -12,8 +15,11 @@ import {
   Dumbbell,
   HeartPulse,
   Loader2,
+  Plus,
+  RotateCcw,
   Save,
   Scale,
+  Trash2,
   Utensils,
 } from 'lucide-react';
 import supabase from '../supabase';
@@ -28,6 +34,7 @@ const PEOPLE = {
     calorieTarget: [2100, 2300],
     proteinTarget: [130, 160],
     waterTarget: [2500, 3000],
+    waterDefault: 2700,
     workoutGoal: '3x por semana',
   },
   ana_clara: {
@@ -39,8 +46,119 @@ const PEOPLE = {
     calorieTarget: [1900, 2200],
     proteinTarget: [80, 110],
     waterTarget: [1800, 2500],
+    waterDefault: 2200,
     workoutGoal: 'Gluteo/perna 3 a 4x por semana',
   },
+};
+
+const DEFAULT_REMINDER_SETTINGS = {
+  pablo: {
+    enabled: true,
+    water: true,
+    meals: true,
+    goals: true,
+    workout: true,
+    smartFrequency: true,
+    waterInterval: 60,
+    startTime: '07:00',
+    endTime: '23:30',
+    tone: 'firme',
+  },
+  ana_clara: {
+    enabled: true,
+    water: true,
+    meals: true,
+    goals: true,
+    workout: true,
+    smartFrequency: true,
+    waterInterval: 60,
+    startTime: '08:30',
+    endTime: '22:30',
+    tone: 'normal',
+  },
+};
+
+const FOOD_CATEGORIES = [
+  ['caseiro', 'caseiro/comida de verdade'],
+  ['processado', 'processado'],
+  ['ultraprocessado', 'ultraprocessado'],
+  ['doce', 'doce/sobremesa'],
+  ['bebida_acucar', 'bebida com acucar'],
+  ['bebida_zero', 'bebida zero/sem acucar'],
+  ['energetico', 'energetico'],
+  ['fruta', 'fruta'],
+  ['legume', 'legume/verdura'],
+  ['proteina', 'proteina'],
+  ['carboidrato', 'carboidrato'],
+  ['gordura_molho', 'gordura/molho'],
+  ['lanche_padaria', 'lanche/padaria'],
+  ['pizza', 'pizza'],
+  ['fast_food', 'fast food'],
+  ['outro', 'outro'],
+];
+
+const UNIT_OPTIONS = [
+  ['g', 'g'],
+  ['kg', 'kg'],
+  ['ml', 'ml'],
+  ['litro', 'litro'],
+  ['unidade', 'unidade'],
+  ['fatia', 'fatia'],
+  ['pedaco', 'pedaco'],
+  ['colher_cha', 'colher de cha'],
+  ['colher_sopa', 'colher de sopa'],
+  ['colher_arroz_media', 'colher de arroz media'],
+  ['colher_arroz_cheia', 'colher de arroz cheia'],
+  ['concha_pequena', 'concha pequena'],
+  ['concha_media', 'concha media'],
+  ['copo_180', 'copo 180 ml'],
+  ['copo_250', 'copo 250 ml'],
+  ['xicara', 'xicara'],
+  ['prato_raso', 'prato raso'],
+  ['prato_cheio', 'prato cheio'],
+];
+
+const UNIT_CONVERSIONS = {
+  kg: 1000,
+  litro: 1000,
+  colher_cha: 5,
+  colher_sopa: 12,
+  colher_arroz_media: 60,
+  colher_arroz_cheia: 80,
+  concha_pequena: 70,
+  concha_media: 100,
+  copo_180: 180,
+  copo_250: 250,
+  xicara: 200,
+  fatia: 50,
+  pedaco: 80,
+  prato_raso: 250,
+  prato_cheio: 350,
+  unidade: 1,
+};
+
+const QUICK_ACTIONS = {
+  pablo: [
+    { label: '+ Cafe acucar 180 ml', meal: 'breakfast', food: 'cafe_com_acucar', amount: 180, unit: 'ml' },
+    { label: '+ Cafe sem acucar 180 ml', meal: 'breakfast', food: 'cafe_sem_acucar', amount: 180, unit: 'ml' },
+    { label: '+ Agua 280 ml', water: 280 },
+    { label: '+ Agua 500 ml', water: 500 },
+    { label: '+ Arroz 100 g', meal: 'lunch', food: 'arroz', amount: 100, unit: 'g' },
+    { label: '+ Feijao 100 g', meal: 'lunch', food: 'feijao', amount: 100, unit: 'g' },
+    { label: '+ Carne 100 g', meal: 'lunch', food: 'carne_bovina', amount: 100, unit: 'g' },
+    { label: '+ Ovo 1 un.', meal: 'extras', food: 'ovo', amount: 1, unit: 'unidade' },
+    { label: '+ Coca normal 200 ml', meal: 'extras', food: 'refrigerante_normal', amount: 200, unit: 'ml' },
+    { label: '+ Monster zero 473 ml', meal: 'extras', custom: { label: 'Monster zero', category: 'energetico', amount: 473, unit: 'ml', calories: 0, protein: 0, sugar: 0, notes: 'Energetico zero; nao substitui agua.' } },
+  ],
+  ana_clara: [
+    { label: '+ Vitamina banana/leite/aveia', meal: 'snack', food: 'vitamina', amount: 350, unit: 'ml' },
+    { label: '+ Agua 250 ml', water: 250 },
+    { label: '+ Ovo 1 un.', meal: 'snack', food: 'ovo', amount: 1, unit: 'unidade' },
+    { label: '+ Banana 1 un.', meal: 'snack', food: 'banana', amount: 1, unit: 'unidade' },
+    { label: '+ Arroz 150 g', meal: 'lunch', food: 'arroz', amount: 150, unit: 'g' },
+    { label: '+ Feijao 100 g', meal: 'lunch', food: 'feijao', amount: 100, unit: 'g' },
+    { label: '+ Frango 100 g', meal: 'lunch', food: 'frango', amount: 100, unit: 'g' },
+  ],
 };
 
 const EMPTY_MEALS = {
@@ -202,6 +320,42 @@ function cloneMeals(meals = EMPTY_MEALS) {
   );
 }
 
+function createCustomMealItem(overrides = {}) {
+  return {
+    id: `custom-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    custom: true,
+    food: 'outro',
+    label: '',
+    category: 'outro',
+    amount: '',
+    unit: 'g',
+    grams_or_ml: '',
+    calories: '',
+    protein: '',
+    sugar: '',
+    notes: '',
+    ...overrides,
+  };
+}
+
+function amountForCalculation(item, food) {
+  const amount = Number(item.amount) || 0;
+  if (item.grams_or_ml !== '' && item.grams_or_ml !== undefined && item.grams_or_ml !== null) return Number(item.grams_or_ml) || 0;
+  if (item.unit === 'kg') return amount * 1000;
+  if (item.unit === 'litro') return amount * 1000;
+  if (item.unit === food.unit || ['g', 'ml', 'unidade'].includes(item.unit)) return amount;
+  return amount * (UNIT_CONVERSIONS[item.unit] || 1);
+}
+
+function categoryWarning(item) {
+  const label = item.label || 'Item personalizado';
+  if (item.category === 'bebida_acucar') return { type: 'danger', text: `${label}: acucar liquido registrado. Melhor tratar como excecao.` };
+  if (item.category === 'energetico') return { type: 'warning', text: `${label}: energetico nao substitui agua; cuidado com cafeina.` };
+  if (['ultraprocessado', 'fast_food', 'pizza'].includes(item.category)) return { type: 'warning', text: `${label}: item mais calorico/processado, vale moderar no resto do dia.` };
+  if (item.category === 'doce') return { type: 'warning', text: `${label}: doce registrado; ajuste as proximas escolhas.` };
+  return null;
+}
+
 function defaultLog(person, logDate) {
   return {
     ...DEFAULTS_BY_PERSON[person],
@@ -229,12 +383,16 @@ function calculateTotals(log) {
   const totals = allItems.reduce(
     (acc, item) => {
       const food = FOOD_DB[item.food] || FOOD_DB.outro;
-      const amount = Number(item.amount) || 0;
+      const amount = amountForCalculation(item, food);
       const multiplier = amount / food.basis;
-      acc.calories += food.kcal * multiplier;
-      acc.protein += food.protein * multiplier;
-      acc.sugar += food.sugar * multiplier;
-      if (food.liquidSugar) acc.liquidSugar += food.sugar * multiplier;
+      const hasCustomNumbers = item.custom && (item.calories !== '' || item.protein !== '' || item.sugar !== '');
+      const itemCalories = hasCustomNumbers ? Number(item.calories) || 0 : food.kcal * multiplier;
+      const itemProtein = hasCustomNumbers ? Number(item.protein) || 0 : food.protein * multiplier;
+      const itemSugar = hasCustomNumbers ? Number(item.sugar) || 0 : food.sugar * multiplier;
+      acc.calories += itemCalories;
+      acc.protein += itemProtein;
+      acc.sugar += itemSugar;
+      if (food.liquidSugar || item.category === 'bebida_acucar') acc.liquidSugar += itemSugar;
       return acc;
     },
     { calories: 0, protein: 0, sugar: 0, liquidSugar: 0 },
@@ -266,20 +424,29 @@ function mealFilled(log, meal) {
 
 function getWarnings(log, totals) {
   const warnings = [];
+  const customWarnings = Object.values(log.meals || {})
+    .flat()
+    .filter((item) => item.custom)
+    .map(categoryWarning)
+    .filter(Boolean);
+  warnings.push(...customWarnings);
+
   if (log.person === 'pablo') {
     const hasSoda = Object.keys(log.meals || {}).some((meal) => mealHas(log, meal, 'refrigerante_normal'));
     const hasSugarCoffee = Object.keys(log.meals || {}).some((meal) => mealHas(log, meal, 'cafe_com_acucar'));
-    if (hasSoda && hasSugarCoffee) warnings.push({ type: 'warning', text: 'Atencao: Coca + cafe com acucar no mesmo dia pode atrapalhar seu deficit.' });
+    if (hasSoda && hasSugarCoffee) warnings.push({ type: 'warning', text: 'Pablo, aqui voce esta se sabotando: Coca + cafe com acucar no mesmo dia nao ajuda sua barriga.' });
     if (totals.liquidSugar > 25) warnings.push({ type: 'danger', text: 'Pablo tomou muito acucar liquido hoje.' });
     if (log.used_uber || (log.walked === false && log.walked_km !== '')) warnings.push({ type: 'warning', text: 'Hoje voce andou menos; controle melhor a noite.' });
     if (!mealFilled(log, 'dinner')) warnings.push({ type: 'warning', text: 'Pablo: tente jantar antes da faculdade para nao chegar com fome extrema.' });
     if ((log.meals?.supper || []).some((item) => ['pao', 'ovo', 'leite'].includes(item.food) && Number(item.amount) > 1)) warnings.push({ type: 'warning', text: 'Ceia ficou pesada tarde; prefira algo mais leve se ja jantou.' });
+    if ((Number(log.water_ml) || 0) < 1000) warnings.push({ type: 'warning', text: 'Agua esta baixa. Monster zero nao substitui agua.' });
   }
 
   if (log.person === 'ana_clara') {
     const trainedGlutes = ['gluteo_a', 'gluteo_b', 'gluteo_pump'].includes(log.workout);
     if (trainedGlutes && totals.calories < 1500) warnings.push({ type: 'warning', text: 'Ana Clara: em dia de gluteo, voce parece ter comido pouco.' });
     if (trainedGlutes && !mealFilled(log, 'snack')) warnings.push({ type: 'warning', text: 'Ana Clara: em dia de gluteo, nao pule lanche/vitamina.' });
+    if (trainedGlutes && totals.protein < 60) warnings.push({ type: 'warning', text: 'Dia de gluteo precisa de proteina e comida suficiente.' });
   }
 
   if (!warnings.length) warnings.push({ type: 'ok', text: log.person === 'pablo' ? 'Boa, Pablo. Continue registrando para ajustar fino.' : 'Boa, Ana Clara. Constancia hoje, resultado amanha.' });
@@ -315,8 +482,202 @@ function inputNumber(value) {
 function itemLabel(item) {
   const food = FOOD_DB[item.food] || FOOD_DB.outro;
   const amount = Number(item.amount) || 0;
-  const note = item.note ? ` (${item.note})` : '';
-  return `${food.label}: ${amount} ${item.unit || food.unit}${note}`;
+  const label = item.custom ? item.label || 'Outro item' : food.label;
+  const note = item.custom ? item.notes : item.note;
+  const macros = item.custom && (item.calories || item.protein || item.sugar)
+    ? ` - ${item.calories || 0} kcal, ${item.protein || 0}g prot., ${item.sugar || 0}g acucar`
+    : '';
+  return `${label}: ${amount} ${item.unit || food.unit}${macros}${note ? ` (${note})` : ''}`;
+}
+
+function getRecommendations(log, totals) {
+  const person = log.person;
+  const profile = PEOPLE[person];
+  const recs = [];
+  const trainedGlutes = person === 'ana_clara' && ['gluteo_a', 'gluteo_b', 'gluteo_pump'].includes(log.workout);
+  const proteinMissing = Math.max(0, profile.proteinTarget[0] - totals.protein);
+  const caloriesMissing = Math.max(0, profile.calorieTarget[0] - totals.calories);
+
+  if (person === 'pablo') {
+    if (proteinMissing >= 35 && totals.calories < profile.calorieTarget[1]) recs.push(`Faltam ${proteinMissing.toFixed(0)}g de proteina. Melhor opcao: frango, ovos, sardinha ou carne em porcao controlada.`);
+    if (proteinMissing >= 25 && totals.calories >= profile.calorieTarget[1]) recs.push('Proteina baixa com caloria alta: vai de frango mais magro, sardinha escorrida ou iogurte natural se tiver.');
+    if (caloriesMissing >= 350 && proteinMissing < 20) recs.push('Calorias baixas e proteina ok: arroz/feijao simples, banana, leite ou pao simples resolvem sem bagunca.');
+    if (totals.liquid_sugar > 15) recs.push('Voce ja consumiu acucar liquido hoje. Evite Coca, doces e bolacha agora.');
+    if (log.used_uber) recs.push('Hoje teve menos caminhada. Janta controlada e sem belisco tarde.');
+    if (!mealFilled(log, 'dinner')) recs.push('Pablo, janta antes da faculdade. Se deixar para 23h20, a chance de exagerar sobe.');
+    if (log.appetite === 'vontade_doce') recs.push(totals.sugar > 25 ? 'Vontade de doce com acucar alto: agua, cafe sem acucar, banana ou espera 20 minutos.' : 'Se bater doce, prefira banana ou leite antes de atacar bolacha/refrigerante.');
+    if (log.appetite === 'muita_fome' && proteinMissing > 25) recs.push('Muita fome e proteina baixa: ovos, carne ou frango antes de pensar em pao com requeijao.');
+  } else {
+    if (trainedGlutes && (proteinMissing >= 20 || caloriesMissing >= 300)) recs.push('Dia de construir gluteo: vitamina de banana + leite + aveia e 2 ovos ajudam bastante.');
+    if (!mealFilled(log, 'snack')) recs.push('Ana Clara, nao pula lanche/vitamina. Comer pouco demais atrapalha o objetivo.');
+    if (proteinMissing >= 20) recs.push('Proteina baixa: ovos, frango, carne, leite ou iogurte entram bem hoje.');
+    if (caloriesMissing >= 350) recs.push('Calorias baixas: banana + aveia + leite, pao com ovo ou arroz/feijao ajudam sem complicar.');
+    if (log.appetite === 'muita_fome' && trainedGlutes) recs.push('Muita fome em dia de gluteo: faz uma vitamina ou refeicao reforcada, sem medo de comer direito.');
+  }
+
+  if ((Number(log.water_ml) || 0) >= profile.waterTarget[0] && totals.protein >= profile.proteinTarget[0]) recs.push('Dia perfeito encaminhado: agua + proteina batendo meta.');
+  if (!recs.length) recs.push(person === 'pablo' ? 'Boa escolha: comida de verdade e constancia ganham o jogo.' : 'Boa: mantenha agua, proteina e refeicoes suficientes.');
+  return recs;
+}
+
+function getSmartWaterInterval(log, settings) {
+  if (!settings.smartFrequency) return Number(settings.waterInterval) || 60;
+  const target = PEOPLE[log.person].waterDefault;
+  const water = Number(log.water_ml) || 0;
+  if (water >= target) return 0;
+  const now = new Date();
+  const [endHour, endMinute] = (settings.endTime || '23:00').split(':').map(Number);
+  const end = new Date();
+  end.setHours(endHour || 23, endMinute || 0, 0, 0);
+  const hoursLeft = Math.max(1, (end - now) / 36e5);
+  const neededPerHour = Math.max(0, target - water) / hoursLeft;
+  if (neededPerHour > 350) return 45;
+  if (neededPerHour < 170) return 90;
+  return 60;
+}
+
+function buildReminderMessage(log) {
+  const profile = PEOPLE[log.person];
+  const waterMissing = Math.max(0, profile.waterDefault - (Number(log.water_ml) || 0));
+  if (waterMissing <= 0) return `${profile.short}, meta de agua batida. Boa!`;
+  if (log.person === 'pablo') {
+    return waterMissing > 1200
+      ? 'Pablo, agua baixa hoje. Toma 300 ml agora para salvar o dia.'
+      : 'Pablo, voce esta atrasado na hidratacao. Nada de so cafe e Monster, toma agua.';
+  }
+  return waterMissing > 900 ? 'Ana Clara, hora da agua. Tenta tomar 250 ml agora.' : 'Boa! Meta de agua quase batida. Falta pouco.';
+}
+
+function timeToMinutes(value) {
+  const [hours, minutes] = (value || '00:00').split(':').map(Number);
+  return (hours || 0) * 60 + (minutes || 0);
+}
+
+function isInsideReminderWindow(settings, now = new Date()) {
+  const current = now.getHours() * 60 + now.getMinutes();
+  return current >= timeToMinutes(settings.startTime) && current <= timeToMinutes(settings.endTime);
+}
+
+function getTimedReminder(log, totals, now = new Date()) {
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const profile = PEOPLE[log.person];
+  if (log.person === 'pablo') {
+    if (minutes >= timeToMinutes('18:30') && !mealFilled(log, 'dinner')) {
+      return 'Pablo, janta antes da faculdade. Se deixar pra 23h20, a chance de exagerar sobe.';
+    }
+    if (minutes >= timeToMinutes('23:20') && (!mealFilled(log, 'dinner') || totals.protein < profile.proteinTarget[0])) {
+      return 'Pablo, ceia leve agora: proteina simples e nada de exagerar tarde.';
+    }
+    if (minutes >= timeToMinutes('17:00') && log.workout === 'descanso') {
+      return 'Pablo, se couber hoje, faz pelo menos treino curto ou caminhada.';
+    }
+  } else {
+    if (minutes >= timeToMinutes('16:30') && !mealFilled(log, 'snack')) {
+      return 'Ana Clara, dia de construir gluteo: nao pula lanche/vitamina.';
+    }
+    if (minutes >= timeToMinutes('17:00') && log.workout === 'descanso') {
+      return 'Ana Clara, se hoje for dia de perna/gluteo, ja deixa o treino encaminhado.';
+    }
+    if (totals.protein < profile.proteinTarget[0] || totals.calories < profile.calorieTarget[0]) {
+      return 'Ana Clara, ainda falta comida boa para bater proteina/caloria hoje.';
+    }
+  }
+  return null;
+}
+
+function settingsToRow(person, settings) {
+  return {
+    person,
+    water_reminders_enabled: Boolean(settings.water),
+    meal_reminders_enabled: Boolean(settings.meals),
+    goal_reminders_enabled: Boolean(settings.goals),
+    workout_reminders_enabled: Boolean(settings.workout),
+    smart_frequency: Boolean(settings.smartFrequency),
+    default_water_interval_minutes: Number(settings.waterInterval) || 60,
+    reminder_start_time: settings.startTime || DEFAULT_REMINDER_SETTINGS[person].startTime,
+    reminder_end_time: settings.endTime || DEFAULT_REMINDER_SETTINGS[person].endTime,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function rowToSettings(row) {
+  return {
+    enabled: true,
+    water: row.water_reminders_enabled,
+    meals: row.meal_reminders_enabled,
+    goals: row.goal_reminders_enabled,
+    workout: row.workout_reminders_enabled,
+    smartFrequency: row.smart_frequency,
+    waterInterval: row.default_water_interval_minutes,
+    startTime: row.reminder_start_time,
+    endTime: row.reminder_end_time,
+  };
+}
+
+function getDayScore(log, totals) {
+  const profile = PEOPLE[log.person];
+  if (!Object.values(log.meals || {}).some((items) => items.length) && !Number(log.water_ml)) return { label: 'vazio', tone: 'bg-slate-100 text-slate-600' };
+  const waterOk = Number(log.water_ml) >= profile.waterTarget[0];
+  const proteinOk = totals.protein >= profile.proteinTarget[0];
+  const caloriesLow = totals.calories < profile.calorieTarget[0] * 0.7;
+  const sugarHigh = log.person === 'pablo' && totals.liquid_sugar > 25;
+  if (waterOk && proteinOk && !sugarHigh) return { label: 'bom', tone: 'bg-emerald-100 text-emerald-800' };
+  if (caloriesLow || sugarHigh || Number(log.water_ml) < profile.waterTarget[0] * 0.45) return { label: 'ruim', tone: 'bg-red-100 text-red-800' };
+  return { label: 'atencao', tone: 'bg-amber-100 text-amber-800' };
+}
+
+function getMonthHistory(logsByDate, person) {
+  return Object.entries(logsByDate)
+    .map(([date, logs]) => {
+      const log = logs?.[person];
+      if (!log) return null;
+      const totals = calculateTotals(log);
+      return {
+        date,
+        weight: Number(log.weight_kg) || 0,
+        water: Number(log.water_ml) || 0,
+        protein: totals.protein || 0,
+        status: log.status,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function getStreak(logsByDate) {
+  let streak = 0;
+  const cursor = new Date();
+  while (streak < 370) {
+    const key = dateToKey(cursor);
+    const dayLogs = logsByDate[key] || {};
+    const registered = Object.values(dayLogs).some((log) => log.status && log.status !== 'empty');
+    if (!registered) break;
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function applyFeedbackTone(warnings, tone) {
+  if (tone === 'firme') return warnings;
+  return warnings.map((warning) => {
+    if (tone === 'leve' && warning.type !== 'ok') {
+      return {
+        ...warning,
+        text: warning.text
+          .replace('Pablo, aqui voce esta se sabotando: ', 'Atencao, Pablo: ')
+          .replace('nao ajuda sua barriga', 'pode atrapalhar seu objetivo')
+          .replace('Nada de so cafe e Monster, toma agua.', 'Tenta tomar agua agora.'),
+      };
+    }
+    if (tone === 'normal' && warning.type !== 'ok') {
+      return {
+        ...warning,
+        text: warning.text.replace('Pablo, aqui voce esta se sabotando: ', 'Pablo, ponto de atencao: '),
+      };
+    }
+    return warning;
+  });
 }
 
 function buildReport(logs, selectedDate, mode) {
@@ -325,26 +686,34 @@ function buildReport(logs, selectedDate, mode) {
     .map((person) => {
       const log = logs[person];
       const totals = calculateTotals(log);
+      const recommendations = getRecommendations(log, totals);
+      const customItems = Object.values(log.meals || {}).flat().filter((item) => item.custom);
+      const unknownCustom = Object.values(log.meals || {}).flat().filter((item) => item.custom && !item.calories && !item.protein && !item.sugar);
       const lines = [
         `RELATORIO DO DIA - ${formatDateBr(selectedDate)}`,
         `Pessoa: ${PEOPLE[person].label}`,
         `Peso: ${log.weight_kg || '-'}`,
+        `Sono: ${log.sleep_time || '-'}`,
         `Agua: ${log.water_ml || 0} ml`,
         person === 'pablo' ? `Caminhada: ${log.walked ? 'sim' : 'nao'} ${log.walked_km ? `(${log.walked_km} km)` : ''}` : null,
         person === 'pablo' ? `Usou Uber: ${log.used_uber ? 'sim' : 'nao'}` : null,
         `Treino: ${log.workout || '-'}`,
+        `Fome agora: ${log.appetite || '-'}`,
         `Cafe da manha: ${(log.meals.breakfast || []).map(itemLabel).join('; ') || '-'}`,
         `Almoco: ${(log.meals.lunch || []).map(itemLabel).join('; ') || '-'}`,
         person === 'ana_clara' ? `Lanche/vitamina: ${(log.meals.snack || []).map(itemLabel).join('; ') || '-'}` : null,
         person === 'pablo' ? `Janta antes da faculdade: ${(log.meals.dinner || []).map(itemLabel).join('; ') || '-'}` : `Janta: ${(log.meals.dinner || []).map(itemLabel).join('; ') || '-'}`,
         `Ceia: ${(log.meals.supper || []).map(itemLabel).join('; ') || '-'}`,
         person === 'pablo' ? `Extras: ${(log.meals.extras || []).map(itemLabel).join('; ') || '-'}` : null,
+        `Itens personalizados: ${customItems.map(itemLabel).join('; ') || '-'}`,
         `Calorias estimadas: ${totals.calories} kcal`,
         `Proteina estimada: ${totals.protein} g`,
         `Acucar estimado: ${totals.sugar} g`,
         `Alertas do sistema: ${totals.warnings.map((warning) => warning.text).join(' | ')}`,
+        `Recomendacoes do site: ${recommendations.join(' | ')}`,
+        `Itens sem valor nutricional conhecido: ${unknownCustom.map((item) => item.label || 'Outro').join('; ') || '-'}`,
         `Observacoes: ${log.notes || '-'}`,
-        'Pergunta para o ChatGPT: Analise meu dia e me diga o que ajustar amanha.',
+        'Pergunta para o ChatGPT: Analise meu dia e me diga o que ajustar ainda hoje ou amanha.',
       ].filter(Boolean);
       return lines.join('\n');
     })
@@ -394,8 +763,20 @@ export default function Dieta() {
   const [loadState, setLoadState] = useState('loading');
   const [report, setReport] = useState('');
   const [dirtyVersion, setDirtyVersion] = useState(0);
+  const [notificationStatus, setNotificationStatus] = useState('idle');
+  const [lastReminder, setLastReminder] = useState(null);
+  const [settingsSaveState, setSettingsSaveState] = useState('local');
+  const [actionMessage, setActionMessage] = useState('');
+  const [reminderSettings, setReminderSettings] = useState(() => {
+    try {
+      return { ...DEFAULT_REMINDER_SETTINGS, ...(JSON.parse(localStorage.getItem('diet-reminder-settings') || '{}')) };
+    } catch {
+      return DEFAULT_REMINDER_SETTINGS;
+    }
+  });
   const didLoadRef = useRef(false);
   const saveTimerRef = useRef(null);
+  const reminderMinuteRef = useRef('');
 
   const monthDays = useMemo(() => getMonthDays(monthDate), [monthDate]);
 
@@ -488,6 +869,36 @@ export default function Dieta() {
   }, [monthDate]);
 
   useEffect(() => {
+    let mounted = true;
+    async function loadReminderSettings() {
+      const { data, error } = await supabase
+        .from('health_notification_settings')
+        .select('*');
+
+      if (!mounted || error || !Array.isArray(data) || !data.length) return;
+
+      setReminderSettings((previous) => {
+        const next = { ...previous };
+        for (const row of data) {
+          next[row.person] = {
+            ...(next[row.person] || DEFAULT_REMINDER_SETTINGS[row.person]),
+            ...rowToSettings(row),
+            tone: next[row.person]?.tone || DEFAULT_REMINDER_SETTINGS[row.person].tone,
+          };
+        }
+        localStorage.setItem('diet-reminder-settings', JSON.stringify(next));
+        return next;
+      });
+      setSettingsSaveState('supabase');
+    }
+
+    loadReminderSettings();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!didLoadRef.current || dirtyVersion === 0) return;
     window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => {
@@ -551,11 +962,15 @@ export default function Dieta() {
   function exportReport(mode) {
     const text = buildReport(selectedLogs, selectedDate, mode);
     setReport(text);
+    return text;
   }
 
-  async function copyReport() {
-    if (!report) return;
-    await navigator.clipboard.writeText(report);
+  async function copyReport(mode) {
+    const text = mode ? buildReport(selectedLogs, selectedDate, mode) : report;
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    if (mode) setReport(text);
+    setActionMessage('Relatorio copiado.');
   }
 
   function downloadReport() {
@@ -571,6 +986,185 @@ export default function Dieta() {
 
   const activeLog = selectedLogs[activePerson];
   const activeTotals = calculateTotals(activeLog);
+  const activeRecommendations = getRecommendations(activeLog, activeTotals);
+  const activeSettings = reminderSettings[activePerson] || DEFAULT_REMINDER_SETTINGS[activePerson];
+  const activeWarnings = applyFeedbackTone(activeTotals.warnings, activeSettings.tone);
+  const history = getMonthHistory(logsByDate, activePerson);
+  const streak = getStreak(logsByDate);
+  const dayScore = getDayScore(activeLog, activeTotals);
+
+  async function persistReminderSettings(nextSettings) {
+    const payload = Object.entries(nextSettings).map(([person, settings]) => settingsToRow(person, settings));
+    const { error } = await supabase
+      .from('health_notification_settings')
+      .upsert(payload, { onConflict: 'person' });
+    setSettingsSaveState(error ? 'local' : 'supabase');
+  }
+
+  function updateReminderSetting(person, key, value) {
+    setReminderSettings((previous) => {
+      const next = {
+        ...previous,
+        [person]: {
+          ...(previous[person] || DEFAULT_REMINDER_SETTINGS[person]),
+          [key]: value,
+        },
+      };
+      localStorage.setItem('diet-reminder-settings', JSON.stringify(next));
+      persistReminderSettings(next);
+      return next;
+    });
+  }
+
+  async function activateReminders() {
+    if (!('Notification' in window)) {
+      setNotificationStatus('unsupported');
+      return;
+    }
+
+    try {
+      setNotificationStatus('requesting');
+      if (OneSignal?.Notifications?.requestPermission) {
+        await OneSignal.Notifications.requestPermission();
+      } else {
+        await Notification.requestPermission();
+      }
+      if (OneSignal?.User?.addTag) {
+        OneSignal.User.addTag('dieta_lembretes', 'ativo');
+        OneSignal.User.addTag('dieta_pessoa_ativa', activePerson);
+      }
+      setNotificationStatus(Notification.permission === 'granted' ? 'granted' : 'blocked');
+    } catch (error) {
+      console.warn('Erro ao ativar lembretes da dieta:', error);
+      setNotificationStatus('error');
+    }
+  }
+
+  function showDietNotification(title, body) {
+    setLastReminder({ title, body, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) });
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    navigator.serviceWorker?.ready
+      ?.then((registration) => registration.showNotification(title, { body, icon: '/images/icon-192.png', tag: 'dieta-reminder' }))
+      .catch(() => new Notification(title, { body }));
+  }
+
+  function addCustomItem(person, meal, custom = {}) {
+    const log = selectedLogs[person];
+    const meals = cloneMeals(log.meals);
+    meals[meal] = [...(meals[meal] || []), createCustomMealItem(custom)];
+    updateLog(person, { meals });
+  }
+
+  function updateCustomItem(person, meal, id, patch) {
+    const log = selectedLogs[person];
+    const meals = cloneMeals(log.meals);
+    meals[meal] = (meals[meal] || []).map((item) => (item.id === id ? { ...item, ...patch } : item));
+    updateLog(person, { meals });
+  }
+
+  function removeCustomItem(person, meal, id) {
+    const log = selectedLogs[person];
+    const meals = cloneMeals(log.meals);
+    meals[meal] = (meals[meal] || []).filter((item) => item.id !== id);
+    updateLog(person, { meals });
+  }
+
+  function applyQuickAction(action) {
+    if (action.water) {
+      updateLog(activePerson, { water_ml: (Number(activeLog.water_ml) || 0) + action.water });
+      return;
+    }
+    if (action.custom) {
+      addCustomItem(activePerson, action.meal, action.custom);
+      return;
+    }
+    updateMealItem(activePerson, action.meal, action.food, { checked: true, amount: action.amount, unit: action.unit });
+  }
+
+  function clearSelectedDay() {
+    if (!window.confirm('Limpar os registros deste dia para Pablo e Ana Clara?')) return;
+    setDirtyVersion((version) => version + 1);
+    setLogsByDate((previous) => ({
+      ...previous,
+      [selectedDate]: {
+        pablo: defaultLog('pablo', selectedDate),
+        ana_clara: defaultLog('ana_clara', selectedDate),
+      },
+    }));
+    setActionMessage('Dia limpo. Salvamento automatico em instantes.');
+  }
+
+  function duplicateYesterdayMeals() {
+    const yesterday = parseLocalDate(selectedDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const previousKey = dateToKey(yesterday);
+    const previousLog = logsByDate[previousKey]?.[activePerson];
+    if (!previousLog) {
+      setActionMessage('Nao encontrei refeicoes de ontem para duplicar.');
+      return;
+    }
+    updateLog(activePerson, { meals: cloneMeals(previousLog.meals) });
+    setActionMessage('Refeicoes de ontem duplicadas para a pessoa ativa.');
+  }
+
+  function repeatPreviousLunch() {
+    const previousLunch = history
+      .filter((item) => item.date < selectedDate)
+      .map((item) => logsByDate[item.date]?.[activePerson])
+      .reverse()
+      .find((log) => log?.meals?.lunch?.length);
+    if (!previousLunch) {
+      setActionMessage('Nao encontrei almoco anterior para repetir.');
+      return;
+    }
+    const meals = cloneMeals(activeLog.meals);
+    meals.lunch = (previousLunch.meals.lunch || []).map((item) => ({
+      ...item,
+      id: item.custom ? `custom-${Date.now()}-${Math.random().toString(16).slice(2)}` : item.id,
+    }));
+    updateLog(activePerson, { meals });
+    setActionMessage('Almoco anterior repetido.');
+  }
+
+  useEffect(() => {
+    if (selectedDate !== todayKey) return undefined;
+
+    const timers = Object.entries(reminderSettings)
+      .filter(([, settings]) => settings.enabled && settings.water)
+      .map(([person, settings]) => {
+        const log = selectedLogs[person];
+        const interval = getSmartWaterInterval(log, settings);
+        if (!interval) return null;
+        return window.setTimeout(() => {
+          showDietNotification('Lembrete da dieta', buildReminderMessage(log));
+        }, interval * 60 * 1000);
+      })
+      .filter(Boolean);
+
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [selectedDate, todayKey, selectedLogs, reminderSettings]);
+
+  useEffect(() => {
+    if (selectedDate !== todayKey) return undefined;
+    const interval = window.setInterval(() => {
+      const now = new Date();
+      const minuteKey = now.toISOString().slice(0, 16);
+      if (reminderMinuteRef.current === minuteKey) return;
+      reminderMinuteRef.current = minuteKey;
+
+      Object.entries(reminderSettings).forEach(([person, settings]) => {
+        if (!settings.enabled || !isInsideReminderWindow(settings, now)) return;
+        const log = selectedLogs[person];
+        const totals = calculateTotals(log);
+        const message = getTimedReminder(log, totals, now);
+        if (message && (settings.meals || settings.goals || settings.workout)) {
+          showDietNotification('Lembrete da dieta', message);
+        }
+      });
+    }, 60 * 1000);
+
+    return () => window.clearInterval(interval);
+  }, [selectedDate, todayKey, selectedLogs, reminderSettings]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-6xl space-y-6 pb-16">
@@ -651,6 +1245,7 @@ export default function Dieta() {
           {Object.keys(PEOPLE).map((person) => {
             const log = selectedLogs[person];
             const totals = calculateTotals(log);
+            const score = getDayScore(log, totals);
             return (
               <button
                 key={person}
@@ -662,14 +1257,138 @@ export default function Dieta() {
                 </div>
                 <h3 className="font-serif text-2xl font-bold text-slate-900">{PEOPLE[person].label}</h3>
                 <p className="mb-4 text-xs font-bold uppercase tracking-wide text-slate-400">{PEOPLE[person].goal}</p>
+                <div className={`mb-4 inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase ${score.tone}`}>
+                  Status: {score.label}
+                </div>
                 <div className="space-y-3">
                   <ProgressBar label="Agua" value={log.water_ml} target={PEOPLE[person].waterTarget[0]} unit="ml" tone="blue" />
                   <ProgressBar label="Calorias" value={totals.calories} target={PEOPLE[person].calorieTarget[0]} unit="kcal" tone={person === 'pablo' ? 'green' : 'rose'} />
                   <ProgressBar label="Proteina" value={totals.protein} target={PEOPLE[person].proteinTarget[0]} unit="g" tone="green" />
                 </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-bold text-slate-500">
+                  <span>Acucar: {totals.sugar}g</span>
+                  <span>{person === 'pablo' ? `Caminhada: ${log.walked ? 'sim' : 'nao'}` : `Lanche: ${mealFilled(log, 'snack') ? 'sim' : 'nao'}`}</span>
+                  <span className="col-span-2">Treino: {(log.workout || 'descanso').replaceAll('_', ' ')}</span>
+                </div>
               </button>
             );
           })}
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-xl backdrop-blur-xl">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="font-serif text-3xl font-bold text-slate-900">Configuracoes de lembretes</h2>
+              <p className="text-sm text-slate-500">Usa o OneSignal ja configurado no site e lembretes locais enquanto esta pagina/PWA estiver aberta.</p>
+            </div>
+            <button onClick={activateReminders} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-lg">
+              <Bell className="h-4 w-4" /> Ativar lembretes
+            </button>
+          </div>
+
+          <div className="mb-4 rounded-2xl bg-white/75 p-4 text-xs font-bold leading-5 text-slate-600">
+            {notificationStatus === 'granted' && 'Permissao ativa. Tags da dieta vinculadas no OneSignal.'}
+            {notificationStatus === 'blocked' && 'Permissao negada no navegador. Ative nas configuracoes do site para receber notificacoes.'}
+            {notificationStatus === 'unsupported' && 'Este navegador nao suporta notificacoes.'}
+            {notificationStatus === 'error' && 'Nao consegui pedir permissao agora. Tente de novo pelo navegador.'}
+            {notificationStatus === 'requesting' && 'Pedindo permissao...'}
+            {notificationStatus === 'idle' && 'No iPhone, adicione este site a Tela de Inicio e permita notificacoes para melhor compatibilidade.'}
+            <span className="mt-1 block text-slate-400">
+              Preferencias: {settingsSaveState === 'supabase' ? 'salvas no Supabase' : 'salvas localmente; rode a migration para sincronizar no Supabase'}.
+            </span>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {Object.keys(PEOPLE).map((person) => {
+              const settings = reminderSettings[person] || DEFAULT_REMINDER_SETTINGS[person];
+              const interval = getSmartWaterInterval(selectedLogs[person], settings);
+              return (
+                <div key={person} className="rounded-3xl bg-white/75 p-4">
+                  <h3 className="mb-3 font-serif text-xl font-bold text-slate-900">{PEOPLE[person].short}</h3>
+                  <div className="grid gap-3">
+                    <label className="flex items-center justify-between gap-3 text-sm font-bold text-slate-700">
+                      Lembretes ativos
+                      <input type="checkbox" checked={settings.enabled} onChange={(event) => updateReminderSetting(person, 'enabled', event.target.checked)} className="h-5 w-5 accent-rose-500" />
+                    </label>
+                    <label className="flex items-center justify-between gap-3 text-sm font-bold text-slate-700">
+                      Agua
+                      <input type="checkbox" checked={settings.water} onChange={(event) => updateReminderSetting(person, 'water', event.target.checked)} className="h-5 w-5 accent-cyan-500" />
+                    </label>
+                    <label className="flex items-center justify-between gap-3 text-sm font-bold text-slate-700">
+                      Metas/refeicoes
+                      <input type="checkbox" checked={settings.meals && settings.goals} onChange={(event) => {
+                        updateReminderSetting(person, 'meals', event.target.checked);
+                        updateReminderSetting(person, 'goals', event.target.checked);
+                      }} className="h-5 w-5 accent-emerald-500" />
+                    </label>
+                    <label className="flex items-center justify-between gap-3 text-sm font-bold text-slate-700">
+                      Frequencia inteligente
+                      <input type="checkbox" checked={settings.smartFrequency} onChange={(event) => updateReminderSetting(person, 'smartFrequency', event.target.checked)} className="h-5 w-5 accent-violet-500" />
+                    </label>
+                    <label className="flex items-center justify-between gap-3 text-sm font-bold text-slate-700">
+                      Treino
+                      <input type="checkbox" checked={settings.workout} onChange={(event) => updateReminderSetting(person, 'workout', event.target.checked)} className="h-5 w-5 accent-emerald-500" />
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="Inicio"><TextInput type="time" value={settings.startTime} onChange={(event) => updateReminderSetting(person, 'startTime', event.target.value)} /></Field>
+                      <Field label="Fim"><TextInput type="time" value={settings.endTime} onChange={(event) => updateReminderSetting(person, 'endTime', event.target.value)} /></Field>
+                    </div>
+                    <Field label="Intervalo agua">
+                      <SelectInput value={settings.smartFrequency ? 'smart' : settings.waterInterval} onChange={(event) => {
+                        if (event.target.value === 'smart') {
+                          updateReminderSetting(person, 'smartFrequency', true);
+                          return;
+                        }
+                        updateReminderSetting(person, 'smartFrequency', false);
+                        updateReminderSetting(person, 'waterInterval', Number(event.target.value));
+                      }}>
+                        <option value="smart">automatico/inteligente</option>
+                        <option value={45}>45 min</option>
+                        <option value={60}>60 min</option>
+                        <option value={90}>90 min</option>
+                      </SelectInput>
+                    </Field>
+                    <Field label="Tom do feedback">
+                      <SelectInput value={settings.tone || DEFAULT_REMINDER_SETTINGS[person].tone} onChange={(event) => updateReminderSetting(person, 'tone', event.target.value)}>
+                        <option value="leve">leve</option>
+                        <option value="normal">normal</option>
+                        <option value="firme">firme</option>
+                      </SelectInput>
+                    </Field>
+                    <p className="rounded-2xl bg-slate-50 p-3 text-xs font-bold text-slate-500">
+                      Proximo lembrete de agua em: {interval ? `${interval} min` : 'meta de agua batida'}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {lastReminder && (
+            <div className="mt-4 rounded-2xl bg-cyan-50 p-4 text-sm font-bold text-cyan-900">
+              Ultimo lembrete visual ({lastReminder.time}): {lastReminder.body}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-xl backdrop-blur-xl">
+          <h2 className="mb-4 font-serif text-3xl font-bold text-slate-900">Acoes rapidas</h2>
+          <div className="mb-5 flex flex-wrap gap-2">
+            {[200, 250, 300, 500].map((ml) => (
+              <button key={ml} onClick={() => updateLog(activePerson, { water_ml: (Number(activeLog.water_ml) || 0) + ml })} className="rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-bold text-white">
+                +{ml} ml
+              </button>
+            ))}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {QUICK_ACTIONS[activePerson].map((action) => (
+              <button key={action.label} onClick={() => applyQuickAction(action)} className="rounded-2xl bg-white/85 px-4 py-3 text-left text-sm font-bold text-slate-700 shadow-sm transition hover:bg-white">
+                {action.label}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -682,6 +1401,19 @@ export default function Dieta() {
           <div className={`rounded-2xl border px-4 py-3 text-sm font-bold ${PEOPLE[activePerson].soft}`}>
             Meta: {PEOPLE[activePerson].calorieTarget[0]}-{PEOPLE[activePerson].calorieTarget[1]} kcal, {PEOPLE[activePerson].proteinTarget[0]}-{PEOPLE[activePerson].proteinTarget[1]}g proteina
           </div>
+        </div>
+
+        <div className="mb-5 flex flex-wrap gap-2">
+          <button onClick={duplicateYesterdayMeals} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">
+            <RotateCcw className="h-4 w-4" /> Duplicar refeicoes de ontem
+          </button>
+          <button onClick={repeatPreviousLunch} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">
+            <Utensils className="h-4 w-4" /> Repetir almoco anterior
+          </button>
+          <button onClick={clearSelectedDay} className="inline-flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 shadow-sm">
+            <Trash2 className="h-4 w-4" /> Limpar dia
+          </button>
+          {actionMessage && <span className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{actionMessage}</span>}
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
@@ -714,11 +1446,13 @@ export default function Dieta() {
               ).map((option) => <option key={option} value={option}>{option.replaceAll('_', ' ')}</option>)}
             </SelectInput>
           </Field>
-          <Field label={activePerson === 'pablo' ? 'Humor/energia' : 'Apetite'}>
-            <SelectInput value={activePerson === 'pablo' ? activeLog.mood || 'medio' : activeLog.appetite || 'medio'} onChange={(event) => updateLog(activePerson, activePerson === 'pablo' ? { mood: event.target.value } : { appetite: event.target.value })}>
-              <option value="baixo">Baixo</option>
-              <option value="medio">Medio</option>
-              <option value="bom">Bom</option>
+          <Field label="Fome agora">
+            <SelectInput value={activeLog.appetite || 'sem_fome'} onChange={(event) => updateLog(activePerson, { appetite: event.target.value })}>
+              <option value="sem_fome">Sem fome</option>
+              <option value="fome_leve">Fome leve</option>
+              <option value="fome_normal">Fome normal</option>
+              <option value="muita_fome">Muita fome</option>
+              <option value="vontade_doce">Vontade de doce</option>
             </SelectInput>
           </Field>
         </div>
@@ -758,6 +1492,40 @@ export default function Dieta() {
                     </div>
                   );
                 })}
+                {(activeLog.meals[meal] || []).filter((item) => item.custom).map((item) => (
+                  <div key={item.id} className="rounded-2xl border border-rose-100 bg-rose-50/70 p-3">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-slate-800">Outro item</p>
+                      <button onClick={() => removeCustomItem(activePerson, meal, item.id)} className="rounded-full bg-white p-2 text-red-500 shadow-sm" aria-label="Remover item personalizado">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <Field label="Alimento"><TextInput value={item.label || ''} placeholder="Ex.: Nugget, pizza, requeijao" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { label: event.target.value })} /></Field>
+                      <Field label="Categoria">
+                        <SelectInput value={item.category || 'outro'} onChange={(event) => updateCustomItem(activePerson, meal, item.id, { category: event.target.value })}>
+                          {FOOD_CATEGORIES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </SelectInput>
+                      </Field>
+                      <Field label="Quantidade"><TextInput type="number" min="0" value={item.amount || ''} onChange={(event) => updateCustomItem(activePerson, meal, item.id, { amount: event.target.value })} /></Field>
+                      <Field label="Unidade">
+                        <SelectInput value={item.unit || 'g'} onChange={(event) => updateCustomItem(activePerson, meal, item.id, { unit: event.target.value })}>
+                          {UNIT_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </SelectInput>
+                      </Field>
+                      <Field label="g/ml calculado"><TextInput type="number" min="0" value={item.grams_or_ml || ''} placeholder="Opcional" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { grams_or_ml: event.target.value })} /></Field>
+                      <Field label="Calorias"><TextInput type="number" min="0" value={item.calories || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { calories: event.target.value })} /></Field>
+                      <Field label="Proteina g"><TextInput type="number" min="0" value={item.protein || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { protein: event.target.value })} /></Field>
+                      <Field label="Acucar g"><TextInput type="number" min="0" value={item.sugar || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { sugar: event.target.value })} /></Field>
+                      <div className="sm:col-span-2">
+                        <Field label="Observacao"><TextInput value={item.notes || ''} placeholder="Ex.: sem acucar, pouco oleo, porcao pequena" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { notes: event.target.value })} /></Field>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button onClick={() => addCustomItem(activePerson, meal)} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-rose-200 bg-white/70 px-4 py-3 text-sm font-bold text-rose-700">
+                  <Plus className="h-4 w-4" /> Adicionar outro alimento
+                </button>
               </div>
             </div>
           ))}
@@ -780,9 +1548,20 @@ export default function Dieta() {
           </div>
 
           <div className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-lg backdrop-blur-xl">
+            <h3 className="mb-4 flex items-center gap-2 font-serif text-2xl font-bold text-slate-900"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Para bater sua meta hoje</h3>
+            <div className="space-y-3">
+              {activeRecommendations.map((recommendation) => (
+                <div key={recommendation} className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold leading-5 text-emerald-900">
+                  {recommendation}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-lg backdrop-blur-xl">
             <h3 className="mb-4 flex items-center gap-2 font-serif text-2xl font-bold text-slate-900"><AlertTriangle className="h-5 w-5 text-amber-500" /> Feedback</h3>
             <div className="space-y-3">
-              {activeTotals.warnings.map((warning, index) => (
+              {activeWarnings.map((warning, index) => (
                 <div key={`${warning.text}-${index}`} className={`rounded-2xl px-4 py-3 text-sm font-bold ${warning.type === 'danger' ? 'bg-red-100 text-red-800' : warning.type === 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
                   {warning.text}
                 </div>
@@ -829,6 +1608,46 @@ export default function Dieta() {
       </section>
 
       <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 font-serif text-3xl font-bold text-slate-900">
+              <BarChart3 className="h-6 w-6 text-cyan-600" /> Historico do mes
+            </h2>
+            <p className="text-sm text-slate-500">Peso, agua e proteina de {PEOPLE[activePerson].short}. Sequencia atual: {streak} dia(s) registrados.</p>
+          </div>
+          <div className={`rounded-2xl px-4 py-3 text-sm font-bold ${dayScore.tone}`}>
+            Hoje: {dayScore.label}
+          </div>
+        </div>
+        {history.length ? (
+          <div className="grid gap-3">
+            {history.slice(-10).map((item) => {
+              const waterPercent = progressValue(item.water, PEOPLE[activePerson].waterTarget[0]);
+              const proteinPercent = progressValue(item.protein, PEOPLE[activePerson].proteinTarget[0]);
+              return (
+                <div key={item.date} className="rounded-2xl bg-white/80 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold text-slate-600">
+                    <span>{formatDateBr(item.date)}</span>
+                    <span>{item.weight ? `${item.weight} kg` : 'peso -'} | {item.water} ml | {item.protein}g prot.</span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="h-2 overflow-hidden rounded-full bg-cyan-50">
+                      <div className="h-full rounded-full bg-cyan-500" style={{ width: `${waterPercent}%` }} />
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-emerald-50">
+                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${proteinPercent}%` }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-500">Ainda nao ha historico carregado para esta pessoa neste mes.</p>
+        )}
+      </section>
+
+      <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="font-serif text-3xl font-bold text-slate-900">Exportar dia para o ChatGPT</h2>
@@ -842,7 +1661,10 @@ export default function Dieta() {
         </div>
         <textarea readOnly value={report} placeholder="Clique em uma opcao de exportacao para gerar o relatorio." className="min-h-72 w-full rounded-2xl border border-white/70 bg-white/80 p-4 font-mono text-xs text-slate-700 outline-none" />
         <div className="mt-3 flex flex-wrap gap-2">
-          <button onClick={copyReport} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Clipboard className="h-4 w-4" /> Copiar relatorio</button>
+          <button onClick={() => copyReport('pablo')} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Clipboard className="h-4 w-4" /> Copiar Pablo</button>
+          <button onClick={() => copyReport('ana_clara')} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Clipboard className="h-4 w-4" /> Copiar Ana Clara</button>
+          <button onClick={() => copyReport('couple')} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Clipboard className="h-4 w-4" /> Copiar casal</button>
+          <button onClick={() => copyReport()} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Clipboard className="h-4 w-4" /> Copiar texto acima</button>
           <button onClick={downloadReport} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Download className="h-4 w-4" /> Baixar .txt</button>
         </div>
       </section>

@@ -134,6 +134,7 @@ const UNIT_OPTIONS = [
   ['pedaco', 'pedaco'],
   ['colher_cha', 'colher de cha'],
   ['colher_sopa', 'colher de sopa'],
+  ['colher_arroz_pequena', 'colher de arroz pequena'],
   ['colher_arroz_media', 'colher de arroz media'],
   ['colher_arroz_cheia', 'colher de arroz cheia'],
   ['concha_pequena', 'concha pequena'],
@@ -150,6 +151,7 @@ const UNIT_CONVERSIONS = {
   litro: 1000,
   colher_cha: 5,
   colher_sopa: 12,
+  colher_arroz_pequena: 40,
   colher_arroz_media: 60,
   colher_arroz_cheia: 80,
   concha_pequena: 70,
@@ -301,6 +303,7 @@ const DEFAULTS_BY_PERSON = {
     walked: false,
     walked_km: '',
     used_uber: false,
+    class_today: false,
     workout: 'descanso',
     mood: 'medio',
     appetite: '',
@@ -318,6 +321,7 @@ const DEFAULTS_BY_PERSON = {
     walked: false,
     walked_km: '',
     used_uber: false,
+    class_today: false,
     workout: 'descanso',
     mood: '',
     appetite: 'medio',
@@ -401,6 +405,7 @@ function normalizeLog(row, person, logDate) {
     walked_km: row.walked_km ?? '',
     water_ml: row.water_ml ?? 0,
     meals: cloneMeals(row.meals),
+    class_today: Boolean(row.meals?._meta?.class_today),
     totals: row.totals || {},
   };
 }
@@ -506,6 +511,36 @@ function inputNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function buildLogPayload(log, selectedDate, userId = null) {
+  const totals = calculateTotals(log);
+  const mealsPayload = {
+    ...(log.meals || EMPTY_MEALS),
+    _meta: {
+      ...(log.meals?._meta || {}),
+      class_today: Boolean(log.class_today),
+    },
+  };
+  return {
+    user_id: userId,
+    person: log.person,
+    log_date: selectedDate,
+    weight_kg: inputNumber(log.weight_kg),
+    wake_time: log.wake_time || null,
+    sleep_time: log.sleep_time || null,
+    water_ml: Number(log.water_ml) || 0,
+    walked: Boolean(log.walked),
+    walked_km: inputNumber(log.walked_km),
+    used_uber: Boolean(log.used_uber),
+    workout: log.workout || null,
+    mood: log.mood || null,
+    appetite: log.appetite || null,
+    notes: log.notes || null,
+    meals: mealsPayload,
+    totals,
+    status: getStatus(log, totals),
+  };
+}
+
 function itemLabel(item) {
   const food = FOOD_DB[item.food] || FOOD_DB.outro;
   const amount = Number(item.amount) || 0;
@@ -545,6 +580,101 @@ function getRecommendations(log, totals) {
   if ((Number(log.water_ml) || 0) >= profile.waterTarget[0] && totals.protein >= profile.proteinTarget[0]) recs.push('Dia perfeito encaminhado: agua + proteina batendo meta.');
   if (!recs.length) recs.push(person === 'pablo' ? 'Boa escolha: comida de verdade e constancia ganham o jogo.' : 'Boa: mantenha agua, proteina e refeicoes suficientes.');
   return recs;
+}
+
+function getSabotageRisk(log, totals) {
+  const profile = PEOPLE[log.person];
+  const reasons = [];
+  const customItems = Object.values(log.meals || {}).flat().filter((item) => item.custom);
+  const ultraCount = customItems.filter((item) => ['ultraprocessado', 'fast_food', 'pizza'].includes(item.category)).length;
+
+  if ((Number(log.water_ml) || 0) < profile.waterTarget[0] * 0.55) reasons.push('agua baixa');
+  if (totals.liquid_sugar > 15) reasons.push('acucar liquido');
+  if (totals.protein < profile.proteinTarget[0] * 0.65) reasons.push('proteina baixa');
+  if (totals.calories > profile.calorieTarget[1]) reasons.push('calorias acima da meta');
+  if (totals.calories > 0 && totals.calories < profile.calorieTarget[0] * 0.6) reasons.push('calorias muito baixas');
+  if (log.person === 'pablo' && (log.used_uber || (log.walked === false && log.walked_km !== ''))) reasons.push('andou pouco/usou Uber');
+  if (ultraCount >= 2) reasons.push('muitos ultraprocessados');
+  if (log.person === 'pablo' && log.class_today && !mealFilled(log, 'dinner')) reasons.push('aula hoje sem janta marcada');
+  if (log.appetite === 'vontade_doce') reasons.push('vontade de doce');
+  if ((log.meals?.supper || []).some((item) => ['pao', 'ovo', 'leite'].includes(item.food) && Number(item.amount) > 1)) reasons.push('ceia pesada');
+
+  if (reasons.length >= 3 || totals.liquid_sugar > 25) return { label: 'Risco alto', tone: 'bg-red-100 text-red-800', reasons };
+  if (reasons.length) return { label: 'Atencao', tone: 'bg-amber-100 text-amber-800', reasons };
+  return { label: 'Bom', tone: 'bg-emerald-100 text-emerald-800', reasons: ['dia bem encaminhado'] };
+}
+
+function getEatNowSuggestion(log, totals, now = new Date()) {
+  const hour = now.getHours();
+  const profile = PEOPLE[log.person];
+  const proteinMissing = Math.max(0, profile.proteinTarget[0] - totals.protein);
+  const caloriesMissing = Math.max(0, profile.calorieTarget[0] - totals.calories);
+  const late = hour >= 22;
+
+  if (log.person === 'pablo') {
+    if (late && mealFilled(log, 'dinner')) return 'Ja jantou e esta tarde. Se tiver fome real, ceia leve: iogurte, leite ou 1-2 ovos. Se for vontade, agua e dormir.';
+    if (log.class_today && !mealFilled(log, 'dinner') && hour >= 17) return 'Hoje tem aula: prioriza jantar antes das 18h30 com arroz/feijao e frango/carne/ovos.';
+    if (totals.liquid_sugar > 15) return 'Acucar ja subiu hoje. Evita doce, refrigerante, pessego em calda e bolacha. Vai de proteina simples ou banana se precisar.';
+    if ((log.used_uber || !log.walked) && hour >= 18) return 'Como andou pouco/usou Uber, nao compensa com lanche pesado. Melhor comida de verdade e porcao controlada.';
+    if (proteinMissing >= 30 && totals.calories < profile.calorieTarget[1]) return 'Pode comer ovos, carne, frango, leite ou iogurte para subir proteina sem baguncar o dia.';
+    if (caloriesMissing >= 350 && proteinMissing < 20) return 'Calorias ainda baixas: arroz/feijao, banana com leite ou pao simples resolvem sem exagero.';
+    return 'Melhor escolha agora: agua primeiro, depois comida de verdade com proteina se a fome continuar.';
+  }
+
+  const trainedGlutes = ['gluteo_a', 'gluteo_b', 'gluteo_pump'].includes(log.workout);
+  if (trainedGlutes && (proteinMissing >= 20 || caloriesMissing >= 300)) return 'Dia de gluteo: vitamina de banana com leite e aveia, ovos ou arroz/feijao/frango ajudam muito.';
+  if (caloriesMissing >= 350) return 'Calorias baixas: banana com leite e aveia, pao com ovo ou arroz/feijao sao boas opcoes.';
+  if (proteinMissing >= 20) return 'Proteina baixa: ovos, carne, frango, leite ou iogurte entram bem agora.';
+  return 'Mantem simples: agua, uma refeicao com proteina ou lanche leve se a fome for real.';
+}
+
+function getCloseDaySuggestions(log, totals) {
+  const profile = PEOPLE[log.person];
+  const suggestions = [];
+  const waterMissing = Math.max(0, profile.waterTarget[0] - (Number(log.water_ml) || 0));
+  const proteinMissing = Math.max(0, profile.proteinTarget[0] - totals.protein);
+
+  if (waterMissing >= 300) suggestions.push(`Tome mais ${Math.min(1000, Math.ceil(waterMissing / 100) * 100)} ml de agua.`);
+  if (totals.liquid_sugar > 10) suggestions.push(log.person === 'pablo' ? 'Nao coma doce hoje e amanha evite Coca.' : 'Evite doce/refrigerante para fechar melhor o dia.');
+  if (proteinMissing >= 20) suggestions.push(log.person === 'pablo' ? 'Se tiver fome, coma 2 ovos, frango ou iogurte.' : 'Se tiver fome, vitamina, ovos ou frango ajudam a fechar proteina.');
+  if (log.person === 'pablo' && log.class_today && !mealFilled(log, 'dinner')) suggestions.push('Jante antes da faculdade ou faca ceia leve ao voltar, sem lanche pesado.');
+  if (!suggestions.length) suggestions.push('Fechamento bom: mantenha agua e nao invente belisco sem fome.');
+  return suggestions;
+}
+
+function getWeeklySummary(logsByDate, person, selectedDate) {
+  const end = parseLocalDate(selectedDate);
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(end);
+    date.setDate(end.getDate() - (6 - index));
+    const key = dateToKey(date);
+    const log = logsByDate[key]?.[person];
+    if (!log) return null;
+    const totals = calculateTotals(log);
+    const risk = getSabotageRisk(log, totals);
+    return { key, log, totals, risk };
+  }).filter(Boolean);
+
+  if (!days.length) return null;
+  const weights = days.map((day) => Number(day.log.weight_kg)).filter(Boolean);
+  const average = (items, getter) => Math.round(items.reduce((sum, item) => sum + getter(item), 0) / Math.max(1, items.length));
+  const warningReasons = days.flatMap((day) => day.risk.reasons.filter((reason) => reason !== 'dia bem encaminhado'));
+  const reasonCounts = warningReasons.reduce((acc, reason) => ({ ...acc, [reason]: (acc[reason] || 0) + 1 }), {});
+  const mainIssue = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'sem erro claro';
+  const waterOkDays = days.filter((day) => day.totals.water_ml >= PEOPLE[person].waterTarget[0]).length;
+  const proteinOkDays = days.filter((day) => day.totals.protein >= PEOPLE[person].proteinTarget[0]).length;
+
+  return {
+    startWeight: weights[0] || null,
+    endWeight: weights[weights.length - 1] || null,
+    averageWater: average(days, (day) => day.totals.water_ml),
+    averageProtein: average(days, (day) => day.totals.protein),
+    averageCalories: average(days, (day) => day.totals.calories),
+    goodDays: days.filter((day) => day.risk.label === 'Bom').length,
+    attentionDays: days.filter((day) => day.risk.label !== 'Bom').length,
+    mainIssue,
+    mainWin: waterOkDays >= proteinOkDays ? 'agua apareceu melhor na semana' : 'proteina apareceu melhor na semana',
+  };
 }
 
 function getSmartWaterInterval(log, settings) {
@@ -865,6 +995,8 @@ export default function Dieta() {
   const [isStandalonePwa] = useState(() => Boolean(window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone));
   const [settingsSaveState, setSettingsSaveState] = useState('local');
   const [actionMessage, setActionMessage] = useState('');
+  const [syncMessage, setSyncMessage] = useState('');
+  const [eatNowSuggestion, setEatNowSuggestion] = useState('');
   const [reminderSettings, setReminderSettings] = useState(() => {
     try {
       return { ...DEFAULT_REMINDER_SETTINGS, ...(JSON.parse(localStorage.getItem('diet-reminder-settings') || '{}')) };
@@ -896,28 +1028,7 @@ export default function Dieta() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const payload = Object.values(selectedLogs).map((log) => {
-      const totals = calculateTotals(log);
-      return {
-        user_id: user?.id || null,
-        person: log.person,
-        log_date: selectedDate,
-        weight_kg: inputNumber(log.weight_kg),
-        wake_time: log.wake_time || null,
-        sleep_time: log.sleep_time || null,
-        water_ml: Number(log.water_ml) || 0,
-        walked: Boolean(log.walked),
-        walked_km: inputNumber(log.walked_km),
-        used_uber: Boolean(log.used_uber),
-        workout: log.workout || null,
-        mood: log.mood || null,
-        appetite: log.appetite || null,
-        notes: log.notes || null,
-        meals: log.meals || EMPTY_MEALS,
-        totals,
-        status: getStatus(log, totals),
-      };
-    });
+    const payload = Object.values(selectedLogs).map((log) => buildLogPayload(log, selectedDate, user?.id || null));
 
     const { error } = await supabase
       .from('daily_health_logs')
@@ -927,9 +1038,59 @@ export default function Dieta() {
     setSaveState(error ? 'error' : 'saved');
     if (error) {
       const backup = JSON.parse(localStorage.getItem('diet-offline-backup') || '{}');
-      localStorage.setItem('diet-offline-backup', JSON.stringify({ ...backup, [selectedDate]: selectedLogs }));
+      localStorage.setItem('diet-offline-backup', JSON.stringify({ ...backup, [selectedDate]: { logs: selectedLogs, updated_at: new Date().toISOString() } }));
     }
   }, [selectedDate, selectedLogs]);
+
+  const syncOfflineBackups = useCallback(async () => {
+    const backup = JSON.parse(localStorage.getItem('diet-offline-backup') || '{}');
+    const entries = Object.entries(backup);
+    if (!entries.length) return;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const remaining = {};
+    let synced = 0;
+
+    for (const [date, value] of entries) {
+      const logs = value.logs || value;
+      const backupUpdatedAt = value.updated_at || '1970-01-01T00:00:00.000Z';
+      const people = Object.keys(logs || {});
+      if (!people.length) continue;
+
+      const { data: remoteRows } = await supabase
+        .from('daily_health_logs')
+        .select('person,updated_at')
+        .eq('log_date', date)
+        .in('person', people);
+
+      const remoteNewer = (remoteRows || []).some((row) => row.updated_at && new Date(row.updated_at) > new Date(backupUpdatedAt));
+      if (remoteNewer) {
+        remaining[date] = value;
+        continue;
+      }
+
+      const payload = Object.values(logs).map((log) => buildLogPayload(normalizeLog(log, log.person, date), date, user?.id || null));
+      const { error } = await supabase
+        .from('daily_health_logs')
+        .upsert(payload, { onConflict: 'person,log_date' });
+
+      if (error) {
+        remaining[date] = value;
+      } else {
+        synced += 1;
+      }
+    }
+
+    if (Object.keys(remaining).length) {
+      localStorage.setItem('diet-offline-backup', JSON.stringify(remaining));
+    } else {
+      localStorage.removeItem('diet-offline-backup');
+    }
+    if (synced) setSyncMessage('Dados offline sincronizados.');
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -969,6 +1130,15 @@ export default function Dieta() {
       mounted = false;
     };
   }, [monthDate]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(syncOfflineBackups, 0);
+    window.addEventListener('online', syncOfflineBackups);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('online', syncOfflineBackups);
+    };
+  }, [syncOfflineBackups]);
 
   useEffect(() => {
     let mounted = true;
@@ -1101,6 +1271,9 @@ export default function Dieta() {
   const history = getMonthHistory(logsByDate, activePerson);
   const streak = getStreak(logsByDate);
   const dayScore = getDayScore(activeLog, activeTotals);
+  const sabotageRisk = getSabotageRisk(activeLog, activeTotals);
+  const closeDaySuggestions = getCloseDaySuggestions(activeLog, activeTotals);
+  const weeklySummary = getWeeklySummary(logsByDate, activePerson, selectedDate);
   const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
   const deviceStatusText = formatEnabledPeople(deviceNotificationSettings);
 
@@ -1476,6 +1649,11 @@ export default function Dieta() {
                 Nao consegui conectar ao Supabase. Confira as variaveis VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY e a tabela daily_health_logs.
               </p>
             )}
+            {syncMessage && (
+              <p className="rounded-2xl bg-emerald-100 px-4 py-3 text-xs font-bold text-emerald-800">
+                {syncMessage}
+              </p>
+            )}
             <button onClick={saveDay} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg">
               <Save className="h-4 w-4" /> Salvar agora
             </button>
@@ -1843,6 +2021,12 @@ export default function Dieta() {
                   <option value="sim">Sim</option>
                 </SelectInput>
               </Field>
+              <Field label="Modo faculdade">
+                <SelectInput value={activeLog.class_today ? 'sim' : 'nao'} onChange={(event) => updateLog(activePerson, { class_today: event.target.value === 'sim' })}>
+                  <option value="nao">Hoje nao tenho aula</option>
+                  <option value="sim">Hoje tenho aula</option>
+                </SelectInput>
+              </Field>
             </>
           )}
           <Field label="Treino">
@@ -1955,6 +2139,40 @@ export default function Dieta() {
           </div>
 
           <div className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-lg backdrop-blur-xl">
+            <h3 className="mb-4 font-serif text-2xl font-bold text-slate-900">O que posso comer agora?</h3>
+            <button
+              onClick={() => setEatNowSuggestion(getEatNowSuggestion(activeLog, activeTotals))}
+              className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-sm"
+            >
+              Gerar sugestao
+            </button>
+            {eatNowSuggestion && (
+              <p className="mt-3 rounded-2xl bg-white/80 p-4 text-sm font-bold leading-5 text-slate-700">{eatNowSuggestion}</p>
+            )}
+          </div>
+
+          <div className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-lg backdrop-blur-xl">
+            <h3 className="mb-3 font-serif text-2xl font-bold text-slate-900">Risco de sabotagem</h3>
+            <div className={`mb-3 inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase ${sabotageRisk.tone}`}>
+              {sabotageRisk.label}
+            </div>
+            <div className="space-y-2">
+              {sabotageRisk.reasons.map((reason) => (
+                <p key={reason} className="rounded-2xl bg-white/80 px-4 py-3 text-sm font-bold text-slate-600">{reason}</p>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-lg backdrop-blur-xl">
+            <h3 className="mb-4 font-serif text-2xl font-bold text-slate-900">Para salvar/fechar o dia</h3>
+            <div className="space-y-2">
+              {closeDaySuggestions.map((suggestion) => (
+                <p key={suggestion} className="rounded-2xl bg-cyan-50 px-4 py-3 text-sm font-bold leading-5 text-cyan-900">{suggestion}</p>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-lg backdrop-blur-xl">
             <h3 className="mb-4 flex items-center gap-2 font-serif text-2xl font-bold text-slate-900"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Para bater sua meta hoje</h3>
             <div className="space-y-3">
               {activeRecommendations.map((recommendation) => (
@@ -2051,6 +2269,24 @@ export default function Dieta() {
           </div>
         ) : (
           <p className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-500">Ainda nao ha historico carregado para esta pessoa neste mes.</p>
+        )}
+      </section>
+
+      <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
+        <h2 className="mb-4 font-serif text-3xl font-bold text-slate-900">Resumo semanal</h2>
+        {weeklySummary ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-700">Peso: {weeklySummary.startWeight || '-'} kg para {weeklySummary.endWeight || '-'} kg</div>
+            <div className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-700">Media agua: {weeklySummary.averageWater} ml</div>
+            <div className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-700">Media proteina: {weeklySummary.averageProtein} g</div>
+            <div className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-700">Media calorias: {weeklySummary.averageCalories} kcal</div>
+            <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">Dias bons: {weeklySummary.goodDays}</div>
+            <div className="rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-800">Dias de atencao: {weeklySummary.attentionDays}</div>
+            <div className="rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-800">Principal erro: {weeklySummary.mainIssue}</div>
+            <div className="rounded-2xl bg-cyan-50 p-4 text-sm font-bold text-cyan-900">Principal acerto: {weeklySummary.mainWin}</div>
+          </div>
+        ) : (
+          <p className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-500">Ainda nao ha dados suficientes para montar a semana.</p>
         )}
       </section>
 

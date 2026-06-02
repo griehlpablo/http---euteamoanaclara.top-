@@ -23,13 +23,6 @@ import {
   Utensils,
 } from 'lucide-react';
 import supabase from '../supabase';
-import BrasiliaClock from '../components/BrasiliaClock';
-import CollapsibleSection from '../components/CollapsibleSection';
-import FoodSearchCalculator from '../components/FoodSearchCalculator';
-import NotificationDiagnostics from '../components/NotificationDiagnostics';
-import QuickNav from '../components/QuickNav';
-import { buildNotificationDiagnostic, buildWaterMessage, planWaterReminder } from '../lib/notificationPlanner';
-import { nutritionForManualItem } from '../lib/nutrition';
 
 const PEOPLE = {
   pablo: {
@@ -85,10 +78,9 @@ const DEFAULT_REMINDER_SETTINGS = {
   },
 };
 
-const DIET_COLLAPSED_SECTIONS_KEY = 'diet_collapsed_sections';
-const DEVICE_NOTIFICATION_STORAGE_KEY = 'diet_notification_device_settings';
-const NOTIFICATION_DEBUG_LOG_KEY = 'diet_notification_debug_log';
-const LAST_NOTIFICATION_AT_KEY = 'diet_notification_last_at';
+const DEVICE_NOTIFICATION_STORAGE_KEY = 'healthNotificationDeviceSettings';
+const NOTIFICATION_DEBUG_LOG_KEY = 'notificationDebugLog';
+const LAST_NOTIFICATION_AT_KEY = 'healthNotificationLastAt';
 const DEFAULT_DEVICE_NOTIFICATION_SETTINGS = {
   enabled: true,
   people: {
@@ -426,63 +418,32 @@ function calculateTotals(log) {
       const amount = amountForCalculation(item, food);
       const multiplier = amount / food.basis;
       const hasCustomNumbers = item.custom && (item.calories !== '' || item.protein !== '' || item.sugar !== '');
-      const manualNutrition = item.custom ? nutritionForManualItem(item) : null;
       const itemCalories = hasCustomNumbers ? Number(item.calories) || 0 : food.kcal * multiplier;
       const itemProtein = hasCustomNumbers ? Number(item.protein) || 0 : food.protein * multiplier;
       const itemSugar = hasCustomNumbers ? Number(item.sugar) || 0 : food.sugar * multiplier;
       acc.calories += itemCalories;
       acc.protein += itemProtein;
-      acc.carbs += manualNutrition?.carbs || (food.carbs || 0) * multiplier;
-      acc.fat += manualNutrition?.fat || (food.fat || 0) * multiplier;
       acc.sugar += itemSugar;
-      acc.fiber += manualNutrition?.fiber || (food.fiber || 0) * multiplier;
-      acc.sodium += manualNutrition?.sodium || (food.sodium || 0) * multiplier;
-      if (item.custom && manualNutrition && !manualNutrition.calories && !manualNutrition.protein && !manualNutrition.carbs) acc.unknown += 1;
       if (food.liquidSugar || item.category === 'bebida_acucar') acc.liquidSugar += itemSugar;
-      const hydration = calculateHydrationEstimate(item, food);
-      acc.pureWaterMl += hydration.pure_water_ml;
-      acc.totalHydrationMl += hydration.hydration_ml;
       return acc;
     },
-    { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0, sodium: 0, liquidSugar: 0, unknown: 0, pureWaterMl: 0, totalHydrationMl: 0 },
+    { calories: 0, protein: 0, sugar: 0, liquidSugar: 0 },
   );
 
   const profile = PEOPLE[log.person];
   const warnings = getWarnings(log, totals);
-  const manualWater = Number(log.water_ml) || 0;
 
   return {
     calories: Math.round(totals.calories),
     protein: Number(totals.protein.toFixed(1)),
-    carbs: Number(totals.carbs.toFixed(1)),
-    fat: Number(totals.fat.toFixed(1)),
     sugar: Number(totals.sugar.toFixed(1)),
-    fiber: Number(totals.fiber.toFixed(1)),
-    sodium: Math.round(totals.sodium),
     liquid_sugar: Number(totals.liquidSugar.toFixed(1)),
-    unknown_items: totals.unknown,
-    water_ml: manualWater,
-    pure_water_ml: manualWater + Math.round(totals.pureWaterMl),
-    total_hydration_ml: manualWater + Math.round(totals.totalHydrationMl),
+    water_ml: Number(log.water_ml) || 0,
     calories_remaining: Math.max(0, profile.calorieTarget[0] - Math.round(totals.calories)),
     protein_remaining: Math.max(0, profile.proteinTarget[0] - Number(totals.protein.toFixed(1))),
-    water_remaining: Math.max(0, profile.waterTarget[0] - manualWater),
+    water_remaining: Math.max(0, profile.waterTarget[0] - (Number(log.water_ml) || 0)),
     warnings,
   };
-}
-
-function calculateHydrationEstimate(item, food) {
-  const amount = amountForCalculation(item, food);
-  if (!amount) return { pure_water_ml: 0, hydration_ml: 0 };
-  const normalizedCategory = String(item.category || food.category || '').toLowerCase();
-  const isWater = item.food === 'agua' || normalizedCategory.includes('agua');
-  const isBeverage = normalizedCategory.includes('bebida') || normalizedCategory.includes('suco') || normalizedCategory.includes('energetico') || normalizedCategory.includes('cafe');
-  const isSoup = normalizedCategory.includes('sopa');
-  if (isWater) return { pure_water_ml: amount, hydration_ml: amount };
-  if (item.unit === 'ml') return { pure_water_ml: 0, hydration_ml: amount * 0.9 };
-  if (isSoup) return { pure_water_ml: 0, hydration_ml: amount * 0.8 };
-  if (isBeverage) return { pure_water_ml: 0, hydration_ml: amount * 0.75 };
-  return { pure_water_ml: 0, hydration_ml: 0 };
 }
 
 function mealHas(log, meal, food) {
@@ -506,7 +467,7 @@ function getWarnings(log, totals) {
     const hasSoda = Object.keys(log.meals || {}).some((meal) => mealHas(log, meal, 'refrigerante_normal'));
     const hasSugarCoffee = Object.keys(log.meals || {}).some((meal) => mealHas(log, meal, 'cafe_com_acucar'));
     if (hasSoda && hasSugarCoffee) warnings.push({ type: 'warning', text: 'Pablo, aqui voce esta se sabotando: Coca + cafe com acucar no mesmo dia nao ajuda sua barriga.' });
-    if (totals.liquidSugar > 25) warnings.push({ type: 'danger', text: 'Acucar liquido acumulou hoje. Nao precisa surtar, mas evita repetir a noite.' });
+    if (totals.liquidSugar > 25) warnings.push({ type: 'danger', text: 'Pablo tomou muito acucar liquido hoje.' });
     if (log.used_uber || (log.walked === false && log.walked_km !== '')) warnings.push({ type: 'warning', text: 'Hoje voce andou menos; controle melhor a noite.' });
     if (!mealFilled(log, 'dinner')) warnings.push({ type: 'warning', text: 'Pablo: tente jantar antes da faculdade para nao chegar com fome extrema.' });
     if ((log.meals?.supper || []).some((item) => ['pao', 'ovo', 'leite'].includes(item.food) && Number(item.amount) > 1)) warnings.push({ type: 'warning', text: 'Ceia ficou pesada tarde; prefira algo mais leve se ja jantou.' });
@@ -517,7 +478,7 @@ function getWarnings(log, totals) {
     const trainedGlutes = ['gluteo_a', 'gluteo_b', 'gluteo_pump'].includes(log.workout);
     if (trainedGlutes && totals.calories < 1500) warnings.push({ type: 'warning', text: 'Ana Clara: em dia de gluteo, voce parece ter comido pouco.' });
     if (trainedGlutes && !mealFilled(log, 'snack')) warnings.push({ type: 'warning', text: 'Ana Clara: em dia de gluteo, nao pule lanche/vitamina.' });
-    if (trainedGlutes && totals.protein < 60) warnings.push({ type: 'warning', text: 'Treinou gluteo e proteina esta baixa. Coloca ovo, leite, carne, frango ou iogurte.' });
+    if (trainedGlutes && totals.protein < 60) warnings.push({ type: 'warning', text: 'Dia de gluteo precisa de proteina e comida suficiente.' });
   }
 
   if (!warnings.length) warnings.push({ type: 'ok', text: log.person === 'pablo' ? 'Boa, Pablo. Continue registrando para ajustar fino.' : 'Boa, Ana Clara. Constancia hoje, resultado amanha.' });
@@ -968,13 +929,7 @@ function buildReport(logs, selectedDate, mode) {
         `Itens personalizados: ${customItems.map(itemLabel).join('; ') || '-'}`,
         `Calorias estimadas: ${totals.calories} kcal`,
         `Proteina estimada: ${totals.protein} g`,
-        `Carboidratos estimados: ${totals.carbs} g`,
-        `Gorduras estimadas: ${totals.fat} g`,
         `Acucar estimado: ${totals.sugar} g`,
-        `Fibras estimadas: ${totals.fiber} g`,
-        `Sodio estimado: ${totals.sodium} mg`,
-        `Itens sem valor nutricional conhecido: ${totals.unknown_items || 0}`,
-        `Fontes: ${Object.values(log.meals || {}).flat().map((item) => item.source).filter(Boolean).join(', ') || 'manual/estimativa local'}`,
         `Alertas do sistema: ${totals.warnings.map((warning) => warning.text).join(' | ')}`,
         `Recomendacoes do site: ${recommendations.join(' | ')}`,
         `Itens sem valor nutricional conhecido: ${unknownCustom.map((item) => item.label || 'Outro').join('; ') || '-'}`,
@@ -1320,24 +1275,6 @@ export default function Dieta() {
   const closeDaySuggestions = getCloseDaySuggestions(activeLog, activeTotals);
   const weeklySummary = getWeeklySummary(logsByDate, activePerson, selectedDate);
   const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
-  const waterPlan = planWaterReminder({
-    profile: PEOPLE[activePerson],
-    pureWaterMl: activeLog.water_ml,
-    totalHydrationMl: activeTotals.total_hydration_ml,
-    startTime: activeSettings.startTime,
-    endTime: activeSettings.endTime,
-  });
-  const notificationDiagnostic = buildNotificationDiagnostic({
-    settings: { ...deviceNotificationSettings, ...activeSettings },
-    profile: PEOPLE[activePerson],
-    waterMl: activeLog.water_ml,
-    activePerson: PEOPLE[activePerson].label,
-    lastSent: lastReminder ? `${lastReminder.title} (${lastReminder.time})` : '-',
-    lastBlocked: lastBlockedNotification?.reason || '-',
-    serviceWorkerReady,
-    isStandalonePwa,
-    notificationPermission,
-  });
   const deviceStatusText = formatEnabledPeople(deviceNotificationSettings);
 
   async function persistReminderSettings(nextSettings) {
@@ -1504,11 +1441,6 @@ export default function Dieta() {
     updateLog(person, { meals });
   }
 
-  function addCalculatedFood(item, meal = 'extras') {
-    addCustomItem(activePerson, meal, item);
-    setActionMessage(`${item.label || 'Alimento'} adicionado em ${MEAL_LABELS[meal] || meal}.`);
-  }
-
   function updateCustomItem(person, meal, id, patch) {
     const log = selectedLogs[person];
     const meals = cloneMeals(log.meals);
@@ -1623,6 +1555,22 @@ export default function Dieta() {
     if (reloadNow) window.location.reload();
   }
 
+  async function clearAppCache() {
+    const confirmed = window.confirm('Limpar cache do app e recarregar o plano do casal? Isso nao apaga registros do Supabase.');
+    if (!confirmed) return;
+    if ('caches' in window) {
+      const names = await caches.keys();
+      await Promise.all(names.map((name) => caches.delete(name)));
+    }
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(async (registration) => {
+        await registration.update().catch(() => undefined);
+      }));
+    }
+    window.location.href = `/dieta?fresh=${Date.now()}`;
+  }
+
   useEffect(() => {
     notifyUserRef.current = notifyUser;
   });
@@ -1725,19 +1673,12 @@ export default function Dieta() {
             <button onClick={saveDay} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg">
               <Save className="h-4 w-4" /> Salvar agora
             </button>
+            <button onClick={clearAppCache} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm">
+              <RotateCcw className="h-4 w-4" /> Limpar cache do app
+            </button>
           </div>
         </div>
       </section>
-
-      <QuickNav items={[
-        { id: 'summary', label: 'Resumo' },
-        { id: 'water', label: 'Agua' },
-        { id: 'meals', label: 'Refeicoes' },
-        { id: 'history', label: 'Historico' },
-        { id: 'notifications', label: 'Notificacoes' },
-      ]} />
-
-      <BrasiliaClock nextWater={waterPlan.nextTime} nextAlert={getTimedReminder(activeLog, activeTotals) || buildWaterMessage(PEOPLE[activePerson].short, waterPlan)} />
 
       <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-[2rem] border border-white/70 bg-white/60 p-5 shadow-lg backdrop-blur-xl">
@@ -1812,8 +1753,8 @@ export default function Dieta() {
         </div>
       </section>
 
-      <section id="notifications" className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <div id="water" className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-xl backdrop-blur-xl">
+      <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-xl backdrop-blur-xl">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="font-serif text-3xl font-bold text-slate-900">Configuracoes de lembretes</h2>
@@ -1953,15 +1894,6 @@ export default function Dieta() {
               </div>
             </div>
 
-            <NotificationDiagnostics
-              diagnostic={notificationDiagnostic}
-              countdown={testCountdown}
-              onTestNow={() => testNotification(activePerson)}
-              onTestWater10s={() => testNotification(activePerson, 'water', 10000)}
-              onRecalculate={() => setActionMessage(`Proxima agua recalculada: ${waterPlan.nextTime}`)}
-              onResetTimers={resetDeviceNotifications}
-            />
-
             <p className="mt-4 rounded-2xl bg-white/80 p-3 text-xs font-bold leading-5 text-cyan-900">
               No celular, as notificacoes funcionam melhor com o site instalado como aplicativo/PWA. No iPhone, abra no Safari, toque em Compartilhar e depois em Adicionar a Tela de Inicio. Depois abra pelo icone criado e permita notificacoes.
             </p>
@@ -2045,7 +1977,7 @@ export default function Dieta() {
           )}
         </div>
 
-        <div id="water" className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-xl backdrop-blur-xl">
+        <div className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-xl backdrop-blur-xl">
           <h2 className="mb-4 font-serif text-3xl font-bold text-slate-900">Acoes rapidas</h2>
           <div className="mb-5 flex flex-wrap gap-2">
             {[200, 250, 300, 500].map((ml) => (
@@ -2142,19 +2074,13 @@ export default function Dieta() {
         </div>
       </section>
 
-      <FoodSearchCalculator onAdd={addCalculatedFood} defaultMeal="extras" title={`Calculadora alimentar - ${PEOPLE[activePerson].short}`} />
-
-      <section id="meals" className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-5">
           {Object.entries(MEAL_OPTIONS[activePerson]).map(([meal, foods]) => (
-            <CollapsibleSection
-              key={meal}
-              title={MEAL_LABELS[meal]}
-              defaultOpen={['breakfast', 'lunch', 'dinner'].includes(meal)}
-              storageKey={DIET_COLLAPSED_SECTIONS_KEY}
-              sectionId={meal}
-              className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-lg backdrop-blur-xl"
-            >
+            <div key={meal} className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-lg backdrop-blur-xl">
+              <h3 className="mb-4 flex items-center gap-2 font-serif text-2xl font-bold text-slate-900">
+                <Utensils className="h-5 w-5 text-rose-500" /> {MEAL_LABELS[meal]}
+              </h3>
               <div className="space-y-3">
                 {foods.map((foodKey) => {
                   const food = FOOD_DB[foodKey] || FOOD_DB.outro;
@@ -2200,11 +2126,7 @@ export default function Dieta() {
                       <Field label="g/ml calculado"><TextInput type="number" min="0" value={item.grams_or_ml || ''} placeholder="Opcional" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { grams_or_ml: event.target.value })} /></Field>
                       <Field label="Calorias"><TextInput type="number" min="0" value={item.calories || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { calories: event.target.value })} /></Field>
                       <Field label="Proteina g"><TextInput type="number" min="0" value={item.protein || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { protein: event.target.value })} /></Field>
-                      <Field label="Carboidratos g"><TextInput type="number" min="0" value={item.carbs || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { carbs: event.target.value })} /></Field>
-                      <Field label="Gorduras g"><TextInput type="number" min="0" value={item.fat || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { fat: event.target.value })} /></Field>
                       <Field label="Acucar g"><TextInput type="number" min="0" value={item.sugar || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { sugar: event.target.value })} /></Field>
-                      <Field label="Fibras g"><TextInput type="number" min="0" value={item.fiber || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { fiber: event.target.value })} /></Field>
-                      <Field label="Sodio mg"><TextInput type="number" min="0" value={item.sodium || ''} placeholder="Se souber" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { sodium: event.target.value })} /></Field>
                       <div className="sm:col-span-2">
                         <Field label="Observacao"><TextInput value={item.notes || ''} placeholder="Ex.: sem acucar, pouco oleo, porcao pequena" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { notes: event.target.value })} /></Field>
                       </div>
@@ -2215,7 +2137,7 @@ export default function Dieta() {
                   <Plus className="h-4 w-4" /> Adicionar outro alimento
                 </button>
               </div>
-            </CollapsibleSection>
+            </div>
           ))}
         </div>
 
@@ -2227,13 +2149,7 @@ export default function Dieta() {
               <ProgressBar label="Calorias" value={activeTotals.calories} target={PEOPLE[activePerson].calorieTarget[0]} unit="kcal" tone={activePerson === 'pablo' ? 'green' : 'rose'} />
               <ProgressBar label="Proteina" value={activeTotals.protein} target={PEOPLE[activePerson].proteinTarget[0]} unit="g" tone="green" />
               <div className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-700">
-                <div className="grid gap-1 sm:grid-cols-2">
-                  <span>Carboidratos: {activeTotals.carbs}g</span>
-                  <span>Gorduras: {activeTotals.fat}g</span>
-                  <span>Acucar: {activeTotals.sugar}g</span>
-                  <span>Fibras: {activeTotals.fiber}g</span>
-                  <span>Sodio: {activeTotals.sodium}mg</span>
-                </div>
+                Acucar estimado: {activeTotals.sugar}g
               </div>
               <div className="rounded-2xl bg-white/80 p-4 text-sm text-slate-600">
                 Falta: {activeTotals.calories_remaining} kcal, {activeTotals.protein_remaining}g proteina, {activeTotals.water_remaining}ml agua.
@@ -2335,7 +2251,7 @@ export default function Dieta() {
         </aside>
       </section>
 
-      <CollapsibleSection title="Historico" subtitle={`Sequencia atual: ${streak} dia(s) registrados.`} defaultOpen={false} storageKey={DIET_COLLAPSED_SECTIONS_KEY} sectionId="history">
+      <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="flex items-center gap-2 font-serif text-3xl font-bold text-slate-900">
@@ -2373,7 +2289,7 @@ export default function Dieta() {
         ) : (
           <p className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-500">Ainda nao ha historico carregado para esta pessoa neste mes.</p>
         )}
-      </CollapsibleSection>
+      </section>
 
       <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
         <h2 className="mb-4 font-serif text-3xl font-bold text-slate-900">Resumo semanal</h2>
@@ -2393,7 +2309,7 @@ export default function Dieta() {
         )}
       </section>
 
-      <CollapsibleSection title="Exportar relatorio" subtitle="Texto pronto para mandar ao ChatGPT." defaultOpen={false} storageKey={DIET_COLLAPSED_SECTIONS_KEY} sectionId="export">
+      <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="font-serif text-3xl font-bold text-slate-900">Exportar dia para o ChatGPT</h2>
@@ -2413,7 +2329,7 @@ export default function Dieta() {
           <button onClick={() => copyReport()} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Clipboard className="h-4 w-4" /> Copiar texto acima</button>
           <button onClick={downloadReport} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Download className="h-4 w-4" /> Baixar .txt</button>
         </div>
-      </CollapsibleSection>
+      </section>
 
       <section className="rounded-[2rem] border border-white/70 bg-white/60 p-5 text-sm leading-6 text-slate-600 shadow-lg backdrop-blur-xl">
         <h2 className="mb-2 font-serif text-2xl font-bold text-slate-900">Dados iniciais de 01/06</h2>

@@ -5,6 +5,7 @@ import OneSignal from 'react-onesignal';
 import Navbar from './components/Navbar';
 import HeartRain from './components/HeartRain';
 import PinGate from './components/PinGate';
+import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import Central from './pages/Central';
 import Contagem from './pages/Contagem';
@@ -71,6 +72,11 @@ export default function App() {
   }, []);
 
   const protectedPage = (page) => <PinGate>{page}</PinGate>;
+  const protectedDieta = (
+    <ErrorBoundary>
+      {protectedPage(<Dieta />)}
+    </ErrorBoundary>
+  );
 
   return (
     <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-slate-900 dark:to-slate-950 min-h-screen text-slate-700 dark:text-slate-200 antialiased overflow-x-hidden font-sans relative transition-colors duration-300">
@@ -98,7 +104,7 @@ export default function App() {
             <Route path="/linha-do-tempo" element={protectedPage(<LinhaDoTempo />)} />
             <Route path="/quiz" element={protectedPage(<QuizCasal />)} />
             <Route path="/surpresa-diaria" element={protectedPage(<SurpresaDiaria />)} />
-            <Route path="/dieta" element={protectedPage(<Dieta />)} />
+            <Route path="/dieta" element={protectedDieta} />
           </Routes>
         </main>
       </Router>

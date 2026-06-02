@@ -48,6 +48,7 @@ export default function HelenaMealLogger({ log, onToggleFood, onUpdateFood, onAd
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <TextInput value={item.label || ''} placeholder="Nome" onChange={(event) => onUpdateCustom(meal, item.id, { label: event.target.value })} />
+                  <TextInput value={item.brand_name || ''} placeholder="Marca/produto" onChange={(event) => onUpdateCustom(meal, item.id, { brand_name: event.target.value })} />
                   <SelectInput value={item.category || 'outro'} onChange={(event) => onUpdateCustom(meal, item.id, { category: event.target.value })}>
                     {HELENA_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
                   </SelectInput>

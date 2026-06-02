@@ -1,4 +1,4 @@
-export const FOOD_SOURCE_OPTIONS = ['manual', 'TACO', 'USDA', 'OpenFoodFacts'];
+export const FOOD_SOURCE_OPTIONS = ['manual', 'TBCA', 'TACO', 'USDA', 'OpenFoodFacts'];
 
 const baseSource = { source: 'manual', source_note: 'estimativa media' };
 
@@ -16,10 +16,40 @@ export const FOOD_DATABASE = [
   food('suco_natural', 'Suco natural', 'bebida', 45, 0.5, 10, 0.1, 8, 0.2, [portion('copo 250 ml', 250)], 0.8, 'ml'),
   food('suco_adocado', 'Suco adocado', 'bebida acucarada', 70, 0.3, 17, 0.1, 15, 0.1, [portion('copo 250 ml', 250)], 0.7, 'ml'),
   food('suco_caixinha', 'Suco de caixinha', 'bebida acucarada', 50, 0.3, 12, 0, 12, 0, [portion('caixinha 200 ml', 200)], 0.65, 'ml'),
-  food('refrigerante_normal', 'Refrigerante normal', 'bebida acucarada', 42, 0, 10.6, 0, 10.6, 0, [portion('copo 200 ml', 200), portion('lata', 350)], 0.65, 'ml'),
-  food('refrigerante_zero', 'Refrigerante zero', 'bebida zero', 0, 0, 0, 0, 0, 0, [portion('lata', 350)], 0.75, 'ml'),
-  food('energetico_normal', 'Energetico normal', 'bebida acucarada', 45, 0, 11, 0, 11, 0, [portion('lata 473 ml', 473)], 0.65, 'ml'),
-  food('energetico_zero', 'Energetico zero', 'bebida zero', 0, 0, 0, 0, 0, 0, [portion('lata 473 ml', 473)], 0.75, 'ml'),
+  food('refrigerante_normal', 'Refrigerante normal', 'bebida com acucar', 42, 0, 10.6, 0, 10.6, 0, [portion('copo 200 ml', 200), portion('lata 350 ml', 350), portion('100 ml', 100)], 0.65, 'ml', false, {
+    aliases: ['coca', 'coca cola', 'coca normal', 'refri', 'refrigerante com acucar'],
+    is_liquid: true,
+    warning_zero: '',
+    warning_sugar: 'Refrigerante normal conta como liquido, mas tambem adiciona acucar. Nao use como hidratacao principal.',
+  }),
+  food('refrigerante_zero', 'Refrigerante zero', 'bebida zero', 0, 0, 0, 0, 0, 0, [portion('lata 350 ml', 350), portion('100 ml', 100)], 0.75, 'ml', false, {
+    aliases: ['coca zero', 'coca sem acucar', 'refri zero', 'refrigerante sem acucar'],
+    is_liquid: true,
+  }),
+  food('energetico_zero', 'Energetico sem acucar', 'bebida zero/energetico', 3, 0, 0.5, 0, 0, 0, 20, [
+    portion('lata 269 ml', 269),
+    portion('lata 350 ml', 350),
+    portion('lata 473 ml', 473),
+    portion('100 ml', 100),
+  ], 0.75, 'ml', false, {
+    aliases: ['monster', 'monster zero', 'monster sem acucar', 'monster ultra', 'energetico zero', 'energetico sem acucar', 'red bull zero', 'red bull sem acucar'],
+    is_liquid: true,
+    source: 'manual',
+    source_note: 'estimativa media para energetico sem acucar; pode variar por marca',
+    warning_zero: 'Monster zero nao trouxe acucar relevante, mas nao substitui agua.',
+  }),
+  food('energetico_normal', 'Energetico normal', 'bebida com acucar/energetico', 45, 0, 11, 0, 11, 0, 35, [
+    portion('lata 269 ml', 269),
+    portion('lata 350 ml', 350),
+    portion('lata 473 ml', 473),
+    portion('100 ml', 100),
+  ], 0.65, 'ml', false, {
+    aliases: ['monster normal', 'monster com acucar', 'energetico', 'energetico normal', 'red bull normal'],
+    is_liquid: true,
+    source: 'manual',
+    source_note: 'estimativa media para energetico com acucar; pode variar por marca',
+    warning_sugar: 'Monster normal trouxe acucar liquido. Melhor nao repetir hoje.',
+  }),
   food('maca', 'Maca', 'fruta', 52, 0.3, 14, 0.2, 10, 2.4, [portion('unidade pequena', 100), portion('unidade media', 130), portion('unidade grande', 180)], 0.9),
   food('banana', 'Banana', 'fruta', 89, 1.1, 23, 0.3, 12, 2.6, [portion('unidade media', 86), portion('100 g', 100)], 0.85),
   food('laranja', 'Laranja', 'fruta', 47, 0.9, 12, 0.1, 9, 2.4, [portion('unidade media', 130), portion('100 g', 100)], 0.9),
@@ -52,16 +82,21 @@ export const FOOD_DATABASE = [
   food('ovo', 'Ovo', 'proteina', 143, 13, 1.1, 10, 0.4, 0, [portion('unidade media', 50), portion('100 g', 100)], 0.5),
   food('ovo_frito', 'Ovo frito', 'proteina', 196, 14, 1.1, 15, 0.4, 0, [portion('unidade media', 55), portion('100 g', 100)], 0.45),
   food('soup', 'Sopa', 'base', 30, 1.5, 4.5, 0.7, 1, 0.8, [portion('copo', 250)], 0.9),
-  food('cereal_matinal', 'Cereal matinal', 'industrializado', 380, 7, 82, 3, 25, 4, [portion('porcao pequena', 25), portion('porcao media', 30), portion('xicara', 40), portion('100 g', 100)], 0.1),
-  food('granola', 'Granola', 'industrializado', 450, 8, 65, 18, 20, 7, [portion('xicara', 40), portion('100 g', 100)], 0.1),
+  food('cereal_matinal', 'Cereal matinal', 'industrializado', 380, 7, 82, 3, 25, 4, [portion('porcao pequena', 25), portion('porcao media', 30), portion('xicara', 40), portion('100 g', 100)], 0.1, 'g', false, { aliases: ['cereal', 'sucrilhos', 'cereal de milho'] }),
+  food('granola', 'Granola', 'industrializado', 450, 8, 65, 18, 20, 7, [portion('xicara', 40), portion('100 g', 100)], 0.1, 'g', false, { aliases: ['cereal', 'granola matinal'] }),
   food('barra_de_cereal', 'Barra de cereal', 'industrializado', 110, 2, 20, 4, 10, 1, [portion('unidade', 30), portion('100 g', 100)], 0.1),
+  food('achocolatado', 'Achocolatado em po', 'industrializado', 380, 4, 90, 2, 75, 3, [portion('colher de sopa', 20), portion('100 g', 100)], 0, 'g', false, { aliases: ['nescau', 'toddy', 'chocolate em po', 'cereal'] }),
+  food('nuggets', 'Nuggets', 'industrializado', 280, 14, 22, 16, 1, 1, 550, [portion('unidade media', 25), portion('5 unidades', 125), portion('100 g', 100)], 0.25, 'g', false, {
+    aliases: ['nugget', 'nuggets de frango', 'nugget frango'],
+    source_note: 'estimativa media para nuggets industrializados; pode variar por marca',
+  }),
   food('pudim', 'Pudim', 'doce/sobremesa', 210, 3, 25, 9, 24, 0.5, [portion('fatia media', 80), portion('100 g', 100)], 0.1),
   food('brigadeiro', 'Brigadeiro', 'doce/sobremesa', 110, 1.3, 15, 5, 10, 0.3, [portion('unidade', 20), portion('100 g', 100)], 0.1),
   food('beijinho', 'Beijinho', 'doce/sobremesa', 100, 1.2, 14, 5, 9, 0.4, [portion('unidade', 20), portion('100 g', 100)], 0.1),
   food('outro', 'Outro', 'outro', 0, 0, 0, 0, 0, 0, [portion('100 g', 100)], 0),
-].map((item) => ({ ...baseSource, ...item }));
+].map((item) => normalizeFood({ ...baseSource, ...item }));
 
-function food(slug, name, category, kcal, protein, carbs, fat, sugar, fiber, sodiumOrPortions, portionsOrHydration = [], hydrationOrUnit = 0, unitOrWater = 'g', maybeWater = false) {
+function food(slug, name, category, kcal, protein, carbs, fat, sugar, fiber, sodiumOrPortions, portionsOrHydration = [], hydrationOrUnit = 0, unitOrWater = 'g', maybeWater = false, options = {}) {
   const legacyShape = Array.isArray(sodiumOrPortions);
   const sodium = legacyShape ? 0 : sodiumOrPortions;
   const default_portions = legacyShape ? sodiumOrPortions : portionsOrHydration;
@@ -69,6 +104,8 @@ function food(slug, name, category, kcal, protein, carbs, fat, sugar, fiber, sod
   const unit = legacyShape ? (typeof hydrationOrUnit === 'string' ? hydrationOrUnit : 'g') : (typeof unitOrWater === 'string' ? unitOrWater : 'g');
   const is_water = legacyShape ? Boolean(unitOrWater) : Boolean(maybeWater);
   return {
+    aliases: [],
+    source_id: '',
     slug,
     name,
     category,
@@ -84,6 +121,8 @@ function food(slug, name, category, kcal, protein, carbs, fat, sugar, fiber, sod
     default_portions,
     hydration_factor,
     is_water,
+    is_liquid: unit === 'ml' || is_water,
+    ...options,
   };
 }
 
@@ -93,4 +132,67 @@ function portion(label, grams) {
 
 export function findFood(slug) {
   return FOOD_DATABASE.find((item) => item.slug === slug);
+}
+
+export async function loadFoodDatabase() {
+  const external = await loadExternalFoods();
+  return mergeFoodDatabases(FOOD_DATABASE, external);
+}
+
+export async function loadExternalFoods(path = '/data/foods.json') {
+  if (typeof fetch !== 'function') return [];
+  try {
+    const response = await fetch(path, { cache: 'no-store' });
+    if (!response.ok) return [];
+    const data = await response.json();
+    const items = Array.isArray(data) ? data : data.foods;
+    return Array.isArray(items) ? items.map(normalizeFood).filter((item) => item.slug) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function mergeFoodDatabases(...databases) {
+  const map = new Map();
+  databases.flat().filter(Boolean).forEach((item) => {
+    const normalized = normalizeFood(item);
+    const previous = map.get(normalized.slug);
+    map.set(normalized.slug, previous ? {
+      ...previous,
+      ...normalized,
+      aliases: [...new Set([...(previous.aliases || []), ...(normalized.aliases || [])])],
+      default_portions: normalized.default_portions?.length ? normalized.default_portions : previous.default_portions,
+    } : normalized);
+  });
+  return [...map.values()];
+}
+
+export function normalizeFood(item = {}) {
+  return {
+    ...item,
+    aliases: [],
+    source: 'manual',
+    source_id: '',
+    source_note: 'estimativa media',
+    unit: item.unit || 'g',
+    base: item.base || '100g',
+    default_portions: normalizePortions(item.default_portions || item.portions),
+    hydration_factor: Number(item.hydration_factor) || 0,
+    is_water: Boolean(item.is_water),
+    is_liquid: Boolean(item.is_liquid || item.unit === 'ml' || item.is_water),
+    kcal_per_100: Number(item.kcal_per_100 ?? item.calories_per_100 ?? item.kcal) || 0,
+    protein_per_100: Number(item.protein_per_100 ?? item.protein) || 0,
+    carbs_per_100: Number(item.carbs_per_100 ?? item.carbs) || 0,
+    fat_per_100: Number(item.fat_per_100 ?? item.fat) || 0,
+    sugar_per_100: Number(item.sugar_per_100 ?? item.sugar) || 0,
+    fiber_per_100: Number(item.fiber_per_100 ?? item.fiber) || 0,
+    sodium_per_100: Number(item.sodium_per_100 ?? item.sodium) || 0,
+    aliases: Array.isArray(item.aliases) ? item.aliases : [],
+  };
+}
+
+function normalizePortions(portions = []) {
+  return Array.isArray(portions)
+    ? portions.map((item) => ({ label: item.label || item.name || 'porcao', grams: Number(item.grams ?? item.ml ?? item.amount) || 100 }))
+    : [];
 }

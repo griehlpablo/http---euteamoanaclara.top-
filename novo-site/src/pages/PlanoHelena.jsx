@@ -89,7 +89,7 @@ function calculateTotals(log) {
         const hydration = estimateHydration(item, null);
         acc.pureWaterMl += hydration.pure_water_ml;
         acc.totalHydrationMl += hydration.hydration_ml;
-        if (item.category === 'bebida com acucar') acc.liquidSugar += manual.sugar;
+        if (String(item.category || '').includes('bebida') && String(item.category || '').includes('acucar')) acc.liquidSugar += manual.sugar;
         return acc;
       }
       const food = HELENA_FOODS[item.food];
@@ -116,6 +116,8 @@ function estimateHydration(item, food) {
   const amount = Number(item.amount) || 0;
   const unit = item.unit || food?.unit || '';
   const normalizedCategory = String(item.category || food?.category || '').toLowerCase();
+  if (item.is_water) return { pure_water_ml: amount, hydration_ml: amount };
+  if (item.hydration_factor) return { pure_water_ml: 0, hydration_ml: amount * Number(item.hydration_factor) };
   const isWater = item.food === 'agua' || normalizedCategory.includes('agua');
   const isBeverage = normalizedCategory.includes('bebida') || normalizedCategory.includes('suco') || normalizedCategory.includes('energetico') || normalizedCategory.includes('cafe');
   const isLiquid = unit === 'ml' || unit.includes('copo') || unit === 'litro';
@@ -154,6 +156,11 @@ function buildWarnings(log, totals) {
   const allItems = Object.values(log.meals || {}).flat();
   const hasPaoDeQueijo = allItems.some((item) => item.food === 'pao_queijo' || item.foodSlug === 'pao_de_queijo' || item.databaseSlug === 'pao_de_queijo' || String(item.label || '').toLowerCase().includes('pao de queijo'));
   const hasMaca = allItems.some((item) => item.food === 'maca' || item.foodSlug === 'maca' || item.databaseSlug === 'maca' || String(item.label || '').toLowerCase().includes('maca'));
+  allItems.filter((item) => item.custom).forEach((item) => {
+    if (item.warning_sugar && Number(item.sugar) > 0) warnings.push(item.warning_sugar);
+    else if (item.warning_zero && Number(item.sugar) === 0) warnings.push(item.warning_zero);
+    else if (String(item.category || '').includes('energetico')) warnings.push(`${item.brand_name || item.label || 'Energetico'} nao substitui agua. Use como excecao, nao como hidratacao principal.`);
+  });
   if (totals.protein < 75) warnings.push('Helena, se quer ganhar massa e emagrecer, proteina nao pode ficar baixa. Coloque ovo, frango, carne, leite, iogurte ou whey.');
   if (trained && hasPaoDeQueijo) warnings.push('Pao de queijo e ok, mas tem pouca proteina. Para recomposicao, complementa com ovo, leite, iogurte, frango ou whey.');
   if (hasMaca) warnings.push('Maca ajuda na fibra e saciedade, mas quase nao tem proteina.');
@@ -371,7 +378,7 @@ export default function PlanoHelena() {
 
   function addCustom(meal) {
     const meals = cloneMeals(log.meals);
-    meals[meal] = [...meals[meal], { id: `helena-${Date.now()}`, custom: true, label: '', category: 'outro', amount: '', unit: 'g', calories: '', protein: '', sugar: '', notes: '' }];
+    meals[meal] = [...meals[meal], { id: `helena-${Date.now()}`, custom: true, label: '', brand_name: '', category: 'outro', amount: '', unit: 'g', calories: '', protein: '', sugar: '', notes: '' }];
     patchLog({ meals });
   }
 
@@ -389,14 +396,20 @@ export default function PlanoHelena() {
       custom: true,
       label: food.name,
       category: food.category,
-      amount: 1,
-      unit: `${grams}g`,
+      amount: grams,
+      unit: food.unit || 'g',
       grams_or_ml: grams,
       grams,
       foodSlug: food.slug,
       databaseSlug: food.slug,
       source: food.source,
+      source_id: food.source_id,
       source_note: food.source_note,
+      hydration_factor: food.hydration_factor,
+      is_water: food.is_water,
+      is_liquid: food.is_liquid,
+      warning_zero: food.warning_zero,
+      warning_sugar: food.warning_sugar,
       ...calculateFoodNutrition(food, grams),
       notes: `Fonte: ${food.source} (${food.source_note})`,
     }, meal);
@@ -501,7 +514,12 @@ export default function PlanoHelena() {
   }
 
   function generateReport() {
-    const lineForMeal = (meal) => (log.meals[meal] || []).map((item) => item.custom ? `${item.label || 'Outro'}: ${item.amount || '-'} ${item.unit || ''}` : `${HELENA_FOODS[item.food]?.label}: ${item.amount} ${item.unit}`).join('; ') || '-';
+    const lineForMeal = (meal) => (log.meals[meal] || []).map((item) => {
+      if (!item.custom) return `${HELENA_FOODS[item.food]?.label}: ${item.amount} ${item.unit}`;
+      const name = item.brand_name ? `${item.label || 'Outro'} / ${item.brand_name}` : item.label || 'Outro';
+      const source = item.source ? `; fonte: ${item.source}${item.source_note ? ` (${item.source_note})` : ''}` : '';
+      return `${name}: ${item.amount || '-'} ${item.unit || ''}${source}`;
+    }).join('; ') || '-';
     const text = [
       `RELATORIO DO DIA - HELENA - ${formatDateBr(selectedDate)}`,
       'Pessoa: Helena',
@@ -655,7 +673,13 @@ export default function PlanoHelena() {
           <button type="button" onClick={() => addQuickDatabaseFood('iogurte_com_frutas', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Iogurte com frutas</button>
           {log.wheyStatus !== 'nao' && <button type="button" onClick={() => addQuickDatabaseFood('whey_protein', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Whey</button>}
         </div>
-        <FoodSearchCalculator onAdd={addCalculatedFood} defaultMeal="snack" title="Calculadora alimentar da Helena" storageKey="planohelena_food_calculator" />
+        <FoodSearchCalculator
+          onAdd={addCalculatedFood}
+          defaultMeal="snack"
+          mealOptions={Object.entries(HELENA_MEALS).map(([value, label]) => ({ value, label }))}
+          title="Calculadora alimentar da Helena"
+          storageKey="planohelena_food_calculator"
+        />
       </CollapsibleSection>
 
       <section id="meals" className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">

@@ -185,7 +185,7 @@ const QUICK_ACTIONS = {
     { label: '+ Carne 100 g', meal: 'lunch', food: 'carne_bovina', amount: 100, unit: 'g' },
     { label: '+ Ovo 1 un.', meal: 'extras', food: 'ovo', amount: 1, unit: 'unidade' },
     { label: '+ Coca normal 200 ml', meal: 'extras', food: 'refrigerante_normal', amount: 200, unit: 'ml' },
-    { label: '+ Monster zero 473 ml', meal: 'extras', custom: { label: 'Monster zero', category: 'energetico', amount: 473, unit: 'ml', calories: 0, protein: 0, sugar: 0, notes: 'Energetico zero; nao substitui agua.' } },
+    { label: '+ Monster zero 473 ml', meal: 'extras', custom: { label: 'Energetico sem acucar', brand_name: 'Monster zero', category: 'bebida zero/energetico', amount: 473, unit: 'ml', grams_or_ml: 473, calories: 14, protein: 0, sugar: 0, hydration_factor: 0.75, is_liquid: true, warning_zero: 'Monster zero nao trouxe acucar relevante, mas nao substitui agua.', notes: 'Energetico zero; nao substitui agua.' } },
   ],
   ana_clara: [
     { label: '+ Vitamina banana/leite/aveia', meal: 'snack', food: 'vitamina', amount: 350, unit: 'ml' },
@@ -365,6 +365,7 @@ function createCustomMealItem(overrides = {}) {
     custom: true,
     food: 'outro',
     label: '',
+    brand_name: '',
     category: 'outro',
     amount: '',
     unit: 'g',
@@ -387,9 +388,12 @@ function amountForCalculation(item, food) {
 }
 
 function categoryWarning(item) {
-  const label = item.label || 'Item personalizado';
-  if (item.category === 'bebida_acucar') return { type: 'danger', text: `${label}: acucar liquido registrado. Melhor tratar como excecao.` };
-  if (item.category === 'energetico') return { type: 'warning', text: `${label}: energetico nao substitui agua; cuidado com cafeina.` };
+  const label = item.brand_name ? `${item.label || 'Item personalizado'} / ${item.brand_name}` : item.label || 'Item personalizado';
+  const category = String(item.category || '');
+  if (item.warning_sugar && Number(item.sugar) > 0) return { type: 'danger', text: item.warning_sugar };
+  if (item.warning_zero && Number(item.sugar) === 0) return { type: 'warning', text: item.warning_zero };
+  if (category.includes('bebida') && category.includes('acucar')) return { type: 'danger', text: `${label}: acucar liquido registrado. Melhor tratar como excecao.` };
+  if (category.includes('energetico')) return { type: 'warning', text: `${label}: energetico nao substitui agua; cuidado com cafeina.` };
   if (['ultraprocessado', 'fast_food', 'pizza'].includes(item.category)) return { type: 'warning', text: `${label}: item mais calorico/processado, vale moderar no resto do dia.` };
   if (item.category === 'doce') return { type: 'warning', text: `${label}: doce registrado; ajuste as proximas escolhas.` };
   return null;
@@ -432,7 +436,7 @@ function calculateTotals(log) {
       acc.calories += itemCalories;
       acc.protein += itemProtein;
       acc.sugar += itemSugar;
-      if (food.liquidSugar || item.category === 'bebida_acucar') acc.liquidSugar += itemSugar;
+      if (food.liquidSugar || (String(item.category || '').includes('bebida') && String(item.category || '').includes('acucar'))) acc.liquidSugar += itemSugar;
       return acc;
     },
     { calories: 0, protein: 0, sugar: 0, liquidSugar: 0 },
@@ -552,7 +556,8 @@ function buildLogPayload(log, selectedDate, userId = null) {
 function itemLabel(item) {
   const food = FOOD_DB[item.food] || FOOD_DB.outro;
   const amount = Number(item.amount) || 0;
-  const label = item.custom ? item.label || 'Outro item' : food.label;
+  const baseLabel = item.custom ? item.label || 'Outro item' : food.label;
+  const label = item.brand_name ? `${baseLabel} / ${item.brand_name}` : baseLabel;
   const note = item.custom ? item.notes : item.note;
   const macros = item.custom && (item.calories || item.protein || item.sugar)
     ? ` - ${item.calories || 0} kcal, ${item.protein || 0}g prot., ${item.sugar || 0}g acucar`
@@ -2175,6 +2180,7 @@ export default function Dieta() {
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <Field label="Alimento"><TextInput value={item.label || ''} placeholder="Ex.: Nugget, pizza, requeijao" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { label: event.target.value })} /></Field>
+                      <Field label="Marca/produto"><TextInput value={item.brand_name || ''} placeholder="Ex.: Monster Ultra" onChange={(event) => updateCustomItem(activePerson, meal, item.id, { brand_name: event.target.value })} /></Field>
                       <Field label="Categoria">
                         <SelectInput value={item.category || 'outro'} onChange={(event) => updateCustomItem(activePerson, meal, item.id, { category: event.target.value })}>
                           {FOOD_CATEGORIES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -2204,8 +2210,6 @@ export default function Dieta() {
                   onAdd={(item, targetMeal) => {
                     addCustomItem(activePerson, targetMeal || meal, {
                       ...item,
-                      amount: 1,
-                      unit: item.unit || 'porcao calculada',
                       grams_or_ml: item.grams_or_ml || item.grams || '',
                     });
                     setActionMessage(`${item.label} adicionado em ${MEAL_LABELS[targetMeal || meal]}.`);

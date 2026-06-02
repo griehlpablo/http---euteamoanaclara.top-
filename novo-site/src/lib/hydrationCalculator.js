@@ -9,7 +9,14 @@ export function calculateHydrationContribution(item = {}) {
 
   const food = findFood(item.foodSlug || item.databaseSlug || item.food);
   const amount = Number(item.grams_or_ml || item.grams || item.amount) || 0;
-  if (!food || !amount) return { pure_water_ml: 0, hydration_ml: 0 };
+  if (!amount) return { pure_water_ml: 0, hydration_ml: 0 };
+
+  if (item.is_water) return { pure_water_ml: amount, hydration_ml: amount };
+  if (item.hydration_factor) {
+    return { pure_water_ml: 0, hydration_ml: amount * Number(item.hydration_factor || 0) };
+  }
+
+  if (!food) return { pure_water_ml: 0, hydration_ml: 0 };
 
   if (food.is_water) {
     return { pure_water_ml: amount, hydration_ml: amount };

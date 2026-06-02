@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
-import { findFood } from '../lib/foodDatabase';
+import { FOOD_DATABASE, findFood, loadFoodDatabase } from '../lib/foodDatabase';
+import { lookupOpenFoodFactsByBarcode, searchOpenFoodFacts } from '../lib/externalFoodSources';
 import { searchFoods } from '../lib/foodSearch';
 import { calculateFoodNutrition } from '../lib/nutrition';
 
@@ -17,21 +18,37 @@ function saveList(key, items) {
   return items.slice(0, 8);
 }
 
-export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alimentar', defaultMeal = 'extras', allowBarcode = true, storageKey = 'food_search_calculator' }) {
+export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alimentar', defaultMeal = 'extras', mealOptions = [], allowBarcode = true, storageKey = 'food_search_calculator' }) {
   const [query, setQuery] = useState('');
   const [selectedSlug, setSelectedSlug] = useState('maca');
+  const [targetMeal, setTargetMeal] = useState(defaultMeal);
+  const [brandName, setBrandName] = useState('');
+  const [barcode, setBarcode] = useState('');
+  const [database, setDatabase] = useState(FOOD_DATABASE);
+  const [onlineMessage, setOnlineMessage] = useState('');
   const [recent, setRecent] = useState(() => readList(`${storageKey}_recent`));
   const [favorites, setFavorites] = useState(() => readList(`${storageKey}_favorites`));
-  const selected = findFood(selectedSlug);
+  const selected = database.find((item) => item.slug === selectedSlug) || findFood(selectedSlug);
   const defaultPortion = selected?.default_portions?.[0];
   const [grams, setGrams] = useState(defaultPortion?.grams || 100);
-  const results = useMemo(() => searchFoods(query, 8), [query]);
+  const results = useMemo(() => searchFoods(query, 8, database), [database, query]);
   const nutrition = selected ? calculateFoodNutrition(selected, grams) : null;
 
+  useEffect(() => {
+    let active = true;
+    loadFoodDatabase().then((items) => {
+      if (active) setDatabase(items);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function choose(slug) {
-    const food = findFood(slug);
+    const food = database.find((item) => item.slug === slug) || findFood(slug);
     setSelectedSlug(slug);
     setGrams(food?.default_portions?.[0]?.grams || 100);
+    setBrandName('');
   }
 
   function addSelected() {
@@ -40,19 +57,26 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
       custom: true,
       label: selected.name,
       category: selected.category,
-      amount: 1,
-      unit: `${grams}g`,
+      amount: grams,
+      unit: selected.unit || 'g',
       grams_or_ml: grams,
       grams,
       foodSlug: selected.slug,
       databaseSlug: selected.slug,
+      brand_name: brandName.trim(),
       source: selected.source,
+      source_id: selected.source_id,
       source_note: selected.source_note,
+      hydration_factor: selected.hydration_factor,
+      is_water: selected.is_water,
+      is_liquid: selected.is_liquid,
+      warning_zero: selected.warning_zero,
+      warning_sugar: selected.warning_sugar,
       ...nutrition,
-      notes: `Fonte: ${selected.source} (${selected.source_note})`,
+      notes: `${brandName.trim() ? `Produto: ${brandName.trim()}. ` : ''}Fonte: ${selected.source} (${selected.source_note})`,
     };
     setRecent(saveList(`${storageKey}_recent`, [item, ...recent.filter((entry) => entry.databaseSlug !== selected.slug)]));
-    onAdd?.(item, defaultMeal);
+    onAdd?.(item, targetMeal);
   }
 
   function toggleFavorite() {
@@ -62,20 +86,39 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
       custom: true,
       label: selected.name,
       category: selected.category,
-      amount: 1,
-      unit: `${grams}g`,
+      amount: grams,
+      unit: selected.unit || 'g',
       grams_or_ml: grams,
       grams,
       foodSlug: selected.slug,
       databaseSlug: selected.slug,
+      brand_name: brandName.trim(),
+      source: selected.source,
+      source_id: selected.source_id,
+      source_note: selected.source_note,
+      hydration_factor: selected.hydration_factor,
+      is_water: selected.is_water,
+      is_liquid: selected.is_liquid,
+      warning_zero: selected.warning_zero,
+      warning_sugar: selected.warning_sugar,
       ...nutrition,
-      notes: `Favorito. Fonte: ${selected.source}`,
+      notes: `${brandName.trim() ? `Produto: ${brandName.trim()}. ` : ''}Favorito. Fonte: ${selected.source}`,
     };
     setFavorites(saveList(`${storageKey}_favorites`, exists ? favorites.filter((item) => item.databaseSlug !== selected.slug) : [favorite, ...favorites]));
   }
 
   function addStored(item) {
-    onAdd?.(item, defaultMeal);
+    onAdd?.(item, targetMeal);
+  }
+
+  async function handleOnlineSearch() {
+    const result = await searchOpenFoodFacts(query);
+    setOnlineMessage(result.message);
+  }
+
+  async function handleBarcodeSearch() {
+    const result = await lookupOpenFoodFactsByBarcode(barcode);
+    setOnlineMessage(result.message);
   }
 
   return (
@@ -88,7 +131,7 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
         Buscar alimento
         <div className="mt-1 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm">
           <Search className="h-4 w-4 text-slate-400" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="maca, ovos, pao de queijo..." className="w-full bg-transparent text-sm font-bold text-slate-700 outline-none" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="monster, coca, nugget, cereal..." className="w-full bg-transparent text-sm font-bold text-slate-700 outline-none" />
         </div>
       </label>
       <div className="mb-4 grid gap-2 sm:grid-cols-2">
@@ -114,12 +157,28 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
               Peso da porcao (g/ml)
               <input type="number" min="0" value={grams} onChange={(event) => setGrams(event.target.value)} className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none" />
             </label>
+            {mealOptions.length ? (
+              <label className="mt-3 block text-xs font-bold uppercase text-slate-500">
+                Adicionar em
+                <select value={targetMeal} onChange={(event) => setTargetMeal(event.target.value)} className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none">
+                  {mealOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <label className="mt-3 block text-xs font-bold uppercase text-slate-500">
+              Marca / produto especifico
+              <input value={brandName} onChange={(event) => setBrandName(event.target.value)} placeholder="Ex.: Monster Ultra" className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none" />
+            </label>
             {allowBarcode && (
               <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                <input placeholder="codigo de barras futuro" className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-500 shadow-sm outline-none" />
-                <button type="button" className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500">buscar produto</button>
+                <input value={barcode} onChange={(event) => setBarcode(event.target.value)} placeholder="codigo de barras futuro" className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-500 shadow-sm outline-none" />
+                <button type="button" onClick={handleBarcodeSearch} className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500">Buscar por codigo</button>
               </div>
             )}
+            <button type="button" onClick={handleOnlineSearch} className="mt-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500">Buscar produto online</button>
+            {onlineMessage && <p className="mt-2 rounded-2xl bg-amber-50 p-3 text-xs font-bold text-amber-800">{onlineMessage}</p>}
           </div>
           <div className="rounded-2xl bg-slate-50 p-4">
             <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-700">

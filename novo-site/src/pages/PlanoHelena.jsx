@@ -16,6 +16,7 @@ import QuickNav from '../components/QuickNav';
 import { findFood } from '../lib/foodDatabase';
 import { buildNotificationDiagnostic, buildWaterMessage, planWaterReminder } from '../lib/notificationPlanner';
 import { calculateFoodNutrition, nutritionForManualItem } from '../lib/nutrition';
+import { reportTimestampLines } from '../lib/reportTimestamp';
 
 const HELENA_ACCESS_CODE = 'helena2026';
 
@@ -522,6 +523,7 @@ export default function PlanoHelena() {
     }).join('; ') || '-';
     const text = [
       `RELATORIO DO DIA - HELENA - ${formatDateBr(selectedDate)}`,
+      ...reportTimestampLines(),
       'Pessoa: Helena',
       'Idade: 23',
       'Altura: 1,57 m',

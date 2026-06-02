@@ -30,6 +30,7 @@ import NotificationDiagnostics from '../components/NotificationDiagnostics';
 import QuickNav from '../components/QuickNav';
 import { calculateTotalHydration } from '../lib/hydrationCalculator';
 import { buildNotificationDiagnostic } from '../lib/notificationPlanner';
+import { reportTimestampLines } from '../lib/reportTimestamp';
 
 const PEOPLE = {
   pablo: {
@@ -925,6 +926,7 @@ function buildReport(logs, selectedDate, mode) {
       const unknownCustom = Object.values(log.meals || {}).flat().filter((item) => item.custom && !item.calories && !item.protein && !item.sugar);
       const lines = [
         `RELATORIO DO DIA - ${formatDateBr(selectedDate)}`,
+        ...reportTimestampLines(),
         `Pessoa: ${PEOPLE[person].label}`,
         `Peso: ${log.weight_kg || '-'}`,
         `Sono: ${log.sleep_time || '-'}`,

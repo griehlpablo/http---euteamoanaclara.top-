@@ -1,12 +1,16 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      // Aqui está o bloqueio! O Vite vai ignorar esses arquivos gigantes que quebram o build
-      external: ['dashjs', 'hls.js', 'flv.js']
-    }
-  }
-})
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        planohelena: resolve(__dirname, 'planohelena/index.html'),
+      },
+      external: ['dashjs', 'hls.js', 'flv.js'],
+    },
+  },
+});

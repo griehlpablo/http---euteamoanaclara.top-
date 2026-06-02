@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Redirecionando...</title>
     <script>
-      sessionStorage.setItem('spaRedirect', window.location.pathname + window.location.search + window.location.hash);
-      window.location.replace('/');
+      const target = window.location.pathname + window.location.search + window.location.hash;
+      if (window.location.pathname.startsWith('/planohelena')) {
+        window.location.replace('/planohelena/' + window.location.search + window.location.hash);
+      } else {
+        sessionStorage.setItem('spaRedirect', target);
+        window.location.replace('/');
+      }
     </script>
   </head>
   <body>

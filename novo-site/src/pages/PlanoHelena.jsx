@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Dumbbell, Lock, Save } from 'lucide-react';
+import { CheckCircle2, Dumbbell, Lock, RotateCcw, Save, Smartphone } from 'lucide-react';
 import supabase from '../supabase';
 import HelenaDashboard from '../components/helena/HelenaDashboard';
 import HelenaExportReport from '../components/helena/HelenaExportReport';
@@ -212,11 +212,17 @@ export default function PlanoHelena() {
   const recommendations = useMemo(() => buildRecommendations(log, totals), [log, totals]);
 
   useEffect(() => {
-    const previousManifest = document.querySelector('link[rel="manifest"]')?.getAttribute('href');
-    document.querySelector('link[rel="manifest"]')?.setAttribute('href', '/manifest-helena.json');
+    let manifestLink = document.querySelector('link[rel="manifest"]');
+    if (!manifestLink) {
+      manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      document.head.appendChild(manifestLink);
+    }
+    const previousManifest = manifestLink.getAttribute('href');
+    manifestLink.setAttribute('href', '/manifest-helena.json');
     document.title = 'Plano da Helena';
     return () => {
-      if (previousManifest) document.querySelector('link[rel="manifest"]')?.setAttribute('href', previousManifest);
+      if (previousManifest) manifestLink.setAttribute('href', previousManifest);
     };
   }, []);
 
@@ -351,12 +357,23 @@ export default function PlanoHelena() {
   }
 
   async function clearHelenaCache() {
+    const ok = window.confirm('Corrigir o atalho da Helena e limpar cache do app? Isso nao apaga registros salvos no Supabase.');
+    if (!ok) return;
     if ('caches' in window) {
       const names = await caches.keys();
-      await Promise.all(names.filter((name) => name.includes('helena') || name.includes('diet-app')).map((name) => caches.delete(name)));
+      await Promise.all(names.map((name) => caches.delete(name)));
+    }
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(async (registration) => {
+        await registration.update().catch(() => undefined);
+        if (registration.scope.includes('/planohelena') || registration.scope.includes(window.location.origin)) {
+          await registration.unregister().catch(() => undefined);
+        }
+      }));
     }
     localStorage.setItem(HELENA_STORAGE.pwaSettings, JSON.stringify({ cacheClearedAt: new Date().toISOString() }));
-    window.location.reload();
+    window.location.href = `/planohelena?fresh=${Date.now()}`;
   }
 
   function generateReport() {
@@ -427,6 +444,28 @@ export default function PlanoHelena() {
             {saveState === 'saving' ? 'Salvando...' : saveState === 'offline' ? 'Backup local criado' : saveState === 'saved' ? 'Salvo' : 'Salvar Helena'}
           </button>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-emerald-100 bg-white/80 p-5 shadow-lg">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 font-serif text-2xl font-bold text-slate-900">
+              <Smartphone className="h-5 w-5 text-emerald-600" /> Instalar no celular
+            </h2>
+            <p className="mt-1 text-xs font-bold text-slate-500">Use esta pagina aberta em /planohelena para criar o atalho correto da Helena.</p>
+          </div>
+          <button onClick={clearHelenaCache} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+            <RotateCcw className="h-4 w-4" /> Corrigir atalho / limpar cache
+          </button>
+        </div>
+        <ol className="grid gap-2 text-sm font-bold leading-6 text-slate-700 md:grid-cols-2">
+          <li className="rounded-2xl bg-emerald-50/70 px-4 py-3">1. Abra no Chrome: https://euteamoanaclara.top/planohelena</li>
+          <li className="rounded-2xl bg-emerald-50/70 px-4 py-3">2. Toque nos tres pontinhos do navegador.</li>
+          <li className="rounded-2xl bg-emerald-50/70 px-4 py-3">3. Toque em Adicionar a tela inicial ou Instalar app.</li>
+          <li className="rounded-2xl bg-emerald-50/70 px-4 py-3">4. Confirme que o nome aparece como Plano Helena.</li>
+          <li className="rounded-2xl bg-emerald-50/70 px-4 py-3">5. Abra pelo novo icone criado.</li>
+          <li className="rounded-2xl bg-emerald-50/70 px-4 py-3">6. Se abrir errado, apague o atalho antigo e use o botao de limpar cache desta pagina.</li>
+        </ol>
       </section>
 
       <section className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import OneSignal from 'react-onesignal';
 
 import Navbar from './components/Navbar';
@@ -27,6 +27,16 @@ import Dieta from './pages/Dieta';
 
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    const redirect = sessionStorage.getItem('spaRedirect');
+    const hashRoute = window.location.hash.startsWith('#/') ? window.location.hash.slice(1) : '';
+    const nextPath = redirect || hashRoute;
+    if (!nextPath) return;
+    sessionStorage.removeItem('spaRedirect');
+    window.history.replaceState(null, '', nextPath);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
 
   // Alterna entre os temas
   const toggleTheme = () => {
@@ -89,6 +99,7 @@ export default function App() {
             <Route path="/quiz" element={protectedPage(<QuizCasal />)} />
             <Route path="/surpresa-diaria" element={protectedPage(<SurpresaDiaria />)} />
             <Route path="/dieta" element={protectedPage(<Dieta />)} />
+            <Route path="/planohelena" element={protectedPage(<Dieta standalonePerson="helena" />)} />
           </Routes>
         </main>
       </Router>

@@ -1,8 +1,8 @@
 /* global importScripts */
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-const DIET_CACHE = "eu-te-amo-ana-clara-v1";
-const CORE_ASSETS = ["/", "/index.html", "/manifest.json", "/favicon.svg"];
+const DIET_CACHE = "diet-app-v2-separated-pages";
+const CORE_ASSETS = ["/", "/index.html", "/manifest.json", "/manifest-helena.json", "/planohelena", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

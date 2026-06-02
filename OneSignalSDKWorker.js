@@ -1,7 +1,7 @@
 /* global importScripts */
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-const CACHE_NAME = "diet-app-v4-fix-blank-screen";
+const CACHE_NAME = "diet-app-v5-openfoodfacts-fix";
 const HELENA_ENTRY = "/planohelena/index.html";
 const CORE_ASSETS = [
   "/",
@@ -36,6 +36,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
+  // Requests to Open Food Facts and any other external origin must go straight to the browser.
   if (url.origin !== self.location.origin) return;
 
   if (event.request.mode === "navigate") {

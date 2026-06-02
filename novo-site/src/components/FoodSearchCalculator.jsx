@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, Plus, Search, Square } from 'lucide-react';
 import { FOOD_DATABASE, findFood, loadFoodDatabase } from '../lib/foodDatabase';
 import { startBarcodeScanner, stopBarcodeScanner } from '../lib/barcodeScanner';
-import { lookupOpenFoodFactsByBarcode, searchOpenFoodFacts } from '../lib/openFoodFacts';
+import { checkOnlineStatus, getOpenFoodFactsDiagnostic, lookupOpenFoodFactsByBarcode, searchOpenFoodFacts } from '../lib/openFoodFacts';
 import { searchFoods } from '../lib/foodSearch';
 import { calculateFoodNutrition } from '../lib/nutrition';
 
@@ -23,8 +23,13 @@ function readObject(key) {
   try {
     return JSON.parse(localStorage.getItem(key) || '{}');
   } catch {
+    localStorage.removeItem(key);
     return {};
   }
+}
+
+function formatDiagnosticValue(value) {
+  return value === null || value === undefined || value === '' ? '-' : String(value);
 }
 
 function emptyManual() {
@@ -78,6 +83,8 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
   const [database, setDatabase] = useState(FOOD_DATABASE);
   const [onlineResults, setOnlineResults] = useState([]);
   const [onlineMessage, setOnlineMessage] = useState('');
+  const [diagnostic, setDiagnostic] = useState(() => getOpenFoodFactsDiagnostic());
+  const [showRawDebug, setShowRawDebug] = useState(false);
   const [cameraMessage, setCameraMessage] = useState('');
   const [scanning, setScanning] = useState(false);
   const [recent, setRecent] = useState(() => readList(`${storageKey}_recent`));
@@ -91,6 +98,7 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
   const results = useMemo(() => searchFoods(query, 8, mergedDatabase), [mergedDatabase, query]);
   const nutrition = selected ? calculateFoodNutrition(selected, grams) : null;
   const onlineNutrition = selectedOnline ? calculateFoodNutrition(selectedOnline, grams) : null;
+  const cacheKey = `${prefix}_openfoodfacts_cache`;
 
   useEffect(() => {
     let active = true;
@@ -216,19 +224,22 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
     onAdd?.(item, targetMeal);
   }
 
-  async function handleOnlineSearch(force = false) {
-    const term = (onlineQuery || query).trim();
-    const cacheKey = `${prefix}_openfoodfacts_cache`;
+  async function handleOnlineSearch(force = false, termOverride = '') {
+    const term = (termOverride || onlineQuery || query).trim();
     const cache = readObject(cacheKey);
     const key = `query:${term.toLowerCase()}`;
     if (!force && cache[key] && Date.now() - cache[key].timestamp < 30 * 24 * 60 * 60 * 1000) {
       setOnlineResults(cache[key].results || []);
+      setOnlineQuery(term);
       setOnlineMessage('Open Food Facts via cache local.');
+      setDiagnostic(getOpenFoodFactsDiagnostic());
       return;
     }
+    setOnlineQuery(term);
     const result = await searchOpenFoodFacts(term);
     setOnlineResults(result.results || []);
     setOnlineMessage(result.message);
+    setDiagnostic(result.diagnostic || getOpenFoodFactsDiagnostic());
     if (result.results?.length) localStorage.setItem(cacheKey, JSON.stringify({ ...cache, [key]: { timestamp: Date.now(), results: result.results } }));
   }
 
@@ -240,24 +251,55 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
       setSelectedOnline(saved);
       setGrams(saved.default_portions?.[0]?.grams || 100);
       setOnlineMessage('Produto encontrado no seu banco local.');
+      setDiagnostic(getOpenFoodFactsDiagnostic());
       return;
     }
-    const cacheKey = `${prefix}_openfoodfacts_cache`;
     const cache = readObject(cacheKey);
     const key = `barcode:${cleanCode}`;
     if (!force && cache[key] && Date.now() - cache[key].timestamp < 30 * 24 * 60 * 60 * 1000) {
       setSelectedOnline(cache[key].product);
       setGrams(cache[key].product?.default_portions?.[0]?.grams || 100);
       setOnlineMessage('Open Food Facts via cache local.');
+      setDiagnostic(getOpenFoodFactsDiagnostic());
       return;
     }
     const result = await lookupOpenFoodFactsByBarcode(cleanCode);
     setOnlineMessage(result.message);
+    setDiagnostic(result.diagnostic || getOpenFoodFactsDiagnostic());
     if (result.product) {
       setSelectedOnline(result.product);
       setGrams(result.product.default_portions?.[0]?.grams || 100);
       localStorage.setItem(cacheKey, JSON.stringify({ ...cache, [key]: { timestamp: Date.now(), product: result.product } }));
     }
+  }
+
+  async function testOnlineConnection(label = 'Teste de conexao online') {
+    const result = await checkOnlineStatus();
+    setDiagnostic(getOpenFoodFactsDiagnostic());
+    setOnlineMessage(`${label}: ${result.message}`);
+  }
+
+  function clearOnlineCache() {
+    localStorage.removeItem(cacheKey);
+    setOnlineMessage('Cache da busca online limpo para este plano.');
+  }
+
+  function clearCurrentProductCache() {
+    const cache = readObject(cacheKey);
+    const next = { ...cache };
+    if (selectedOnline?.barcode) delete next[`barcode:${selectedOnline.barcode}`];
+    const term = (onlineQuery || selectedOnline?.name || query || '').trim().toLowerCase();
+    if (term) delete next[`query:${term}`];
+    localStorage.setItem(cacheKey, JSON.stringify(next));
+    setOnlineMessage('Cache deste produto limpo. Use Atualizar dados online para refazer a consulta.');
+  }
+
+  function retryOnlineAction() {
+    if (activeTab === 'barcode' || barcode) {
+      handleBarcodeSearch(true);
+      return;
+    }
+    handleOnlineSearch(true);
   }
 
   function saveSelectedOnline() {
@@ -349,7 +391,7 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
           </button>
         ))}
       </div>}
-      {activeTab === 'search' && <button type="button" onClick={() => { setActiveTab('online'); setOnlineQuery(query); handleOnlineSearch(); }} className="mb-4 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600">Buscar online no Open Food Facts</button>}
+      {activeTab === 'search' && <button type="button" onClick={() => { setActiveTab('online'); setOnlineQuery(query); handleOnlineSearch(false, query); }} className="mb-4 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600">Buscar online no Open Food Facts</button>}
 
       {activeTab === 'barcode' && (
         <div className="mb-4 rounded-2xl bg-white/80 p-4">
@@ -374,6 +416,29 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
             <button type="button" onClick={() => handleOnlineSearch()} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">Buscar online</button>
             <button type="button" onClick={() => handleOnlineSearch(true)} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">Atualizar dados online</button>
           </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-4">
+            <button type="button" onClick={() => testOnlineConnection('Teste de conexao online')} className="rounded-2xl bg-cyan-50 px-3 py-2 text-xs font-bold text-cyan-900">Testar conexao online</button>
+            <button type="button" onClick={() => testOnlineConnection('Teste Open Food Facts')} className="rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900">Testar Open Food Facts</button>
+            <button type="button" onClick={clearOnlineCache} className="rounded-2xl bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">Limpar cache da busca online</button>
+            <button type="button" onClick={retryOnlineAction} className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700">Tentar novamente</button>
+          </div>
+          <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs font-bold text-slate-600">
+            <div className="grid gap-2 sm:grid-cols-3">
+              <span>Navegador online: {formatDiagnosticValue(diagnostic.browserOnline)}</span>
+              <span>Open Food Facts: {formatDiagnosticValue(diagnostic.openFoodFactsStatus)}</span>
+              <span>Ultima tentativa: {formatDiagnosticValue(diagnostic.lastAttemptAt)}</span>
+            </div>
+            <details className="mt-2">
+              <summary className="cursor-pointer text-slate-900">Detalhes tecnicos</summary>
+              <div className="mt-2 grid gap-1 break-words font-mono text-[11px] text-slate-500">
+                <span>ultima_url: {formatDiagnosticValue(diagnostic.lastUrl)}</span>
+                <span>http_status: {formatDiagnosticValue(diagnostic.lastHttpStatus)}</span>
+                <span>erro_tecnico: {formatDiagnosticValue(diagnostic.lastTechnicalError)}</span>
+                <span>codigo_erro: {formatDiagnosticValue(diagnostic.lastErrorCode)}</span>
+                <span>ultima_busca: {formatDiagnosticValue(diagnostic.lastSearch)}</span>
+              </div>
+            </details>
+          </div>
           {onlineResults.length ? <div className="mt-3 grid gap-2">
             {onlineResults.map((product) => (
               <button key={product.slug} type="button" onClick={() => { setSelectedOnline(product); setGrams(product.default_portions?.[0]?.grams || 100); }} className="grid gap-3 rounded-2xl bg-slate-50 p-3 text-left text-xs font-bold text-slate-700 sm:grid-cols-[48px_1fr_auto]">
@@ -397,7 +462,13 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
         <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <p className="mb-2 text-sm font-bold text-slate-800">{selectedOnline?.name || selected.name}</p>
-            {selectedOnline?.data_quality === 'Incompleto' && <p className="mb-2 rounded-2xl bg-amber-50 p-3 text-xs font-bold text-amber-800">Produto encontrado, mas dados nutricionais estao incompletos. Confira o rotulo ou edite manualmente.</p>}
+            {selectedOnline?.data_quality && selectedOnline.data_quality !== 'COMPLETE' && (
+              <p className={`mb-2 rounded-2xl p-3 text-xs font-bold ${selectedOnline.data_quality === 'PARTIAL' ? 'bg-cyan-50 text-cyan-900' : 'bg-amber-50 text-amber-800'}`}>
+                {selectedOnline.data_quality_message || 'Dados encontrados parcialmente. Voce pode editar antes de adicionar.'}
+              </p>
+            )}
+            {selectedOnline?.warning_zero && <p className="mb-2 rounded-2xl bg-emerald-50 p-3 text-xs font-bold text-emerald-900">{selectedOnline.warning_zero}</p>}
+            {selectedOnline?.missing_fields?.length ? <p className="mb-2 text-xs font-bold text-slate-500">Campos ausentes no Open Food Facts: {selectedOnline.missing_fields.join(', ')}.</p> : null}
             {selectedOnline && (
               <div className="mb-3 grid gap-2 sm:grid-cols-2">
                 {[
@@ -418,7 +489,18 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
                 <label className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">
                   <input type="checkbox" checked={Boolean(selectedOnline.is_liquid)} onChange={(event) => setSelectedOnline({ ...selectedOnline, is_liquid: event.target.checked })} /> E bebida?
                 </label>
+                <button type="button" onClick={clearCurrentProductCache} className="rounded-2xl bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">Limpar cache deste produto</button>
+                {selectedOnline.raw_debug && (
+                  <button type="button" onClick={() => setShowRawDebug(!showRawDebug)} className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700">
+                    {showRawDebug ? 'Ocultar dados brutos' : 'Ver dados brutos do produto'}
+                  </button>
+                )}
               </div>
+            )}
+            {selectedOnline?.raw_debug && showRawDebug && (
+              <pre className="mb-3 max-h-72 overflow-auto rounded-2xl bg-slate-950 p-3 text-[11px] font-bold text-slate-100">
+                {JSON.stringify(selectedOnline.raw_debug, null, 2)}
+              </pre>
             )}
             <div className="mb-3 flex flex-wrap gap-2">
               {(selectedOnline?.default_portions || selected.default_portions).map((portion) => (
@@ -448,10 +530,10 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
             {allowBarcode && (
               <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
                 <input value={barcode} onChange={(event) => setBarcode(event.target.value)} placeholder="codigo de barras futuro" className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-500 shadow-sm outline-none" />
-                <button type="button" onClick={handleBarcodeSearch} className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500">Buscar por codigo</button>
+                <button type="button" onClick={() => handleBarcodeSearch()} className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500">Buscar por codigo</button>
               </div>
             )}
-            <button type="button" onClick={handleOnlineSearch} className="mt-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500">Buscar produto online</button>
+            <button type="button" onClick={() => handleOnlineSearch()} className="mt-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500">Buscar produto online</button>
             {onlineMessage && <p className="mt-2 rounded-2xl bg-amber-50 p-3 text-xs font-bold text-amber-800">{onlineMessage}</p>}
           </div>
           <div className="rounded-2xl bg-slate-50 p-4">

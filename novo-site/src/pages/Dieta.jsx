@@ -23,6 +23,13 @@ import {
   Utensils,
 } from 'lucide-react';
 import supabase from '../supabase';
+import BrasiliaClock from '../components/BrasiliaClock';
+import CollapsibleSection from '../components/CollapsibleSection';
+import FoodSearchCalculator from '../components/FoodSearchCalculator';
+import NotificationDiagnostics from '../components/NotificationDiagnostics';
+import QuickNav from '../components/QuickNav';
+import { calculateTotalHydration } from '../lib/hydrationCalculator';
+import { buildNotificationDiagnostic } from '../lib/notificationPlanner';
 
 const PEOPLE = {
   pablo: {
@@ -78,9 +85,10 @@ const DEFAULT_REMINDER_SETTINGS = {
   },
 };
 
-const DEVICE_NOTIFICATION_STORAGE_KEY = 'healthNotificationDeviceSettings';
-const NOTIFICATION_DEBUG_LOG_KEY = 'notificationDebugLog';
-const LAST_NOTIFICATION_AT_KEY = 'healthNotificationLastAt';
+const DIET_COLLAPSED_SECTIONS_KEY = 'diet_collapsed_sections';
+const DEVICE_NOTIFICATION_STORAGE_KEY = 'diet_notification_device_settings';
+const NOTIFICATION_DEBUG_LOG_KEY = 'diet_notification_debug_log';
+const LAST_NOTIFICATION_AT_KEY = 'diet_notification_last_at';
 const DEFAULT_DEVICE_NOTIFICATION_SETTINGS = {
   enabled: true,
   people: {
@@ -1265,6 +1273,10 @@ export default function Dieta() {
 
   const activeLog = selectedLogs[activePerson];
   const activeTotals = calculateTotals(activeLog);
+  const activeHydration = useMemo(() => {
+    const items = Object.values(activeLog.meals || {}).flat();
+    return calculateTotalHydration(items, activeLog.water_ml);
+  }, [activeLog]);
   const activeRecommendations = getRecommendations(activeLog, activeTotals);
   const activeSettings = reminderSettings[activePerson] || DEFAULT_REMINDER_SETTINGS[activePerson];
   const activeWarnings = applyFeedbackTone(activeTotals.warnings, activeSettings.tone);
@@ -1275,6 +1287,32 @@ export default function Dieta() {
   const closeDaySuggestions = getCloseDaySuggestions(activeLog, activeTotals);
   const weeklySummary = getWeeklySummary(logsByDate, activePerson, selectedDate);
   const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
+  const activeNotificationDiagnostic = useMemo(() => buildNotificationDiagnostic({
+    settings: {
+      ...deviceNotificationSettings,
+      ...(reminderSettings[activePerson] || {}),
+    },
+    profile: PEOPLE[activePerson],
+    waterMl: activeLog.water_ml,
+    totalHydrationMl: activeHydration.hydration_ml,
+    activePerson: PEOPLE[activePerson].short,
+    lastSent: lastReminder ? `${lastReminder.title} (${lastReminder.time})` : '-',
+    lastBlocked: lastBlockedNotification?.reason || '-',
+    serviceWorkerReady,
+    isStandalonePwa,
+    notificationPermission,
+  }), [
+    activeHydration.hydration_ml,
+    activeLog.water_ml,
+    activePerson,
+    deviceNotificationSettings,
+    isStandalonePwa,
+    lastBlockedNotification,
+    lastReminder,
+    notificationPermission,
+    reminderSettings,
+    serviceWorkerReady,
+  ]);
   const deviceStatusText = formatEnabledPeople(deviceNotificationSettings);
 
   async function persistReminderSettings(nextSettings) {
@@ -1680,7 +1718,17 @@ export default function Dieta() {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+      <QuickNav items={[
+        { id: 'summary', label: 'Resumo' },
+        { id: 'water', label: 'Agua' },
+        { id: 'meals', label: 'Refeicoes' },
+        { id: 'history', label: 'Historico' },
+        { id: 'notifications', label: 'Notificacoes' },
+      ]} />
+
+      <BrasiliaClock nextWater="ver lembretes" nextAlert="acompanhar refeicoes" />
+
+      <section id="summary" className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-[2rem] border border-white/70 bg-white/60 p-5 shadow-lg backdrop-blur-xl">
           <div className="mb-4 flex items-center justify-between">
             <button onClick={() => changeMonth(-1)} className="rounded-full bg-white p-2 shadow-sm" aria-label="Mes anterior"><ChevronLeft /></button>
@@ -1753,8 +1801,8 @@ export default function Dieta() {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-xl backdrop-blur-xl">
+      <section id="notifications" className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div id="water" className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-xl backdrop-blur-xl">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="font-serif text-3xl font-bold text-slate-900">Configuracoes de lembretes</h2>
@@ -1892,6 +1940,17 @@ export default function Dieta() {
                   </div>
                 )) : 'Nenhum evento registrado ainda.'}
               </div>
+            </div>
+
+            <div className="mt-4">
+              <NotificationDiagnostics
+                diagnostic={activeNotificationDiagnostic}
+                countdown={testCountdown}
+                onTestNow={() => testNotification(activePerson, 'test')}
+                onTestWater10s={() => testNotification(activePerson, 'water', 10000)}
+                onRecalculate={() => setActionMessage(`Proxima agua prevista: ${activeNotificationDiagnostic.nextWater}. Faltam ${activeNotificationDiagnostic.waterPlan.remaining} ml de agua pura.`)}
+                onResetTimers={resetDeviceNotifications}
+              />
             </div>
 
             <p className="mt-4 rounded-2xl bg-white/80 p-3 text-xs font-bold leading-5 text-cyan-900">
@@ -2074,13 +2133,17 @@ export default function Dieta() {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <section id="meals" className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-5">
           {Object.entries(MEAL_OPTIONS[activePerson]).map(([meal, foods]) => (
-            <div key={meal} className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-lg backdrop-blur-xl">
-              <h3 className="mb-4 flex items-center gap-2 font-serif text-2xl font-bold text-slate-900">
-                <Utensils className="h-5 w-5 text-rose-500" /> {MEAL_LABELS[meal]}
-              </h3>
+            <CollapsibleSection
+              key={meal}
+              title={MEAL_LABELS[meal]}
+              defaultOpen={['breakfast', 'lunch', 'dinner'].includes(meal)}
+              storageKey={DIET_COLLAPSED_SECTIONS_KEY}
+              sectionId={meal}
+              className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-lg backdrop-blur-xl"
+            >
               <div className="space-y-3">
                 {foods.map((foodKey) => {
                   const food = FOOD_DB[foodKey] || FOOD_DB.outro;
@@ -2133,11 +2196,26 @@ export default function Dieta() {
                     </div>
                   </div>
                 ))}
+                <FoodSearchCalculator
+                  title={`Buscar e calcular - ${MEAL_LABELS[meal]}`}
+                  defaultMeal={meal}
+                  allowBarcode={false}
+                  storageKey="diet_food_calculator"
+                  onAdd={(item, targetMeal) => {
+                    addCustomItem(activePerson, targetMeal || meal, {
+                      ...item,
+                      amount: 1,
+                      unit: item.unit || 'porcao calculada',
+                      grams_or_ml: item.grams_or_ml || item.grams || '',
+                    });
+                    setActionMessage(`${item.label} adicionado em ${MEAL_LABELS[targetMeal || meal]}.`);
+                  }}
+                />
                 <button onClick={() => addCustomItem(activePerson, meal)} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-rose-200 bg-white/70 px-4 py-3 text-sm font-bold text-rose-700">
                   <Plus className="h-4 w-4" /> Adicionar outro alimento
                 </button>
               </div>
-            </div>
+            </CollapsibleSection>
           ))}
         </div>
 
@@ -2150,6 +2228,10 @@ export default function Dieta() {
               <ProgressBar label="Proteina" value={activeTotals.protein} target={PEOPLE[activePerson].proteinTarget[0]} unit="g" tone="green" />
               <div className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-700">
                 Acucar estimado: {activeTotals.sugar}g
+              </div>
+              <div className="rounded-2xl bg-cyan-50 p-4 text-sm font-bold text-cyan-900">
+                Hidratacao total estimada: {Math.round(activeHydration.hydration_ml || 0)} ml
+                <span className="block text-xs text-cyan-700">Agua pura registrada: {Math.round(activeHydration.pure_water_ml || 0)} ml</span>
               </div>
               <div className="rounded-2xl bg-white/80 p-4 text-sm text-slate-600">
                 Falta: {activeTotals.calories_remaining} kcal, {activeTotals.protein_remaining}g proteina, {activeTotals.water_remaining}ml agua.
@@ -2251,7 +2333,7 @@ export default function Dieta() {
         </aside>
       </section>
 
-      <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
+      <CollapsibleSection title="Historico" subtitle={`Sequencia atual: ${streak} dia(s) registrados.`} defaultOpen={false} storageKey={DIET_COLLAPSED_SECTIONS_KEY} sectionId="history">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="flex items-center gap-2 font-serif text-3xl font-bold text-slate-900">
@@ -2289,7 +2371,7 @@ export default function Dieta() {
         ) : (
           <p className="rounded-2xl bg-white/80 p-4 text-sm font-bold text-slate-500">Ainda nao ha historico carregado para esta pessoa neste mes.</p>
         )}
-      </section>
+      </CollapsibleSection>
 
       <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
         <h2 className="mb-4 font-serif text-3xl font-bold text-slate-900">Resumo semanal</h2>
@@ -2309,7 +2391,7 @@ export default function Dieta() {
         )}
       </section>
 
-      <section className="rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
+      <CollapsibleSection title="Exportar relatorio" subtitle="Texto pronto para mandar ao ChatGPT." defaultOpen={false} storageKey={DIET_COLLAPSED_SECTIONS_KEY} sectionId="export">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="font-serif text-3xl font-bold text-slate-900">Exportar dia para o ChatGPT</h2>
@@ -2329,7 +2411,7 @@ export default function Dieta() {
           <button onClick={() => copyReport()} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Clipboard className="h-4 w-4" /> Copiar texto acima</button>
           <button onClick={downloadReport} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"><Download className="h-4 w-4" /> Baixar .txt</button>
         </div>
-      </section>
+      </CollapsibleSection>
 
       <section className="rounded-[2rem] border border-white/70 bg-white/60 p-5 text-sm leading-6 text-slate-600 shadow-lg backdrop-blur-xl">
         <h2 className="mb-2 font-serif text-2xl font-bold text-slate-900">Dados iniciais de 01/06</h2>

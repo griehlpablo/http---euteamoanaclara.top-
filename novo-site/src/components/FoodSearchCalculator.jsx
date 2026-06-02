@@ -4,9 +4,24 @@ import { findFood } from '../lib/foodDatabase';
 import { searchFoods } from '../lib/foodSearch';
 import { calculateFoodNutrition } from '../lib/nutrition';
 
-export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alimentar', defaultMeal = 'extras', allowBarcode = true }) {
+function readList(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveList(key, items) {
+  localStorage.setItem(key, JSON.stringify(items.slice(0, 8)));
+  return items.slice(0, 8);
+}
+
+export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alimentar', defaultMeal = 'extras', allowBarcode = true, storageKey = 'food_search_calculator' }) {
   const [query, setQuery] = useState('');
   const [selectedSlug, setSelectedSlug] = useState('maca');
+  const [recent, setRecent] = useState(() => readList(`${storageKey}_recent`));
+  const [favorites, setFavorites] = useState(() => readList(`${storageKey}_favorites`));
   const selected = findFood(selectedSlug);
   const defaultPortion = selected?.default_portions?.[0];
   const [grams, setGrams] = useState(defaultPortion?.grams || 100);
@@ -21,7 +36,7 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
 
   function addSelected() {
     if (!selected || !nutrition) return;
-    onAdd?.({
+    const item = {
       custom: true,
       label: selected.name,
       category: selected.category,
@@ -35,7 +50,32 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
       source_note: selected.source_note,
       ...nutrition,
       notes: `Fonte: ${selected.source} (${selected.source_note})`,
-    }, defaultMeal);
+    };
+    setRecent(saveList(`${storageKey}_recent`, [item, ...recent.filter((entry) => entry.databaseSlug !== selected.slug)]));
+    onAdd?.(item, defaultMeal);
+  }
+
+  function toggleFavorite() {
+    if (!selected || !nutrition) return;
+    const exists = favorites.some((item) => item.databaseSlug === selected.slug);
+    const favorite = {
+      custom: true,
+      label: selected.name,
+      category: selected.category,
+      amount: 1,
+      unit: `${grams}g`,
+      grams_or_ml: grams,
+      grams,
+      foodSlug: selected.slug,
+      databaseSlug: selected.slug,
+      ...nutrition,
+      notes: `Favorito. Fonte: ${selected.source}`,
+    };
+    setFavorites(saveList(`${storageKey}_favorites`, exists ? favorites.filter((item) => item.databaseSlug !== selected.slug) : [favorite, ...favorites]));
+  }
+
+  function addStored(item) {
+    onAdd?.(item, defaultMeal);
   }
 
   return (
@@ -94,9 +134,36 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
             <button type="button" onClick={addSelected} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">
               <Plus className="h-4 w-4" /> Adicionar
             </button>
+            <button type="button" onClick={toggleFavorite} className="mt-2 w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">
+              {favorites.some((item) => item.databaseSlug === selected.slug) ? 'Remover dos favoritos' : 'Salvar favorito'}
+            </button>
           </div>
         </div>
       )}
+      {(favorites.length || recent.length) ? (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div className="rounded-2xl bg-white/80 p-3">
+            <p className="mb-2 text-xs font-bold uppercase text-slate-500">Favoritos</p>
+            <div className="flex flex-wrap gap-2">
+              {favorites.length ? favorites.map((item) => (
+                <button key={`fav-${item.databaseSlug}-${item.grams_or_ml}`} type="button" onClick={() => addStored(item)} className="rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+                  + {item.label}
+                </button>
+              )) : <span className="text-xs font-bold text-slate-400">Nenhum favorito ainda.</span>}
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white/80 p-3">
+            <p className="mb-2 text-xs font-bold uppercase text-slate-500">Recentes</p>
+            <div className="flex flex-wrap gap-2">
+              {recent.length ? recent.map((item) => (
+                <button key={`recent-${item.databaseSlug}-${item.grams_or_ml}`} type="button" onClick={() => addStored(item)} className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
+                  + {item.label}
+                </button>
+              )) : <span className="text-xs font-bold text-slate-400">Nada recente ainda.</span>}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

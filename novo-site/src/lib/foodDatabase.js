@@ -61,7 +61,13 @@ export const FOOD_DATABASE = [
   food('outro', 'Outro', 'outro', 0, 0, 0, 0, 0, 0, [portion('100 g', 100)], 0),
 ].map((item) => ({ ...baseSource, ...item }));
 
-function food(slug, name, category, kcal, protein, carbs, fat, sugar, fiber, sodium, default_portions, hydration_factor = 0, unit = 'g', is_water = false) {
+function food(slug, name, category, kcal, protein, carbs, fat, sugar, fiber, sodiumOrPortions, portionsOrHydration = [], hydrationOrUnit = 0, unitOrWater = 'g', maybeWater = false) {
+  const legacyShape = Array.isArray(sodiumOrPortions);
+  const sodium = legacyShape ? 0 : sodiumOrPortions;
+  const default_portions = legacyShape ? sodiumOrPortions : portionsOrHydration;
+  const hydration_factor = legacyShape ? Number(portionsOrHydration) || 0 : Number(hydrationOrUnit) || 0;
+  const unit = legacyShape ? (typeof hydrationOrUnit === 'string' ? hydrationOrUnit : 'g') : (typeof unitOrWater === 'string' ? unitOrWater : 'g');
+  const is_water = legacyShape ? Boolean(unitOrWater) : Boolean(maybeWater);
   return {
     slug,
     name,

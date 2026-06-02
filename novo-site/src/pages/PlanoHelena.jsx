@@ -655,7 +655,7 @@ export default function PlanoHelena() {
           <button type="button" onClick={() => addQuickDatabaseFood('iogurte_com_frutas', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Iogurte com frutas</button>
           {log.wheyStatus !== 'nao' && <button type="button" onClick={() => addQuickDatabaseFood('whey_protein', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Whey</button>}
         </div>
-        <FoodSearchCalculator onAdd={addCalculatedFood} defaultMeal="snack" title="Calculadora alimentar da Helena" />
+        <FoodSearchCalculator onAdd={addCalculatedFood} defaultMeal="snack" title="Calculadora alimentar da Helena" storageKey="planohelena_food_calculator" />
       </CollapsibleSection>
 
       <section id="meals" className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
-import { findFood, searchFoods } from '../lib/foodDatabase';
+import { findFood } from '../lib/foodDatabase';
+import { searchFoods } from '../lib/foodSearch';
 import { calculateFoodNutrition } from '../lib/nutrition';
 
 export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alimentar', defaultMeal = 'extras', allowBarcode = true }) {

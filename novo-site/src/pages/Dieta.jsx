@@ -439,13 +439,17 @@ function calculateTotals(log) {
       acc.sodium += manualNutrition?.sodium || (food.sodium || 0) * multiplier;
       if (item.custom && manualNutrition && !manualNutrition.calories && !manualNutrition.protein && !manualNutrition.carbs) acc.unknown += 1;
       if (food.liquidSugar || item.category === 'bebida_acucar') acc.liquidSugar += itemSugar;
+      const hydration = calculateHydrationEstimate(item, food);
+      acc.pureWaterMl += hydration.pure_water_ml;
+      acc.totalHydrationMl += hydration.hydration_ml;
       return acc;
     },
-    { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0, sodium: 0, liquidSugar: 0, unknown: 0 },
+    { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0, sodium: 0, liquidSugar: 0, unknown: 0, pureWaterMl: 0, totalHydrationMl: 0 },
   );
 
   const profile = PEOPLE[log.person];
   const warnings = getWarnings(log, totals);
+  const manualWater = Number(log.water_ml) || 0;
 
   return {
     calories: Math.round(totals.calories),
@@ -457,12 +461,28 @@ function calculateTotals(log) {
     sodium: Math.round(totals.sodium),
     liquid_sugar: Number(totals.liquidSugar.toFixed(1)),
     unknown_items: totals.unknown,
-    water_ml: Number(log.water_ml) || 0,
+    water_ml: manualWater,
+    pure_water_ml: manualWater + Math.round(totals.pureWaterMl),
+    total_hydration_ml: manualWater + Math.round(totals.totalHydrationMl),
     calories_remaining: Math.max(0, profile.calorieTarget[0] - Math.round(totals.calories)),
     protein_remaining: Math.max(0, profile.proteinTarget[0] - Number(totals.protein.toFixed(1))),
-    water_remaining: Math.max(0, profile.waterTarget[0] - (Number(log.water_ml) || 0)),
+    water_remaining: Math.max(0, profile.waterTarget[0] - manualWater),
     warnings,
   };
+}
+
+function calculateHydrationEstimate(item, food) {
+  const amount = amountForCalculation(item, food);
+  if (!amount) return { pure_water_ml: 0, hydration_ml: 0 };
+  const normalizedCategory = String(item.category || food.category || '').toLowerCase();
+  const isWater = item.food === 'agua' || normalizedCategory.includes('agua');
+  const isBeverage = normalizedCategory.includes('bebida') || normalizedCategory.includes('suco') || normalizedCategory.includes('energetico') || normalizedCategory.includes('cafe');
+  const isSoup = normalizedCategory.includes('sopa');
+  if (isWater) return { pure_water_ml: amount, hydration_ml: amount };
+  if (item.unit === 'ml') return { pure_water_ml: 0, hydration_ml: amount * 0.9 };
+  if (isSoup) return { pure_water_ml: 0, hydration_ml: amount * 0.8 };
+  if (isBeverage) return { pure_water_ml: 0, hydration_ml: amount * 0.75 };
+  return { pure_water_ml: 0, hydration_ml: 0 };
 }
 
 function mealHas(log, meal, food) {
@@ -1302,7 +1322,8 @@ export default function Dieta() {
   const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
   const waterPlan = planWaterReminder({
     profile: PEOPLE[activePerson],
-    waterMl: activeLog.water_ml,
+    pureWaterMl: activeLog.water_ml,
+    totalHydrationMl: activeTotals.total_hydration_ml,
     startTime: activeSettings.startTime,
     endTime: activeSettings.endTime,
   });

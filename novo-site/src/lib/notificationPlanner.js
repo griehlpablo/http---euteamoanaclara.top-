@@ -1,12 +1,13 @@
 import { getBrasiliaNow, minutesToTime, timeToMinutes } from './time';
 
-export function planWaterReminder({ profile, waterMl = 0, now = new Date(), startTime, endTime }) {
+export function planWaterReminder({ profile, pureWaterMl = 0, totalHydrationMl = 0, now = new Date(), startTime, endTime }) {
   const target = Number(profile?.waterDefault || profile?.waterTarget?.[0] || profile?.water?.[0] || 0);
   const start = timeToMinutes(startTime || profile?.waterStart || '07:00');
   const end = timeToMinutes(endTime || profile?.waterEnd || '23:30');
   const currentTime = getBrasiliaNow(now).time;
   const current = timeToMinutes(currentTime);
-  const consumed = Number(waterMl) || 0;
+  const consumed = Number(pureWaterMl) || 0;
+  const hydrationMl = Number(totalHydrationMl) || consumed;
   const remaining = Math.max(0, target - consumed);
   const hoursLeft = Math.max(0.25, (end - current) / 60);
   const expectedByNow = current <= start ? 0 : target * Math.min(1, (current - start) / Math.max(1, end - start));
@@ -17,6 +18,8 @@ export function planWaterReminder({ profile, waterMl = 0, now = new Date(), star
   return {
     target,
     consumed,
+    hydrationMl,
+    totalHydrationMl: hydrationMl,
     remaining,
     hoursLeft: Number(hoursLeft.toFixed(1)),
     neededPerHour: Math.round(remaining / hoursLeft),
@@ -33,6 +36,7 @@ export function buildNotificationDiagnostic({
   settings = {},
   profile = {},
   waterMl = 0,
+  totalHydrationMl = 0,
   activePerson = '-',
   lastSent = null,
   lastBlocked = null,
@@ -41,7 +45,14 @@ export function buildNotificationDiagnostic({
   notificationPermission = 'unsupported',
   now = new Date(),
 }) {
-  const waterPlan = planWaterReminder({ profile, waterMl, now, startTime: settings.startTime, endTime: settings.endTime });
+  const waterPlan = planWaterReminder({
+    profile,
+    pureWaterMl: waterMl,
+    totalHydrationMl,
+    now,
+    startTime: settings.startTime,
+    endTime: settings.endTime,
+  });
   const blockedReason = getBlockedReason({ settings, waterPlan, serviceWorkerReady, notificationPermission });
   return {
     permission: notificationPermission,
@@ -52,6 +63,7 @@ export function buildNotificationDiagnostic({
     activePerson,
     waterTarget: waterPlan.target,
     waterMl: Number(waterMl) || 0,
+    totalHydrationMl: waterPlan.totalHydrationMl,
     nextWater: waterPlan.nextTime,
     lastSent,
     lastBlocked,
@@ -73,7 +85,9 @@ export function getBlockedReason({ settings = {}, waterPlan, serviceWorkerReady,
 
 export function buildWaterMessage(personName, plan) {
   if (plan.done) return `${personName}, meta de agua batida. Boa.`;
-  if (plan.consumed === 0 && plan.behind > 400) return `${personName}, agua zerada ainda. Toma 300 ml agora para nao correr atras so a noite.`;
+  if (plan.consumed === 0 && plan.behind > 400) return `${personName}, agua pura zerada ainda. Toma 300 ml agora para nao correr atras so a noite.`;
   if (plan.behind > 800) return `${personName}, agua ficou atrasada. Toma 300 ml agora e deixa uma garrafa por perto.`;
+  if (plan.totalHydrationMl >= plan.target && plan.consumed < plan.target) return `${personName}, ja recebeu hidratacao de bebidas, mas priorize agua pura para completar a meta.`;
+  if (plan.totalHydrationMl > plan.consumed + 200) return `${personName}, hidratação total esta legal, mas continua subindo a ingestao de agua pura.`;
   return `${personName}, hora da agua. Tenta tomar 250 ml agora.`;
 }

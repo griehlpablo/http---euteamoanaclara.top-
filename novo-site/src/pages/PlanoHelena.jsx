@@ -75,32 +75,55 @@ function gramsMultiplier(item, food) {
 }
 
 function calculateTotals(log) {
-  return Object.values(log.meals || {}).flat().reduce((acc, item) => {
-    if (item.custom) {
-      const manual = nutritionForManualItem(item);
-      acc.calories += manual.calories;
-      acc.protein += manual.protein;
-      acc.carbs += manual.carbs;
-      acc.fat += manual.fat;
-      acc.sugar += manual.sugar;
-      acc.fiber += manual.fiber;
-      acc.sodium += manual.sodium;
-      if (item.category === 'bebida com acucar') acc.liquidSugar += manual.sugar;
+  return Object.values(log.meals || {}).flat().reduce(
+    (acc, item) => {
+      if (item.custom) {
+        const manual = nutritionForManualItem(item);
+        acc.calories += manual.calories;
+        acc.protein += manual.protein;
+        acc.carbs += manual.carbs;
+        acc.fat += manual.fat;
+        acc.sugar += manual.sugar;
+        acc.fiber += manual.fiber;
+        acc.sodium += manual.sodium;
+        const hydration = estimateHydration(item, null);
+        acc.pureWaterMl += hydration.pure_water_ml;
+        acc.totalHydrationMl += hydration.hydration_ml;
+        if (item.category === 'bebida com acucar') acc.liquidSugar += manual.sugar;
+        return acc;
+      }
+      const food = HELENA_FOODS[item.food];
+      if (!food) return acc;
+      const multiplier = gramsMultiplier(item, food);
+      const hydration = estimateHydration(item, food);
+      acc.pureWaterMl += hydration.pure_water_ml;
+      acc.totalHydrationMl += hydration.hydration_ml;
+      acc.calories += food.kcal * multiplier;
+      acc.protein += food.protein * multiplier;
+      acc.carbs += (food.carbs || 0) * multiplier;
+      acc.fat += (food.fat || 0) * multiplier;
+      acc.sugar += food.sugar * multiplier;
+      acc.fiber += (food.fiber || 0) * multiplier;
+      acc.sodium += (food.sodium || 0) * multiplier;
+      if (food.liquidSugar) acc.liquidSugar += food.sugar * multiplier;
       return acc;
-    }
-    const food = HELENA_FOODS[item.food];
-    if (!food) return acc;
-    const multiplier = gramsMultiplier(item, food);
-    acc.calories += food.kcal * multiplier;
-    acc.protein += food.protein * multiplier;
-    acc.carbs += (food.carbs || 0) * multiplier;
-    acc.fat += (food.fat || 0) * multiplier;
-    acc.sugar += food.sugar * multiplier;
-    acc.fiber += (food.fiber || 0) * multiplier;
-    acc.sodium += (food.sodium || 0) * multiplier;
-    if (food.liquidSugar) acc.liquidSugar += food.sugar * multiplier;
-    return acc;
-  }, { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0, sodium: 0, liquidSugar: 0 });
+    },
+    { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0, sodium: 0, liquidSugar: 0, pureWaterMl: 0, totalHydrationMl: 0 },
+  );
+}
+
+function estimateHydration(item, food) {
+  const amount = Number(item.amount) || 0;
+  const unit = item.unit || food?.unit || '';
+  const normalizedCategory = String(item.category || food?.category || '').toLowerCase();
+  const isWater = item.food === 'agua' || normalizedCategory.includes('agua');
+  const isBeverage = normalizedCategory.includes('bebida') || normalizedCategory.includes('suco') || normalizedCategory.includes('energetico') || normalizedCategory.includes('cafe');
+  const isLiquid = unit === 'ml' || unit.includes('copo') || unit === 'litro';
+  if (isWater) return { pure_water_ml: amount, hydration_ml: amount };
+  if (unit === 'ml') return { pure_water_ml: 0, hydration_ml: amount * 0.9 };
+  if (isLiquid) return { pure_water_ml: 0, hydration_ml: amount * 0.8 };
+  if (isBeverage) return { pure_water_ml: 0, hydration_ml: amount * 0.75 };
+  return { pure_water_ml: 0, hydration_ml: 0 };
 }
 
 function normalizeLog(row, selectedDate) {
@@ -239,20 +262,24 @@ export default function PlanoHelena() {
       fiber: Number(raw.fiber.toFixed(1)),
       sodium: Math.round(raw.sodium),
       liquidSugar: Number(raw.liquidSugar.toFixed(1)),
+      totalHydrationMl: Number(raw.totalHydrationMl || 0),
+      pureWaterMl: Number(raw.pureWaterMl || 0),
     };
   }, [log]);
   const warnings = useMemo(() => buildWarnings(log, totals), [log, totals]);
   const recommendations = useMemo(() => buildRecommendations(log, totals), [log, totals]);
   const waterPlan = useMemo(() => planWaterReminder({
     profile: { waterDefault: HELENA_PROFILE.water[0], waterStart: '07:40', waterEnd: '23:30' },
-    waterMl: log.waterMl,
-  }), [log.waterMl, diagnosticTick]);
+    pureWaterMl: log.waterMl,
+    totalHydrationMl: totals.totalHydrationMl,
+  }), [log.waterMl, totals.totalHydrationMl, diagnosticTick]);
   const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
   const isStandalonePwa = Boolean(window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone);
   const notificationDiagnostic = buildNotificationDiagnostic({
     settings: { ...notificationSettings, startTime: '07:40', endTime: '23:30' },
     profile: { waterDefault: HELENA_PROFILE.water[0] },
     waterMl: log.waterMl,
+    totalHydrationMl: totals.totalHydrationMl,
     activePerson: 'Helena',
     lastSent: debugLog[0] ? `${debugLog[0].type} (${debugLog[0].time})` : '-',
     lastBlocked: '-',

@@ -7,6 +7,7 @@ export const HELENA_STORAGE = {
   debugLog: 'planohelena_debug_log',
   lastNotificationAt: 'planohelena_last_notification_at',
   pwaSettings: 'planohelena_pwa_settings',
+  collapsedSections: 'planohelena_collapsed_sections',
 };
 
 export const HELENA_PROFILE = {

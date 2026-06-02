@@ -8,6 +8,14 @@ import HelenaMealLogger from '../components/helena/HelenaMealLogger';
 import HelenaNotificationSettings from '../components/helena/HelenaNotificationSettings';
 import HelenaWaterTracker from '../components/helena/HelenaWaterTracker';
 import { HELENA_FOODS, HELENA_MEALS, HELENA_PERSON, HELENA_PROFILE, HELENA_STORAGE } from '../components/helena/helenaData';
+import BrasiliaClock from '../components/BrasiliaClock';
+import CollapsibleSection from '../components/CollapsibleSection';
+import FoodSearchCalculator from '../components/FoodSearchCalculator';
+import NotificationDiagnostics from '../components/NotificationDiagnostics';
+import QuickNav from '../components/QuickNav';
+import { findFood } from '../lib/foodDatabase';
+import { buildNotificationDiagnostic, buildWaterMessage, planWaterReminder } from '../lib/notificationPlanner';
+import { calculateFoodNutrition, nutritionForManualItem } from '../lib/nutrition';
 
 const HELENA_ACCESS_CODE = 'helena2026';
 
@@ -69,10 +77,15 @@ function gramsMultiplier(item, food) {
 function calculateTotals(log) {
   return Object.values(log.meals || {}).flat().reduce((acc, item) => {
     if (item.custom) {
-      acc.calories += Number(item.calories) || 0;
-      acc.protein += Number(item.protein) || 0;
-      acc.sugar += Number(item.sugar) || 0;
-      if (item.category === 'bebida com acucar') acc.liquidSugar += Number(item.sugar) || 0;
+      const manual = nutritionForManualItem(item);
+      acc.calories += manual.calories;
+      acc.protein += manual.protein;
+      acc.carbs += manual.carbs;
+      acc.fat += manual.fat;
+      acc.sugar += manual.sugar;
+      acc.fiber += manual.fiber;
+      acc.sodium += manual.sodium;
+      if (item.category === 'bebida com acucar') acc.liquidSugar += manual.sugar;
       return acc;
     }
     const food = HELENA_FOODS[item.food];
@@ -80,10 +93,14 @@ function calculateTotals(log) {
     const multiplier = gramsMultiplier(item, food);
     acc.calories += food.kcal * multiplier;
     acc.protein += food.protein * multiplier;
+    acc.carbs += (food.carbs || 0) * multiplier;
+    acc.fat += (food.fat || 0) * multiplier;
     acc.sugar += food.sugar * multiplier;
+    acc.fiber += (food.fiber || 0) * multiplier;
+    acc.sodium += (food.sodium || 0) * multiplier;
     if (food.liquidSugar) acc.liquidSugar += food.sugar * multiplier;
     return acc;
-  }, { calories: 0, protein: 0, sugar: 0, liquidSugar: 0 });
+  }, { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0, sodium: 0, liquidSugar: 0 });
 }
 
 function normalizeLog(row, selectedDate) {
@@ -111,7 +128,12 @@ function normalizeLog(row, selectedDate) {
 function buildWarnings(log, totals) {
   const warnings = [];
   const trained = log.workout === 'musculacao';
+  const allItems = Object.values(log.meals || {}).flat();
+  const hasPaoDeQueijo = allItems.some((item) => item.food === 'pao_queijo' || item.foodSlug === 'pao_de_queijo' || item.databaseSlug === 'pao_de_queijo' || String(item.label || '').toLowerCase().includes('pao de queijo'));
+  const hasMaca = allItems.some((item) => item.food === 'maca' || item.foodSlug === 'maca' || item.databaseSlug === 'maca' || String(item.label || '').toLowerCase().includes('maca'));
   if (totals.protein < 75) warnings.push('Helena, se quer ganhar massa e emagrecer, proteina nao pode ficar baixa. Coloque ovo, frango, carne, leite, iogurte ou whey.');
+  if (trained && hasPaoDeQueijo) warnings.push('Pao de queijo e ok, mas tem pouca proteina. Para recomposicao, complementa com ovo, leite, iogurte, frango ou whey.');
+  if (hasMaca) warnings.push('Maca ajuda na fibra e saciedade, mas quase nao tem proteina.');
   if (trained && totals.calories > 0 && totals.calories < 1200) warnings.push('Treinou musculacao e comeu pouco. Isso atrapalha ganho de massa e recuperacao.');
   if (totals.calories > 0 && totals.calories < 1100) warnings.push('Comer pouco demais pode ate baixar peso rapido, mas piora treino, fome e massa muscular.');
   if (totals.calories > HELENA_PROFILE.calories[1] + 250) warnings.push('Hoje passou do ponto. Amanha volta ao basico: proteina, agua e comida de verdade.');
@@ -144,7 +166,11 @@ function rowPayload(log, selectedDate) {
   const totals = {
     calories: Math.round(rawTotals.calories),
     protein: Number(rawTotals.protein.toFixed(1)),
+    carbs: Number(rawTotals.carbs.toFixed(1)),
+    fat: Number(rawTotals.fat.toFixed(1)),
     sugar: Number(rawTotals.sugar.toFixed(1)),
+    fiber: Number(rawTotals.fiber.toFixed(1)),
+    sodium: Math.round(rawTotals.sodium),
     liquid_sugar: Number(rawTotals.liquidSugar.toFixed(1)),
     water_ml: Number(log.waterMl) || 0,
   };
@@ -188,6 +214,9 @@ export default function PlanoHelena() {
   const [notificationStatus, setNotificationStatus] = useState('');
   const [debugLog, setDebugLog] = useState(() => JSON.parse(localStorage.getItem(HELENA_STORAGE.debugLog) || '[]'));
   const [report, setReport] = useState('');
+  const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
+  const [testCountdown, setTestCountdown] = useState('');
+  const [diagnosticTick, setDiagnosticTick] = useState(0);
   const [eatNow, setEatNow] = useState('');
   const [notificationSettings, setNotificationSettings] = useState(() => JSON.parse(localStorage.getItem(HELENA_STORAGE.notificationSettings) || 'null') || {
     enabled: true,
@@ -204,12 +233,33 @@ export default function PlanoHelena() {
     return {
       calories: Math.round(raw.calories),
       protein: Number(raw.protein.toFixed(1)),
+      carbs: Number(raw.carbs.toFixed(1)),
+      fat: Number(raw.fat.toFixed(1)),
       sugar: Number(raw.sugar.toFixed(1)),
+      fiber: Number(raw.fiber.toFixed(1)),
+      sodium: Math.round(raw.sodium),
       liquidSugar: Number(raw.liquidSugar.toFixed(1)),
     };
   }, [log]);
   const warnings = useMemo(() => buildWarnings(log, totals), [log, totals]);
   const recommendations = useMemo(() => buildRecommendations(log, totals), [log, totals]);
+  const waterPlan = useMemo(() => planWaterReminder({
+    profile: { waterDefault: HELENA_PROFILE.water[0], waterStart: '07:40', waterEnd: '23:30' },
+    waterMl: log.waterMl,
+  }), [log.waterMl, diagnosticTick]);
+  const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
+  const isStandalonePwa = Boolean(window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone);
+  const notificationDiagnostic = buildNotificationDiagnostic({
+    settings: { ...notificationSettings, startTime: '07:40', endTime: '23:30' },
+    profile: { waterDefault: HELENA_PROFILE.water[0] },
+    waterMl: log.waterMl,
+    activePerson: 'Helena',
+    lastSent: debugLog[0] ? `${debugLog[0].type} (${debugLog[0].time})` : '-',
+    lastBlocked: '-',
+    serviceWorkerReady,
+    isStandalonePwa,
+    notificationPermission,
+  });
 
   useEffect(() => {
     let manifestLink = document.querySelector('link[rel="manifest"]');
@@ -224,6 +274,11 @@ export default function PlanoHelena() {
     return () => {
       if (previousManifest) manifestLink.setAttribute('href', previousManifest);
     };
+  }, []);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.ready.then(() => setServiceWorkerReady(true)).catch(() => setServiceWorkerReady(false));
   }, []);
 
   useEffect(() => {
@@ -293,6 +348,33 @@ export default function PlanoHelena() {
     patchLog({ meals });
   }
 
+  function addCalculatedFood(item, meal = 'snack') {
+    const meals = cloneMeals(log.meals);
+    meals[meal] = [...(meals[meal] || []), { id: `helena-${Date.now()}`, ...item }];
+    patchLog({ meals });
+  }
+
+  function addQuickDatabaseFood(slug, meal = 'snack') {
+    const food = findFood(slug);
+    if (!food) return;
+    const grams = food.default_portions?.[0]?.grams || 100;
+    addCalculatedFood({
+      custom: true,
+      label: food.name,
+      category: food.category,
+      amount: 1,
+      unit: `${grams}g`,
+      grams_or_ml: grams,
+      grams,
+      foodSlug: food.slug,
+      databaseSlug: food.slug,
+      source: food.source,
+      source_note: food.source_note,
+      ...calculateFoodNutrition(food, grams),
+      notes: `Fonte: ${food.source} (${food.source_note})`,
+    }, meal);
+  }
+
   function updateCustom(meal, id, patch) {
     const meals = cloneMeals(log.meals);
     meals[meal] = meals[meal].map((item) => item.id === id ? { ...item, ...patch } : item);
@@ -342,13 +424,28 @@ export default function PlanoHelena() {
   }
 
   function testNotification(delayMs = 0) {
-    const send = () => {
-      const message = 'Helena, hora da agua. Pos-treino e proteina tambem contam hoje.';
-      if ('Notification' in window && Notification.permission === 'granted') new Notification('Plano da Helena', { body: message, tag: 'planohelena-test' });
+    const send = async () => {
+      const message = buildWaterMessage('Helena', waterPlan);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const registration = 'serviceWorker' in navigator ? await navigator.serviceWorker.ready.catch(() => null) : null;
+        if (registration?.showNotification) {
+          registration.showNotification('Plano da Helena', { body: message, tag: 'planohelena-water', icon: '/images/icon-192.png' });
+        } else {
+          new Notification('Plano da Helena', { body: message, tag: 'planohelena-test' });
+        }
+      }
       logNotification('helena', message);
+      setTestCountdown('');
       setNotificationStatus('Teste de notificacao da Helena enviado.');
     };
     if (delayMs) {
+      let remaining = Math.round(delayMs / 1000);
+      setTestCountdown(`Disparando teste em ${remaining}s.`);
+      const countdown = window.setInterval(() => {
+        remaining -= 1;
+        setTestCountdown(remaining > 0 ? `Disparando teste em ${remaining}s.` : 'Enviando notificacao...');
+        if (remaining <= 0) window.clearInterval(countdown);
+      }, 1000);
       setNotificationStatus(`Teste da Helena agendado em ${Math.round(delayMs / 1000)}s.`);
       window.setTimeout(send, delayMs);
     } else {
@@ -400,10 +497,15 @@ export default function PlanoHelena() {
       `Extras: ${lineForMeal('extras')}`,
       `Calorias estimadas: ${totals.calories} kcal`,
       `Proteina estimada: ${totals.protein} g`,
+      `Carboidratos estimados: ${totals.carbs} g`,
+      `Gorduras estimadas: ${totals.fat} g`,
       `Acucar estimado: ${totals.sugar} g`,
+      `Fibras estimadas: ${totals.fiber} g`,
+      `Sodio estimado: ${totals.sodium} mg`,
       `Alertas do sistema: ${warnings.join(' | ')}`,
       `Recomendacoes do site: ${recommendations.join(' | ')}`,
       'Itens sem valor nutricional conhecido: itens personalizados sem kcal/proteina/acucar preenchidos',
+      `Fontes dos alimentos calculados: ${Object.values(log.meals || {}).flat().map((item) => item.source).filter(Boolean).join(', ') || 'manual/estimativa local'}`,
       `Observacoes: ${log.notes || '-'}`,
       'Pergunta para o ChatGPT: Analise meu dia e me diga o que ajustar ainda hoje ou amanha.',
     ].join('\n');
@@ -446,6 +548,16 @@ export default function PlanoHelena() {
         </div>
       </section>
 
+      <QuickNav items={[
+        { id: 'summary', label: 'Resumo' },
+        { id: 'water', label: 'Agua' },
+        { id: 'meals', label: 'Refeicoes' },
+        { id: 'history', label: 'Historico' },
+        { id: 'notifications', label: 'Notificacoes' },
+      ]} />
+
+      <BrasiliaClock nextWater={waterPlan.nextTime} nextAlert={buildWaterMessage('Helena', waterPlan)} />
+
       <section className="rounded-3xl border border-emerald-100 bg-white/80 p-5 shadow-lg">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -487,15 +599,50 @@ export default function PlanoHelena() {
         <textarea value={log.notes} onChange={(event) => patchLog({ notes: event.target.value })} placeholder="Observacoes" className="mt-4 min-h-20 w-full rounded-2xl bg-white px-4 py-3 text-sm text-slate-800 outline-none" />
       </section>
 
-      <HelenaNotificationSettings settings={notificationSettings} status={notificationStatus} debugLog={debugLog} onSettings={updateNotificationSettings} onEnable={enableNotifications} onTest={testNotification} onClearCache={clearHelenaCache} />
-      <HelenaWaterTracker water={log.waterMl} onWater={(ml) => patchLog({ waterMl: (Number(log.waterMl) || 0) + ml })} />
+      <CollapsibleSection title="Notificacoes" defaultOpen={false} storageKey={HELENA_STORAGE.collapsedSections} sectionId="notifications">
+        <HelenaNotificationSettings settings={notificationSettings} status={notificationStatus} debugLog={debugLog} onSettings={updateNotificationSettings} onEnable={enableNotifications} onTest={testNotification} onClearCache={clearHelenaCache} />
+        <div className="mt-4">
+          <NotificationDiagnostics
+            diagnostic={notificationDiagnostic}
+            countdown={testCountdown}
+            onTestNow={() => testNotification(0)}
+            onTestWater10s={() => testNotification(10000)}
+            onRecalculate={() => setDiagnosticTick((value) => value + 1)}
+            onResetTimers={() => {
+              setTestCountdown('');
+              localStorage.removeItem(HELENA_STORAGE.lastNotificationAt);
+              setNotificationStatus('Timers de notificacao da Helena resetados.');
+            }}
+          />
+        </div>
+      </CollapsibleSection>
 
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <HelenaMealLogger log={log} onToggleFood={toggleFood} onUpdateFood={updateFood} onAddCustom={addCustom} onUpdateCustom={updateCustom} onRemoveCustom={removeCustom} />
-        <HelenaDashboard log={log} totals={totals} warnings={warnings} recommendations={recommendations} eatNow={eatNow} onEatNow={() => setEatNow(buildEatNow(log, totals))} history={history} />
+      <CollapsibleSection title="Agua" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="water">
+        <HelenaWaterTracker water={log.waterMl} onWater={(ml) => patchLog({ waterMl: (Number(log.waterMl) || 0) + ml })} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Calculadora alimentar" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="calculator">
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button type="button" onClick={() => addQuickDatabaseFood('pao_de_queijo', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Pao de queijo</button>
+          <button type="button" onClick={() => addQuickDatabaseFood('maca', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Maca</button>
+          <button type="button" onClick={() => addQuickDatabaseFood('iogurte_com_frutas', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Iogurte com frutas</button>
+          {log.wheyStatus !== 'nao' && <button type="button" onClick={() => addQuickDatabaseFood('whey_protein', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Whey</button>}
+        </div>
+        <FoodSearchCalculator onAdd={addCalculatedFood} defaultMeal="snack" title="Calculadora alimentar da Helena" />
+      </CollapsibleSection>
+
+      <section id="meals" className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <CollapsibleSection title="Refeicoes" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="meals">
+          <HelenaMealLogger log={log} onToggleFood={toggleFood} onUpdateFood={updateFood} onAddCustom={addCustom} onUpdateCustom={updateCustom} onRemoveCustom={removeCustom} />
+        </CollapsibleSection>
+        <CollapsibleSection title="Resumo e recomendacoes" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="recommendations">
+          <HelenaDashboard log={log} totals={totals} warnings={warnings} recommendations={recommendations} eatNow={eatNow} onEatNow={() => setEatNow(buildEatNow(log, totals))} history={history} />
+        </CollapsibleSection>
       </section>
 
-      <HelenaExportReport report={report} onGenerate={generateReport} onCopy={copyReport} />
+      <CollapsibleSection title="Exportar relatorio" defaultOpen={false} storageKey={HELENA_STORAGE.collapsedSections} sectionId="export">
+        <HelenaExportReport report={report} onGenerate={generateReport} onCopy={copyReport} />
+      </CollapsibleSection>
     </motion.div>
   );
 }

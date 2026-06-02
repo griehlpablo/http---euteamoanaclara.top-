@@ -1,5 +1,6 @@
-import { Plus, Trash2, Utensils } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { HELENA_CATEGORIES, HELENA_FOODS, HELENA_MEAL_OPTIONS, HELENA_MEALS, HELENA_UNITS } from './helenaData';
+import CollapsibleSection from '../CollapsibleSection';
 
 function TextInput(props) {
   return <input {...props} className={`w-full rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100 ${props.className || ''}`} />;
@@ -15,10 +16,7 @@ export default function HelenaMealLogger({ log, onToggleFood, onUpdateFood, onAd
   return (
     <section className="space-y-5">
       {Object.entries(HELENA_MEAL_OPTIONS).map(([meal, foods]) => (
-        <div key={meal} className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
-          <h2 className="mb-4 flex items-center gap-2 font-serif text-2xl font-bold text-slate-900">
-            <Utensils className="h-5 w-5 text-emerald-600" /> {HELENA_MEALS[meal]}
-          </h2>
+        <CollapsibleSection key={meal} title={HELENA_MEALS[meal]} defaultOpen={['breakfast', 'lunch', 'snack', 'dinner'].includes(meal)} storageKey="planohelena_collapsed_sections" sectionId={meal} className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
           <div className="space-y-3">
             {foods
               .filter((key) => wheyEnabled || !key.includes('whey'))
@@ -59,7 +57,11 @@ export default function HelenaMealLogger({ log, onToggleFood, onUpdateFood, onAd
                   </SelectInput>
                   <TextInput type="number" min="0" value={item.calories || ''} placeholder="Calorias estimadas" onChange={(event) => onUpdateCustom(meal, item.id, { calories: event.target.value })} />
                   <TextInput type="number" min="0" value={item.protein || ''} placeholder="Proteina estimada" onChange={(event) => onUpdateCustom(meal, item.id, { protein: event.target.value })} />
+                  <TextInput type="number" min="0" value={item.carbs || ''} placeholder="Carboidratos estimados" onChange={(event) => onUpdateCustom(meal, item.id, { carbs: event.target.value })} />
+                  <TextInput type="number" min="0" value={item.fat || ''} placeholder="Gorduras estimadas" onChange={(event) => onUpdateCustom(meal, item.id, { fat: event.target.value })} />
                   <TextInput type="number" min="0" value={item.sugar || ''} placeholder="Acucar estimado" onChange={(event) => onUpdateCustom(meal, item.id, { sugar: event.target.value })} />
+                  <TextInput type="number" min="0" value={item.fiber || ''} placeholder="Fibras estimadas" onChange={(event) => onUpdateCustom(meal, item.id, { fiber: event.target.value })} />
+                  <TextInput type="number" min="0" value={item.sodium || ''} placeholder="Sodio estimado" onChange={(event) => onUpdateCustom(meal, item.id, { sodium: event.target.value })} />
                   <TextInput value={item.notes || ''} placeholder="Observacao" onChange={(event) => onUpdateCustom(meal, item.id, { notes: event.target.value })} />
                 </div>
               </div>
@@ -69,7 +71,7 @@ export default function HelenaMealLogger({ log, onToggleFood, onUpdateFood, onAd
               <Plus className="h-4 w-4" /> Adicionar outro
             </button>
           </div>
-        </div>
+        </CollapsibleSection>
       ))}
     </section>
   );

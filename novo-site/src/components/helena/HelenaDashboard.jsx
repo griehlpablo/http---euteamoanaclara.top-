@@ -27,6 +27,9 @@ export default function HelenaDashboard({ log, totals, warnings, recommendations
           <Progress label="Agua" value={log.waterMl} target={HELENA_PROFILE.water[0]} unit="ml" color="bg-cyan-500" />
           <Progress label="Calorias" value={totals.calories} target={HELENA_PROFILE.calories[0]} unit="kcal" color="bg-emerald-500" />
           <Progress label="Proteina" value={totals.protein} target={HELENA_PROFILE.protein[0]} unit="g" color="bg-lime-500" />
+          <div className="rounded-2xl bg-white/80 p-3 text-xs font-bold leading-5 text-slate-700">
+            Carboidratos: {totals.carbs || 0}g | Gorduras: {totals.fat || 0}g | Acucar: {totals.sugar || 0}g | Fibras: {totals.fiber || 0}g | Sodio: {totals.sodium || 0}mg
+          </div>
           <p className="rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-900">
             Metas iniciais: {HELENA_PROFILE.calories[0]}-{HELENA_PROFILE.calories[1]} kcal, {HELENA_PROFILE.protein[0]}-{HELENA_PROFILE.protein[1]} g proteina, {HELENA_PROFILE.water[0]}-{HELENA_PROFILE.water[1]} ml agua.
           </p>
@@ -36,7 +39,7 @@ export default function HelenaDashboard({ log, totals, warnings, recommendations
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
+      <section id="history" className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
         <h2 className="mb-3 font-serif text-2xl font-bold text-slate-900">O que posso comer agora?</h2>
         <button onClick={onEatNow} className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">Gerar sugestao</button>
         {eatNow && <p className="mt-3 rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-5 text-emerald-900">{eatNow}</p>}

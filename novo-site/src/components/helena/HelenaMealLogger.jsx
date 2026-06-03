@@ -1,6 +1,7 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { Copy, Plus, Save, Trash2 } from 'lucide-react';
 import { HELENA_CATEGORIES, HELENA_FOODS, HELENA_MEAL_OPTIONS, HELENA_MEALS, HELENA_UNITS } from './helenaData';
 import CollapsibleSection from '../CollapsibleSection';
+import FoodSearchCalculator from '../FoodSearchCalculator';
 
 function TextInput(props) {
   return <input {...props} className={`w-full rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100 ${props.className || ''}`} />;
@@ -10,19 +11,54 @@ function SelectInput(props) {
   return <select {...props} className={`w-full rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100 ${props.className || ''}`} />;
 }
 
-export default function HelenaMealLogger({ log, onToggleFood, onUpdateFood, onAddCustom, onUpdateCustom, onRemoveCustom }) {
+function mealItems(log, meal) {
+  const value = log.meals?.[meal];
+  if (Array.isArray(value)) return value;
+  return Array.isArray(value?.items) ? value.items : [];
+}
+
+function mealTotal(items, key) {
+  return items.reduce((sum, item) => sum + (Number(item[key]) || 0), 0);
+}
+
+function readSavedMeals() {
+  try {
+    return JSON.parse(localStorage.getItem('planohelena_saved_meals') || '[]');
+  } catch {
+    localStorage.removeItem('planohelena_saved_meals');
+    return [];
+  }
+}
+
+export default function HelenaMealLogger({ log, onToggleFood, onUpdateFood, onAddCustom, onAddCalculatedFood, onUpdateCustom, onRemoveCustom, onDuplicateItem, onSaveMeal, onRepeatMeal }) {
   const wheyEnabled = log.wheyStatus !== 'nao';
+  const savedMeals = readSavedMeals();
 
   return (
     <section className="space-y-5">
       {Object.entries(HELENA_MEAL_OPTIONS).map(([meal, foods]) => (
         <CollapsibleSection key={meal} title={HELENA_MEALS[meal]} defaultOpen={['breakfast', 'lunch', 'snack', 'dinner'].includes(meal)} storageKey="planohelena_collapsed_sections" sectionId={meal} className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
           <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white/80 p-3 text-xs font-bold text-slate-600">
+              <span>{Math.round(mealTotal(mealItems(log, meal), 'calories'))} kcal | {mealTotal(mealItems(log, meal), 'protein').toFixed(1)}g proteina</span>
+              <button type="button" onClick={() => onSaveMeal(meal)} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-800">
+                <Save className="h-4 w-4" /> Salvar refeicao como modelo
+              </button>
+            </div>
+            {savedMeals.length ? (
+              <div className="flex flex-wrap gap-2 rounded-2xl bg-slate-50 p-3">
+                {savedMeals.map((template) => (
+                  <button key={template.id} type="button" onClick={() => onRepeatMeal(template)} className="rounded-2xl bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">
+                    Repetir {template.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {foods
               .filter((key) => wheyEnabled || !key.includes('whey'))
               .map((foodKey) => {
                 const food = HELENA_FOODS[foodKey];
-                const item = (log.meals[meal] || []).find((entry) => entry.food === foodKey && !entry.custom);
+                const item = mealItems(log, meal).find((entry) => entry.food === foodKey && !entry.custom);
                 return (
                   <div key={foodKey} className="grid gap-2 rounded-2xl bg-emerald-50/60 p-3 sm:grid-cols-[1fr_110px_110px_1fr] sm:items-center">
                     <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
@@ -38,13 +74,18 @@ export default function HelenaMealLogger({ log, onToggleFood, onUpdateFood, onAd
                 );
               })}
 
-            {(log.meals[meal] || []).filter((item) => item.custom).map((item) => (
+            {mealItems(log, meal).filter((item) => item.custom).map((item) => (
               <div key={item.id} className="rounded-2xl border border-emerald-100 bg-white/80 p-3">
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-sm font-bold text-slate-800">Outro personalizado</p>
-                  <button onClick={() => onRemoveCustom(meal, item.id)} className="rounded-full bg-red-50 p-2 text-red-600" aria-label="Remover item personalizado">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <p className="text-sm font-bold text-slate-800">{item.label || 'Alimento personalizado'}</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => onDuplicateItem(meal, item)} className="rounded-full bg-slate-50 p-2 text-slate-600" aria-label="Duplicar item">
+                      <Copy className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => onRemoveCustom(meal, item.id)} className="rounded-full bg-red-50 p-2 text-red-600" aria-label="Remover item personalizado">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <TextInput value={item.label || ''} placeholder="Nome" onChange={(event) => onUpdateCustom(meal, item.id, { label: event.target.value })} />
@@ -69,8 +110,19 @@ export default function HelenaMealLogger({ log, onToggleFood, onUpdateFood, onAd
             ))}
 
             <button onClick={() => onAddCustom(meal)} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-emerald-200 bg-white/80 px-4 py-3 text-sm font-bold text-emerald-700">
-              <Plus className="h-4 w-4" /> Adicionar outro
+              <Plus className="h-4 w-4" /> Adicionar alimento manual
             </button>
+            <details className="rounded-2xl bg-emerald-50/70 p-3">
+              <summary className="cursor-pointer text-sm font-bold text-emerald-800">Adicionar alimento</summary>
+              <div className="mt-3">
+                <FoodSearchCalculator
+                  onAdd={(item) => onAddCalculatedFood(item, meal)}
+                  defaultMeal={meal}
+                  title={`Adicionar alimento - ${HELENA_MEALS[meal]}`}
+                  storageKey="planohelena"
+                />
+              </div>
+            </details>
           </div>
         </CollapsibleSection>
       ))}

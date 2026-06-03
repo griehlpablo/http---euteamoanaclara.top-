@@ -17,11 +17,14 @@ export default function HelenaNotificationSettings({ settings, status, debugLog,
         {[
           ['enabled', 'Ativar notificacoes da Helena'],
           ['water', 'Agua'],
+          ['meals', 'Refeicoes'],
+          ['workout', 'Treino'],
           ['preWorkout', 'Pre-treino'],
           ['postWorkout', 'Pos-treino'],
           ['protein', 'Proteina'],
           ['collegeSnack', 'Lanche antes da faculdade'],
           ['weighIn', 'Pesagem quinzenal'],
+          ['quietHours', 'Horario silencioso'],
         ].map(([key, label]) => (
           <label key={key} className="flex items-center justify-between rounded-2xl bg-emerald-50/70 px-4 py-3 text-sm font-bold text-slate-700">
             {label}
@@ -30,10 +33,22 @@ export default function HelenaNotificationSettings({ settings, status, debugLog,
         ))}
       </div>
 
+      <div className="mb-4 grid gap-2 sm:grid-cols-2">
+        <label className="block rounded-2xl bg-white/80 px-4 py-3 text-xs font-bold uppercase text-slate-500">
+          Inicio silencioso
+          <input type="time" value={settings.quietStart || '23:30'} onChange={(event) => onSettings({ quietStart: event.target.value })} className="mt-1 w-full rounded-2xl bg-white px-3 py-2 text-sm text-slate-800 outline-none" />
+        </label>
+        <label className="block rounded-2xl bg-white/80 px-4 py-3 text-xs font-bold uppercase text-slate-500">
+          Fim silencioso
+          <input type="time" value={settings.quietEnd || '07:40'} onChange={(event) => onSettings({ quietEnd: event.target.value })} className="mt-1 w-full rounded-2xl bg-white px-3 py-2 text-sm text-slate-800 outline-none" />
+        </label>
+      </div>
+
       <div className="mb-4 flex flex-wrap gap-2">
         <button onClick={() => onTest(0)} className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white">Testar agora</button>
         <button onClick={() => onTest(10000)} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">Testar em 10s</button>
         <button onClick={() => onTest(60000)} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">Testar em 1 min</button>
+        <button onClick={() => onTest(0)} className="rounded-2xl bg-cyan-50 px-4 py-2 text-sm font-bold text-cyan-900">Diagnostico</button>
         <button onClick={onClearCache} className="inline-flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700">
           <RotateCcw className="h-4 w-4" /> Atualizar app / limpar cache
         </button>

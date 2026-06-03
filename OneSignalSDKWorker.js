@@ -1,7 +1,7 @@
 /* global importScripts */
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-const CACHE_NAME = "diet-app-v5-openfoodfacts-fix";
+const CACHE_NAME = "diet-app-v6-helena-parity";
 const HELENA_ENTRY = "/planohelena/index.html";
 const CORE_ASSETS = [
   "/",

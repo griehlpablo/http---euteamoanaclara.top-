@@ -2,12 +2,20 @@ export const HELENA_PERSON = 'helena';
 
 export const HELENA_STORAGE = {
   access: 'planohelena_access',
+  selectedDate: 'planohelena_selected_date',
+  currentLog: 'planohelena_current_log',
+  draftLog: 'planohelena_draft_log',
   notificationSettings: 'planohelena_notification_settings',
   offlineBackup: 'planohelena_offline_backup',
   debugLog: 'planohelena_debug_log',
   lastNotificationAt: 'planohelena_last_notification_at',
   pwaSettings: 'planohelena_pwa_settings',
   collapsedSections: 'planohelena_collapsed_sections',
+  foodFavorites: 'planohelena_food_favorites',
+  recentFoods: 'planohelena_recent_foods',
+  savedMeals: 'planohelena_saved_meals',
+  customFoods: 'planohelena_custom_foods',
+  openFoodFactsCache: 'planohelena_openfoodfacts_cache',
 };
 
 export const HELENA_PROFILE = {
@@ -18,7 +26,7 @@ export const HELENA_PROFILE = {
   goal: 'Recomposicao corporal: perder gordura, melhorar definicao e manter/ganhar massa magra.',
   calories: [1700, 2000],
   protein: [100, 125],
-  water: [2200, 2500],
+  water: [2300, 2500],
 };
 
 export const HELENA_SCHEDULE = [

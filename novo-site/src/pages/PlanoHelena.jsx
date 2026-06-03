@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Dumbbell, Lock, RotateCcw, Save, Smartphone } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Dumbbell, Lock, RotateCcw, Save, Smartphone } from 'lucide-react';
 import supabase from '../supabase';
 import HelenaDashboard from '../components/helena/HelenaDashboard';
 import HelenaExportReport from '../components/helena/HelenaExportReport';
@@ -21,12 +21,12 @@ import { reportTimestampLines } from '../lib/reportTimestamp';
 const HELENA_ACCESS_CODE = 'helena2026';
 
 const emptyMeals = {
-  breakfast: [],
-  lunch: [],
-  snack: [],
-  dinner: [],
-  supper: [],
-  extras: [],
+  breakfast: { items: [], totals: {} },
+  lunch: { items: [], totals: {} },
+  snack: { items: [], totals: {} },
+  dinner: { items: [], totals: {} },
+  supper: { items: [], totals: {} },
+  extras: { items: [], totals: {} },
 };
 
 function dateKey(date = new Date()) {
@@ -56,12 +56,74 @@ function defaultLog(selectedDate = dateKey()) {
     proteinDone: false,
     waterDone: false,
     measures: { waist: '', hip: '', abdomen: '', thigh: '', arm: '' },
-    meals: emptyMeals,
+    meals: cloneMeals(emptyMeals),
   };
 }
 
 function cloneMeals(meals = emptyMeals) {
-  return Object.fromEntries(Object.entries({ ...emptyMeals, ...meals }).map(([key, value]) => [key, Array.isArray(value) ? value.map((item) => ({ ...item })) : []]));
+  return Object.fromEntries(Object.keys(emptyMeals).map((key) => {
+    const value = meals?.[key];
+    const items = Array.isArray(value) ? value : Array.isArray(value?.items) ? value.items : [];
+    return [key, { items: items.map((item) => normalizeMealItem(item, key)), totals: value?.totals || {} }];
+  }));
+}
+
+function mealItems(meals, meal) {
+  const value = meals?.[meal];
+  if (Array.isArray(value)) return value;
+  return Array.isArray(value?.items) ? value.items : [];
+}
+
+function allMealItems(meals) {
+  return Object.keys(emptyMeals).flatMap((meal) => mealItems(meals, meal));
+}
+
+function normalizeMealItem(item = {}, meal = 'extras') {
+  const food = item.food ? HELENA_FOODS[item.food] : null;
+  const label = item.label || food?.label || item.name || 'Alimento';
+  const amount = item.amount ?? item.quantity ?? item.grams_or_ml ?? item.grams ?? '';
+  const gramsOrMl = item.grams_or_ml ?? item.grams ?? amount ?? '';
+  return {
+    id: item.id || `helena-${meal}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    food_key: item.food_key || item.food || item.foodSlug || item.databaseSlug || '',
+    label,
+    brand_name: item.brand_name || '',
+    barcode: item.barcode || '',
+    category: item.category || food?.category || 'outro',
+    meal,
+    quantity: item.quantity ?? amount,
+    portion_label: item.portion_label || `${amount || '-'} ${item.unit || food?.unit || 'g'}`,
+    unit: item.unit || food?.unit || 'g',
+    grams_or_ml: gramsOrMl,
+    calories: item.calories ?? '',
+    protein: item.protein ?? '',
+    carbs: item.carbs ?? '',
+    fat: item.fat ?? '',
+    sugar: item.sugar ?? '',
+    fiber: item.fiber ?? '',
+    sodium: item.sodium ?? '',
+    hydration_ml: item.hydration_ml ?? '',
+    pure_water_ml: item.pure_water_ml ?? '',
+    hydration_factor: item.hydration_factor ?? '',
+    source: item.source || '',
+    source_id: item.source_id || '',
+    source_url: item.source_url || '',
+    image_url: item.image_url || '',
+    notes: item.notes || item.note || '',
+    ...item,
+    meal,
+    label,
+  };
+}
+
+function safeJson(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    localStorage.removeItem(key);
+    return fallback;
+  }
 }
 
 function gramsMultiplier(item, food) {
@@ -76,7 +138,7 @@ function gramsMultiplier(item, food) {
 }
 
 function calculateTotals(log) {
-  return Object.values(log.meals || {}).flat().reduce(
+  return allMealItems(log.meals).reduce(
     (acc, item) => {
       if (item.custom) {
         const manual = nutritionForManualItem(item);
@@ -134,19 +196,20 @@ function normalizeLog(row, selectedDate) {
   const meta = row.meals?._meta || {};
   return {
     ...defaultLog(selectedDate),
-    weightKg: row.weight_kg ?? '63',
-    wakeTime: row.wake_time || '07:40',
-    sleepTime: row.sleep_time || '01:40',
-    waterMl: row.water_ml || 0,
+    weightKg: row.weight_kg ?? row.weightKg ?? '63',
+    wakeTime: row.wake_time || row.wakeTime || '07:40',
+    sleepTime: row.sleep_time || row.sleepTime || '01:40',
+    waterMl: row.water_ml ?? row.waterMl ?? 0,
     workout: row.workout || 'musculacao',
     appetite: row.appetite || 'medio',
+    hungerNow: row.hungerNow || row.hunger_now || '',
     notes: row.notes || '',
-    wheyStatus: meta.wheyStatus || 'pretendo_usar',
-    preWorkoutMeal: Boolean(meta.preWorkoutMeal),
-    postWorkoutMeal: Boolean(meta.postWorkoutMeal),
-    proteinDone: Boolean(meta.proteinDone),
-    waterDone: Boolean(meta.waterDone),
-    measures: { ...defaultLog(selectedDate).measures, ...(meta.measures || {}) },
+    wheyStatus: meta.wheyStatus || row.wheyStatus || 'pretendo_usar',
+    preWorkoutMeal: Boolean(meta.preWorkoutMeal ?? row.preWorkoutMeal),
+    postWorkoutMeal: Boolean(meta.postWorkoutMeal ?? row.postWorkoutMeal),
+    proteinDone: Boolean(meta.proteinDone ?? row.proteinDone),
+    waterDone: Boolean(meta.waterDone ?? row.waterDone),
+    measures: { ...defaultLog(selectedDate).measures, ...(meta.measures || row.measures || {}) },
     meals: cloneMeals(row.meals),
   };
 }
@@ -154,7 +217,7 @@ function normalizeLog(row, selectedDate) {
 function buildWarnings(log, totals) {
   const warnings = [];
   const trained = log.workout === 'musculacao';
-  const allItems = Object.values(log.meals || {}).flat();
+  const allItems = allMealItems(log.meals);
   const hasPaoDeQueijo = allItems.some((item) => item.food === 'pao_queijo' || item.foodSlug === 'pao_de_queijo' || item.databaseSlug === 'pao_de_queijo' || String(item.label || '').toLowerCase().includes('pao de queijo'));
   const hasMaca = allItems.some((item) => item.food === 'maca' || item.foodSlug === 'maca' || item.databaseSlug === 'maca' || String(item.label || '').toLowerCase().includes('maca'));
   allItems.filter((item) => item.custom).forEach((item) => {
@@ -169,7 +232,7 @@ function buildWarnings(log, totals) {
   if (totals.calories > 0 && totals.calories < 1100) warnings.push('Comer pouco demais pode ate baixar peso rapido, mas piora treino, fome e massa muscular.');
   if (totals.calories > HELENA_PROFILE.calories[1] + 250) warnings.push('Hoje passou do ponto. Amanha volta ao basico: proteina, agua e comida de verdade.');
   if (totals.liquidSugar > 18) warnings.push('Caloria liquida atrapalha facil. Se quer recomposicao, refrigerante normal/suco adocado precisa ser excecao.');
-  if (!log.meals.dinner.length && new Date().getHours() >= 18) warnings.push('Nao vai para faculdade zerada de comida. Depois a chance de atacar qualquer coisa aumenta.');
+  if (!mealItems(log.meals, 'dinner').length && new Date().getHours() >= 18) warnings.push('Nao vai para faculdade zerada de comida. Depois a chance de atacar qualquer coisa aumenta.');
   if (!warnings.length) warnings.push('Boa, Helena. Sem terrorismo alimentar: mantenha proteina, agua e treino.');
   return warnings;
 }
@@ -177,7 +240,7 @@ function buildWarnings(log, totals) {
 function buildRecommendations(log, totals) {
   const recs = [];
   if (totals.protein < HELENA_PROFILE.protein[0]) recs.push('Prioridade: bater proteina com ovo, frango, carne, leite, iogurte ou whey se estiver usando.');
-  if (log.workout === 'musculacao' && !log.meals.lunch.length) recs.push('Depois do treino das 12h15/12h30, faca almoco com proteina.');
+  if (log.workout === 'musculacao' && !mealItems(log.meals, 'lunch').length) recs.push('Depois do treino das 12h15/12h30, faca almoco com proteina.');
   if (totals.liquidSugar > 12) recs.push('Controle refrigerante normal/suco adocado. Pequeno doce isolado nao e desastre; repetir todo dia atrapalha.');
   if (!recs.length) recs.push('Dia encaminhado: comida de verdade, proteina e agua.');
   return recs;
@@ -192,6 +255,77 @@ function buildEatNow(log, totals) {
   return 'Mantem simples: proteina primeiro, agua e carboidrato suficiente para o treino.';
 }
 
+function buildRecommendationOptions(log, totals) {
+  const trained = log.workout === 'musculacao';
+  const proteinGap = Math.max(0, HELENA_PROFILE.protein[0] - (Number(totals.protein) || 0));
+  const caloriesGap = Math.max(0, HELENA_PROFILE.calories[0] - (Number(totals.calories) || 0));
+  const baseReason = trained ? 'Treino pede carboidrato suficiente e proteina para recuperar.' : 'Mantem saciedade sem exagerar no fim do dia.';
+  return [
+    {
+      id: 'leve',
+      title: 'Opcao leve',
+      meal: 'snack',
+      foods: 'iogurte natural + banana pequena',
+      calories: 220,
+      protein: 10,
+      reason: proteinGap > 20 ? 'Leve, mas ja coloca um pouco de proteina sem pesar.' : 'Boa para fome pequena e para nao chegar vazia na faculdade.',
+      items: [
+        recommendationItem('Iogurte natural', 'laticinio', 170, 'g', 110, 7, 14, 4),
+        recommendationItem('Banana', 'fruta', 1, 'unidade', 90, 1, 23, 0),
+      ],
+    },
+    {
+      id: 'equilibrada',
+      title: 'Opcao equilibrada',
+      meal: trained || caloriesGap > 400 ? 'lunch' : 'dinner',
+      foods: 'arroz + frango + legumes',
+      calories: 480,
+      protein: 35,
+      reason: baseReason,
+      items: [
+        recommendationItem('Arroz cozido', 'carboidrato', 120, 'g', 156, 3, 34, 0),
+        recommendationItem('Frango', 'proteina', 120, 'g', 198, 37, 0, 4),
+        recommendationItem('Legumes/salada', 'legume/verdura', 120, 'g', 42, 3, 8, 0),
+      ],
+    },
+    {
+      id: 'reforcada',
+      title: 'Opcao reforcada',
+      meal: trained ? 'lunch' : 'dinner',
+      foods: 'macarrao ou arroz + carne/frango + ovo',
+      calories: 650,
+      protein: 48,
+      reason: trained ? 'Boa se treinou 12h15/12h30 e ainda esta longe da meta.' : 'Use se a fome estiver alta e o dia ainda couber nas metas.',
+      items: [
+        recommendationItem('Macarrao cozido', 'carboidrato', 150, 'g', 236, 9, 46, 2),
+        recommendationItem('Carne ou frango', 'proteina', 140, 'g', 260, 38, 0, 10),
+        recommendationItem('Ovo', 'proteina', 1, 'unidade', 70, 6, 0, 5),
+      ],
+    },
+  ];
+}
+
+function recommendationItem(label, category, amount, unit, calories, protein, carbs, fat) {
+  return normalizeMealItem({
+    custom: true,
+    label,
+    category,
+    amount,
+    quantity: amount,
+    unit,
+    grams_or_ml: unit === 'unidade' ? amount : amount,
+    calories,
+    protein,
+    carbs,
+    fat,
+    sugar: 0,
+    fiber: category === 'legume/verdura' || category === 'fruta' ? 3 : 0,
+    sodium: 0,
+    source: 'recomendacao_helena',
+    notes: 'Adicionado por recomendacao automatica da Helena.',
+  });
+}
+
 function rowPayload(log, selectedDate) {
   const rawTotals = calculateTotals(log);
   const totals = {
@@ -204,6 +338,8 @@ function rowPayload(log, selectedDate) {
     sodium: Math.round(rawTotals.sodium),
     liquid_sugar: Number(rawTotals.liquidSugar.toFixed(1)),
     water_ml: Number(log.waterMl) || 0,
+    pure_water_ml: Math.round((Number(log.waterMl) || 0) + Number(rawTotals.pureWaterMl || 0)),
+    hydration_ml: Math.round((Number(log.waterMl) || 0) + Number(rawTotals.totalHydrationMl || 0)),
   };
   return {
     person: HELENA_PERSON,
@@ -238,10 +374,11 @@ function rowPayload(log, selectedDate) {
 export default function PlanoHelena() {
   const [hasAccess, setHasAccess] = useState(() => localStorage.getItem(HELENA_STORAGE.access) === 'true');
   const [code, setCode] = useState('');
-  const [selectedDate, setSelectedDate] = useState(dateKey());
-  const [log, setLog] = useState(() => defaultLog(dateKey()));
+  const [selectedDate, setSelectedDate] = useState(() => localStorage.getItem(HELENA_STORAGE.selectedDate) || dateKey());
+  const [log, setLog] = useState(() => normalizeLog(safeJson(HELENA_STORAGE.draftLog, null), localStorage.getItem(HELENA_STORAGE.selectedDate) || dateKey()));
   const [history, setHistory] = useState([]);
   const [saveState, setSaveState] = useState('idle');
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState('');
   const [debugLog, setDebugLog] = useState(() => JSON.parse(localStorage.getItem(HELENA_STORAGE.debugLog) || '[]'));
   const [report, setReport] = useState('');
@@ -252,6 +389,11 @@ export default function PlanoHelena() {
   const [notificationSettings, setNotificationSettings] = useState(() => JSON.parse(localStorage.getItem(HELENA_STORAGE.notificationSettings) || 'null') || {
     enabled: true,
     water: true,
+    meals: true,
+    workout: true,
+    quietHours: true,
+    quietStart: '23:30',
+    quietEnd: '07:40',
     preWorkout: true,
     postWorkout: true,
     protein: true,
@@ -270,23 +412,24 @@ export default function PlanoHelena() {
       fiber: Number(raw.fiber.toFixed(1)),
       sodium: Math.round(raw.sodium),
       liquidSugar: Number(raw.liquidSugar.toFixed(1)),
-      totalHydrationMl: Number(raw.totalHydrationMl || 0),
-      pureWaterMl: Number(raw.pureWaterMl || 0),
+      totalHydrationMl: Math.round((Number(log.waterMl) || 0) + Number(raw.totalHydrationMl || 0)),
+      pureWaterMl: Math.round((Number(log.waterMl) || 0) + Number(raw.pureWaterMl || 0)),
     };
   }, [log]);
   const warnings = useMemo(() => buildWarnings(log, totals), [log, totals]);
   const recommendations = useMemo(() => buildRecommendations(log, totals), [log, totals]);
+  const recommendationOptions = useMemo(() => buildRecommendationOptions(log, totals), [log, totals]);
   const waterPlan = useMemo(() => planWaterReminder({
     profile: { waterDefault: HELENA_PROFILE.water[0], waterStart: '07:40', waterEnd: '23:30' },
-    pureWaterMl: log.waterMl,
+    pureWaterMl: totals.pureWaterMl,
     totalHydrationMl: totals.totalHydrationMl,
-  }), [log.waterMl, totals.totalHydrationMl, diagnosticTick]);
+  }), [totals.pureWaterMl, totals.totalHydrationMl, diagnosticTick]);
   const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
   const isStandalonePwa = Boolean(window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone);
   const notificationDiagnostic = buildNotificationDiagnostic({
     settings: { ...notificationSettings, startTime: '07:40', endTime: '23:30' },
     profile: { waterDefault: HELENA_PROFILE.water[0] },
-    waterMl: log.waterMl,
+    waterMl: totals.pureWaterMl,
     totalHydrationMl: totals.totalHydrationMl,
     activePerson: 'Helena',
     lastSent: debugLog[0] ? `${debugLog[0].type} (${debugLog[0].time})` : '-',
@@ -336,8 +479,10 @@ export default function PlanoHelena() {
       }
       const current = (data || []).find((row) => row.log_date === selectedDate);
       setLog(normalizeLog(current, selectedDate));
+      setHasPendingChanges(false);
       setHistory((data || []).map((row) => ({
         date: formatDateBr(row.log_date),
+        logDate: row.log_date,
         weight: row.weight_kg,
         waist: row.meals?._meta?.measures?.waist,
         abdomen: row.meals?._meta?.measures?.abdomen,
@@ -349,6 +494,13 @@ export default function PlanoHelena() {
     };
   }, [hasAccess, selectedDate]);
 
+  useEffect(() => {
+    if (!hasAccess) return;
+    localStorage.setItem(HELENA_STORAGE.selectedDate, selectedDate);
+    localStorage.setItem(HELENA_STORAGE.currentLog, JSON.stringify(log));
+    if (hasPendingChanges) localStorage.setItem(HELENA_STORAGE.draftLog, JSON.stringify(log));
+  }, [hasAccess, hasPendingChanges, log, selectedDate]);
+
   function grantAccess(event) {
     event.preventDefault();
     if (code.trim() !== HELENA_ACCESS_CODE) return;
@@ -358,34 +510,35 @@ export default function PlanoHelena() {
 
   function patchLog(patch) {
     setLog((current) => ({ ...current, ...patch }));
+    setHasPendingChanges(true);
   }
 
   function toggleFood(meal, foodKey, checked) {
     const meals = cloneMeals(log.meals);
     if (!checked) {
-      meals[meal] = meals[meal].filter((item) => item.food !== foodKey || item.custom);
-    } else if (!meals[meal].some((item) => item.food === foodKey && !item.custom)) {
+      meals[meal].items = mealItems(meals, meal).filter((item) => item.food !== foodKey || item.custom);
+    } else if (!mealItems(meals, meal).some((item) => item.food === foodKey && !item.custom)) {
       const food = HELENA_FOODS[foodKey];
-      meals[meal] = [...meals[meal], { food: foodKey, amount: food.unit === 'g' ? 100 : food.unit === 'ml' ? 200 : 1, unit: food.unit, note: '' }];
+      meals[meal].items = [...mealItems(meals, meal), normalizeMealItem({ food: foodKey, amount: food.unit === 'g' ? 100 : food.unit === 'ml' ? 200 : 1, unit: food.unit, note: '' }, meal)];
     }
     patchLog({ meals });
   }
 
   function updateFood(meal, foodKey, patch) {
     const meals = cloneMeals(log.meals);
-    meals[meal] = meals[meal].map((item) => item.food === foodKey && !item.custom ? { ...item, ...patch } : item);
+    meals[meal].items = mealItems(meals, meal).map((item) => item.food === foodKey && !item.custom ? normalizeMealItem({ ...item, ...patch }, meal) : item);
     patchLog({ meals });
   }
 
   function addCustom(meal) {
     const meals = cloneMeals(log.meals);
-    meals[meal] = [...meals[meal], { id: `helena-${Date.now()}`, custom: true, label: '', brand_name: '', category: 'outro', amount: '', unit: 'g', calories: '', protein: '', sugar: '', notes: '' }];
+    meals[meal].items = [...mealItems(meals, meal), normalizeMealItem({ id: `helena-${Date.now()}`, custom: true, label: '', brand_name: '', category: 'outro', amount: '', unit: 'g', calories: '', protein: '', sugar: '', notes: '' }, meal)];
     patchLog({ meals });
   }
 
   function addCalculatedFood(item, meal = 'snack') {
     const meals = cloneMeals(log.meals);
-    meals[meal] = [...(meals[meal] || []), { id: `helena-${Date.now()}`, ...item }];
+    meals[meal].items = [...mealItems(meals, meal), normalizeMealItem({ id: `helena-${Date.now()}`, custom: true, ...item }, meal)];
     patchLog({ meals });
   }
 
@@ -418,27 +571,73 @@ export default function PlanoHelena() {
 
   function updateCustom(meal, id, patch) {
     const meals = cloneMeals(log.meals);
-    meals[meal] = meals[meal].map((item) => item.id === id ? { ...item, ...patch } : item);
+    meals[meal].items = mealItems(meals, meal).map((item) => item.id === id ? normalizeMealItem({ ...item, ...patch }, meal) : item);
     patchLog({ meals });
   }
 
   function removeCustom(meal, id) {
     const meals = cloneMeals(log.meals);
-    meals[meal] = meals[meal].filter((item) => item.id !== id);
+    meals[meal].items = mealItems(meals, meal).filter((item) => item.id !== id);
     patchLog({ meals });
   }
 
-  async function saveHelena() {
+  function duplicateItem(meal, item) {
+    const meals = cloneMeals(log.meals);
+    meals[meal].items = [...mealItems(meals, meal), normalizeMealItem({ ...item, id: `helena-${Date.now()}` }, meal)];
+    patchLog({ meals });
+  }
+
+  function addRecommendation(option) {
+    const meals = cloneMeals(log.meals);
+    meals[option.meal].items = [...mealItems(meals, option.meal), ...option.items.map((item) => normalizeMealItem({ ...item, id: `helena-${Date.now()}-${item.label}` }, option.meal))];
+    patchLog({ meals });
+  }
+
+  function saveMealTemplate(meal) {
+    const templates = safeJson(HELENA_STORAGE.savedMeals, []);
+    const next = [{
+      id: `helena-meal-${Date.now()}`,
+      name: `${HELENA_MEALS[meal]} Helena`,
+      meal,
+      items: mealItems(log.meals, meal),
+      saved_at: new Date().toISOString(),
+    }, ...templates].slice(0, 12);
+    localStorage.setItem(HELENA_STORAGE.savedMeals, JSON.stringify(next));
+    setSaveState('saved');
+  }
+
+  function repeatMealTemplate(template) {
+    const meals = cloneMeals(log.meals);
+    const meal = template.meal || 'snack';
+    meals[meal].items = [...mealItems(meals, meal), ...(template.items || []).map((item) => normalizeMealItem({ ...item, id: `helena-${Date.now()}-${item.label}` }, meal))];
+    patchLog({ meals });
+  }
+
+  async function saveHelena(logToSave = log, dateToSave = selectedDate) {
     setSaveState('saving');
-    const payload = rowPayload(log, selectedDate);
+    const payload = rowPayload(logToSave, dateToSave);
     const { error } = await supabase.from('daily_health_logs').upsert(payload, { onConflict: 'person,log_date' });
     if (error) {
       const backup = JSON.parse(localStorage.getItem(HELENA_STORAGE.offlineBackup) || '{}');
-      localStorage.setItem(HELENA_STORAGE.offlineBackup, JSON.stringify({ ...backup, [selectedDate]: log }));
+      localStorage.setItem(HELENA_STORAGE.offlineBackup, JSON.stringify({ ...backup, [dateToSave]: logToSave }));
       setSaveState('offline');
       return;
     }
     setSaveState('saved');
+    setHasPendingChanges(false);
+    localStorage.removeItem(HELENA_STORAGE.draftLog);
+  }
+
+  async function changeDate(nextDate) {
+    if (!nextDate || nextDate === selectedDate) return;
+    if (hasPendingChanges) await saveHelena(log, selectedDate);
+    setSelectedDate(nextDate);
+  }
+
+  function moveDate(days) {
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const next = new Date(year, month - 1, day + days);
+    changeDate(dateKey(next));
   }
 
   function updateNotificationSettings(patch) {
@@ -515,27 +714,37 @@ export default function PlanoHelena() {
   }
 
   function generateReport() {
-    const lineForMeal = (meal) => (log.meals[meal] || []).map((item) => {
+    const items = allMealItems(log.meals);
+    const lineForMeal = (meal) => mealItems(log.meals, meal).map((item) => {
       if (!item.custom) return `${HELENA_FOODS[item.food]?.label}: ${item.amount} ${item.unit}`;
       const name = item.brand_name ? `${item.label || 'Outro'} / ${item.brand_name}` : item.label || 'Outro';
       const source = item.source ? `; fonte: ${item.source}${item.source_note ? ` (${item.source_note})` : ''}` : '';
       return `${name}: ${item.amount || '-'} ${item.unit || ''}${source}`;
     }).join('; ') || '-';
+    const hydrationItems = items
+      .map((item) => ({ item, hydration: estimateHydration(item, HELENA_FOODS[item.food]) }))
+      .filter(({ hydration }) => Number(hydration.hydration_ml) > 0)
+      .map(({ item, hydration }) => `- ${item.label || HELENA_FOODS[item.food]?.label || 'Bebida'}: ${item.amount || item.grams_or_ml || '-'} ${item.unit || ''}; fator ${item.hydration_factor || (item.is_water ? 1 : 'estimado')}; hidratacao ${Math.round(hydration.hydration_ml)} ml`);
+    const unknownItems = items
+      .filter((item) => item.custom && !Number(item.calories) && !Number(item.protein) && !Number(item.carbs))
+      .map((item) => item.label || item.brand_name || 'Item personalizado');
     const text = [
-      `RELATORIO DO DIA - HELENA - ${formatDateBr(selectedDate)}`,
+      'RELATORIO DO DIA - HELENA',
+      `Data do registro: ${formatDateBr(selectedDate)}`,
       ...reportTimestampLines(),
       'Pessoa: Helena',
       'Idade: 23',
       'Altura: 1,57 m',
-      `Peso atual: ${log.weightKg || '-'}`,
+      `Peso: ${log.weightKg || '-'}`,
       'Objetivo: emagrecer e ganhar massa / recomposicao corporal',
       `Sono: ${log.wakeTime || '-'} ate ${log.sleepTime || '-'}`,
-      `Agua: ${log.waterMl || 0} ml`,
+      `Agua pura: ${totals.pureWaterMl || 0} ml`,
+      `Hidratacao total estimada: ${totals.totalHydrationMl || 0} ml`,
       `Treino: ${log.workout || '-'}`,
       'Horario do treino: 12h15/12h30',
       'Trabalho: 08h00 as 12h00 / 14h30 as 17h00',
       'Faculdade: por volta de 19h30',
-      `Fome agora: ${log.appetite || '-'}`,
+      `Fome: ${log.appetite || '-'}`,
       `Cafe da manha: ${lineForMeal('breakfast')}`,
       `Almoco: ${lineForMeal('lunch')}`,
       `Lanche: ${lineForMeal('snack')}`,
@@ -549,12 +758,16 @@ export default function PlanoHelena() {
       `Acucar estimado: ${totals.sugar} g`,
       `Fibras estimadas: ${totals.fiber} g`,
       `Sodio estimado: ${totals.sodium} mg`,
+      'Bebidas que contribuiram para hidratacao:',
+      hydrationItems.join('\n') || '-',
       `Alertas do sistema: ${warnings.join(' | ')}`,
-      `Recomendacoes do site: ${recommendations.join(' | ')}`,
-      'Itens sem valor nutricional conhecido: itens personalizados sem kcal/proteina/acucar preenchidos',
-      `Fontes dos alimentos calculados: ${Object.values(log.meals || {}).flat().map((item) => item.source).filter(Boolean).join(', ') || 'manual/estimativa local'}`,
+      'Recomendacoes automaticas do site:',
+      recommendationOptions.map((option) => `- ${option.title}: ${option.foods}; ${option.calories} kcal; ${option.protein}g proteina; motivo: ${option.reason}`).join('\n'),
+      `Itens sem valor nutricional conhecido: ${unknownItems.join(', ') || '-'}`,
+      `Fontes dos alimentos calculados: ${items.map((item) => item.source).filter(Boolean).join(', ') || 'manual/estimativa local'}`,
       `Observacoes: ${log.notes || '-'}`,
       'Pergunta para o ChatGPT: Analise meu dia e me diga o que ajustar ainda hoje ou amanha.',
+      'Aviso: Valores nutricionais e hidratacao estimada sao aproximacoes e podem variar por marca, preparo e porcao.',
     ].join('\n');
     setReport(text);
     return text;
@@ -597,6 +810,7 @@ export default function PlanoHelena() {
 
       <QuickNav items={[
         { id: 'summary', label: 'Resumo' },
+        { id: 'calendar', label: 'Data' },
         { id: 'water', label: 'Agua' },
         { id: 'meals', label: 'Refeicoes' },
         { id: 'history', label: 'Historico' },
@@ -627,9 +841,32 @@ export default function PlanoHelena() {
         </ol>
       </section>
 
-      <section className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
+      <CollapsibleSection title="Calendario/Data" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="calendar">
+        <section id="calendar" className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 font-serif text-2xl font-bold text-slate-900">
+                <CalendarDays className="h-5 w-5 text-emerald-600" /> {formatDateBr(selectedDate)}
+              </h2>
+              <p className="text-xs font-bold text-slate-500">Registro separado: person=helena, log_date={selectedDate}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => moveDate(-1)} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">
+                <ChevronLeft className="h-4 w-4" /> Dia anterior
+              </button>
+              <input type="date" value={selectedDate} onChange={(event) => changeDate(event.target.value)} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-sm outline-none" />
+              <button type="button" onClick={() => moveDate(1)} className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">
+                Proximo dia <ChevronRight className="h-4 w-4" />
+              </button>
+              <button type="button" onClick={() => changeDate(dateKey())} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white">Hoje</button>
+            </div>
+          </div>
+        </section>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Resumo do dia" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="summary">
+      <section id="summary" className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
         <div className="grid gap-4 md:grid-cols-4">
-          <label className="block text-xs font-bold uppercase text-slate-500">Data<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm text-slate-800" /></label>
           <label className="block text-xs font-bold uppercase text-slate-500">Peso kg<input type="number" step="0.1" value={log.weightKg} onChange={(event) => patchLog({ weightKg: event.target.value })} className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm text-slate-800" /></label>
           <label className="block text-xs font-bold uppercase text-slate-500">Acordou<input type="time" value={log.wakeTime} onChange={(event) => patchLog({ wakeTime: event.target.value })} className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm text-slate-800" /></label>
           <label className="block text-xs font-bold uppercase text-slate-500">Dormir<input type="time" value={log.sleepTime} onChange={(event) => patchLog({ sleepTime: event.target.value })} className="mt-1 w-full rounded-2xl bg-white px-4 py-3 text-sm text-slate-800" /></label>
@@ -645,6 +882,7 @@ export default function PlanoHelena() {
         </div>
         <textarea value={log.notes} onChange={(event) => patchLog({ notes: event.target.value })} placeholder="Observacoes" className="mt-4 min-h-20 w-full rounded-2xl bg-white px-4 py-3 text-sm text-slate-800 outline-none" />
       </section>
+      </CollapsibleSection>
 
       <CollapsibleSection title="Notificacoes" defaultOpen={false} storageKey={HELENA_STORAGE.collapsedSections} sectionId="notifications">
         <HelenaNotificationSettings settings={notificationSettings} status={notificationStatus} debugLog={debugLog} onSettings={updateNotificationSettings} onEnable={enableNotifications} onTest={testNotification} onClearCache={clearHelenaCache} />
@@ -665,31 +903,27 @@ export default function PlanoHelena() {
       </CollapsibleSection>
 
       <CollapsibleSection title="Agua" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="water">
-        <HelenaWaterTracker water={log.waterMl} onWater={(ml) => patchLog({ waterMl: (Number(log.waterMl) || 0) + ml })} />
-      </CollapsibleSection>
-
-      <CollapsibleSection title="Calculadora alimentar" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="calculator">
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => addQuickDatabaseFood('pao_de_queijo', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Pao de queijo</button>
-          <button type="button" onClick={() => addQuickDatabaseFood('maca', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Maca</button>
-          <button type="button" onClick={() => addQuickDatabaseFood('iogurte_com_frutas', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Iogurte com frutas</button>
-          {log.wheyStatus !== 'nao' && <button type="button" onClick={() => addQuickDatabaseFood('whey_protein', 'snack')} className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">+ Whey</button>}
-        </div>
-        <FoodSearchCalculator
-          onAdd={addCalculatedFood}
-          defaultMeal="snack"
-          mealOptions={Object.entries(HELENA_MEALS).map(([value, label]) => ({ value, label }))}
-          title="Calculadora alimentar da Helena"
-          storageKey="planohelena_food_calculator"
-        />
+        <HelenaWaterTracker water={log.waterMl} hydration={totals} onWater={(ml) => patchLog({ waterMl: (Number(log.waterMl) || 0) + ml })} />
       </CollapsibleSection>
 
       <section id="meals" className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <CollapsibleSection title="Refeicoes" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="meals">
-          <HelenaMealLogger log={log} onToggleFood={toggleFood} onUpdateFood={updateFood} onAddCustom={addCustom} onUpdateCustom={updateCustom} onRemoveCustom={removeCustom} />
+          <HelenaMealLogger
+            log={log}
+            totals={totals}
+            onToggleFood={toggleFood}
+            onUpdateFood={updateFood}
+            onAddCustom={addCustom}
+            onAddCalculatedFood={addCalculatedFood}
+            onUpdateCustom={updateCustom}
+            onRemoveCustom={removeCustom}
+            onDuplicateItem={duplicateItem}
+            onSaveMeal={saveMealTemplate}
+            onRepeatMeal={repeatMealTemplate}
+          />
         </CollapsibleSection>
         <CollapsibleSection title="Resumo e recomendacoes" defaultOpen storageKey={HELENA_STORAGE.collapsedSections} sectionId="recommendations">
-          <HelenaDashboard log={log} totals={totals} warnings={warnings} recommendations={recommendations} eatNow={eatNow} onEatNow={() => setEatNow(buildEatNow(log, totals))} history={history} />
+          <HelenaDashboard log={log} totals={totals} warnings={warnings} recommendations={recommendations} recommendationOptions={recommendationOptions} onAddRecommendation={addRecommendation} eatNow={eatNow} onEatNow={() => setEatNow(buildEatNow(log, totals))} history={history} onRegisterWeight={() => patchLog({ weightKg: log.weightKg || '63' })} />
         </CollapsibleSection>
       </section>
 

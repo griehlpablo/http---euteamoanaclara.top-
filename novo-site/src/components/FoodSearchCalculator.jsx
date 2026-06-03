@@ -71,6 +71,8 @@ const manualFields = [
 
 export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alimentar', defaultMeal = 'extras', mealOptions = [], allowBarcode = true, storageKey = 'food_search_calculator' }) {
   const prefix = storageKey.startsWith('planohelena') ? 'planohelena' : storageKey.startsWith('diet') ? 'diet' : storageKey;
+  const recentKey = prefix === 'planohelena' ? 'planohelena_recent_foods' : `${storageKey}_recent`;
+  const favoritesKey = prefix === 'planohelena' ? 'planohelena_food_favorites' : `${storageKey}_favorites`;
   const [query, setQuery] = useState('');
   const [onlineQuery, setOnlineQuery] = useState('');
   const [activeTab, setActiveTab] = useState('search');
@@ -87,8 +89,8 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
   const [showRawDebug, setShowRawDebug] = useState(false);
   const [cameraMessage, setCameraMessage] = useState('');
   const [scanning, setScanning] = useState(false);
-  const [recent, setRecent] = useState(() => readList(`${storageKey}_recent`));
-  const [favorites, setFavorites] = useState(() => readList(`${storageKey}_favorites`));
+  const [recent, setRecent] = useState(() => readList(recentKey));
+  const [favorites, setFavorites] = useState(() => readList(favoritesKey));
   const [customFoods, setCustomFoods] = useState(() => readList(`${prefix}_custom_foods`));
   const videoRef = useRef(null);
   const selected = database.find((item) => item.slug === selectedSlug) || findFood(selectedSlug);
@@ -143,7 +145,7 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
       ...nutrition,
       notes: `${brandName.trim() ? `Produto: ${brandName.trim()}. ` : ''}Fonte: ${selected.source} (${selected.source_note})`,
     };
-    setRecent(saveList(`${storageKey}_recent`, [item, ...recent.filter((entry) => entry.databaseSlug !== selected.slug)]));
+    setRecent(saveList(recentKey, [item, ...recent.filter((entry) => entry.databaseSlug !== selected.slug)]));
     onAdd?.(item, targetMeal);
   }
 
@@ -172,7 +174,7 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
       ...nutrition,
       notes: `${brandName.trim() ? `Produto: ${brandName.trim()}. ` : ''}Favorito. Fonte: ${selected.source}`,
     };
-    setFavorites(saveList(`${storageKey}_favorites`, exists ? favorites.filter((item) => item.databaseSlug !== selected.slug) : [favorite, ...favorites]));
+    setFavorites(saveList(favoritesKey, exists ? favorites.filter((item) => item.databaseSlug !== selected.slug) : [favorite, ...favorites]));
   }
 
   function addStored(item) {
@@ -220,7 +222,7 @@ export default function FoodSearchCalculator({ onAdd, title = 'Calculadora alime
   function addOnlineProduct() {
     const item = productToItem();
     if (!item) return;
-    setRecent(saveList(`${storageKey}_recent`, [item, ...recent.filter((entry) => entry.barcode !== item.barcode)]));
+    setRecent(saveList(recentKey, [item, ...recent.filter((entry) => entry.barcode !== item.barcode)]));
     onAdd?.(item, targetMeal);
   }
 

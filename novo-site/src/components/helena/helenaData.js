@@ -7,6 +7,8 @@ export const HELENA_STORAGE = {
   draftLog: 'planohelena_draft_log',
   notificationSettings: 'planohelena_notification_settings',
   offlineBackup: 'planohelena_offline_backup',
+  pendingSync: 'planohelena_pending_sync',
+  syncMeta: 'planohelena_pending_sync_meta',
   debugLog: 'planohelena_debug_log',
   lastNotificationAt: 'planohelena_last_notification_at',
   pwaSettings: 'planohelena_pwa_settings',

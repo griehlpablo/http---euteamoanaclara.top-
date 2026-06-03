@@ -33,6 +33,23 @@ function dateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function getMonthDateRange(date) {
+  const d = new Date(`${date}T00:00:00`);
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  return {
+    startDate: formatLocalDate(new Date(year, month, 1)),
+    endDate: formatLocalDate(new Date(year, month + 1, 0)),
+  };
+}
+
 function formatDateBr(value) {
   const [year, month, day] = value.split('-').map(Number);
   return new Date(year, month - 1, day).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -123,6 +140,43 @@ function safeJson(key, fallback) {
   } catch {
     localStorage.removeItem(key);
     return fallback;
+  }
+}
+
+function isDomOrReactEvent(value) {
+  if (!value || typeof value !== 'object') return false;
+  if (value.nodeType) return true;
+  if (typeof HTMLElement !== 'undefined' && value instanceof HTMLElement) return true;
+  if (typeof Event !== 'undefined' && value instanceof Event) return true;
+  if (typeof Blob !== 'undefined' && value instanceof Blob) return true;
+  if (typeof File !== 'undefined' && value instanceof File) return true;
+  if ('target' in value && 'currentTarget' in value && 'preventDefault' in value) return true;
+  return Object.keys(value).some((key) => key.startsWith('__reactFiber') || key.startsWith('__reactProps') || key === '_reactInternals');
+}
+
+export function sanitizeHelenaLogForSave(value, seen = new WeakSet()) {
+  if (value === undefined || typeof value === 'function' || typeof value === 'symbol') return undefined;
+  if (value === null || typeof value !== 'object') return value;
+  if (isDomOrReactEvent(value)) return undefined;
+  if (seen.has(value)) return undefined;
+  seen.add(value);
+  if (Array.isArray(value)) return value.map((item) => sanitizeHelenaLogForSave(item, seen)).filter((item) => item !== undefined);
+  const output = {};
+  Object.entries(value).forEach(([key, item]) => {
+    if (key === 'target' || key === 'currentTarget' || key === 'nativeEvent' || key === 'view' || key === 'ownerDocument' || key.startsWith('__react')) return;
+    const clean = sanitizeHelenaLogForSave(item, seen);
+    if (clean !== undefined) output[key] = clean;
+  });
+  return output;
+}
+
+function safeStringify(value) {
+  const clean = sanitizeHelenaLogForSave(value);
+  try {
+    return { ok: true, clean, text: JSON.stringify(clean), error: null };
+  } catch (error) {
+    console.error('Erro ao serializar dados da Helena:', error);
+    return { ok: false, clean: null, text: '', error };
   }
 }
 
@@ -378,15 +432,19 @@ export default function PlanoHelena() {
   const [log, setLog] = useState(() => normalizeLog(safeJson(HELENA_STORAGE.draftLog, null), localStorage.getItem(HELENA_STORAGE.selectedDate) || dateKey()));
   const [history, setHistory] = useState([]);
   const [saveState, setSaveState] = useState('idle');
+  const [saveError, setSaveError] = useState(null);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState('');
-  const [debugLog, setDebugLog] = useState(() => JSON.parse(localStorage.getItem(HELENA_STORAGE.debugLog) || '[]'));
+  const [debugLog, setDebugLog] = useState(() => safeJson(HELENA_STORAGE.debugLog, []));
   const [report, setReport] = useState('');
   const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
   const [testCountdown, setTestCountdown] = useState('');
   const [diagnosticTick, setDiagnosticTick] = useState(0);
   const [eatNow, setEatNow] = useState('');
-  const [notificationSettings, setNotificationSettings] = useState(() => JSON.parse(localStorage.getItem(HELENA_STORAGE.notificationSettings) || 'null') || {
+  const [syncMeta, setSyncMeta] = useState(() => safeJson(HELENA_STORAGE.syncMeta, { lastAttempt: '', lastError: '' }));
+  const [pendingSyncCount, setPendingSyncCount] = useState(() => Object.keys(safeJson(HELENA_STORAGE.pendingSync, {})).length);
+  const attemptedPendingSync = useRef(false);
+  const [notificationSettings, setNotificationSettings] = useState(() => safeJson(HELENA_STORAGE.notificationSettings, null) || {
     enabled: true,
     water: true,
     meals: true,
@@ -463,23 +521,35 @@ export default function PlanoHelena() {
     if (!hasAccess) return;
     let mounted = true;
     async function loadHelena() {
-      const first = selectedDate.slice(0, 8) + '01';
+      const { startDate, endDate } = getMonthDateRange(selectedDate);
       const { data, error } = await supabase
         .from('daily_health_logs')
         .select('*')
         .eq('person', HELENA_PERSON)
-        .gte('log_date', first)
-        .lte('log_date', selectedDate.slice(0, 8) + '31')
+        .gte('log_date', startDate)
+        .lte('log_date', endDate)
         .order('log_date', { ascending: true });
       if (!mounted) return;
       if (error) {
-        const backup = JSON.parse(localStorage.getItem(HELENA_STORAGE.offlineBackup) || '{}');
+        console.error('Erro ao carregar Helena no Supabase:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          range: { startDate, endDate },
+          person: HELENA_PERSON,
+        });
+        const backup = safeJson(HELENA_STORAGE.offlineBackup, {});
+        const pending = safeJson(HELENA_STORAGE.pendingSync, {});
         setLog(backup[selectedDate] || defaultLog(selectedDate));
+        setPendingSyncCount(Object.keys(pending).length);
         return;
       }
       const current = (data || []).find((row) => row.log_date === selectedDate);
-      setLog(normalizeLog(current, selectedDate));
+      const pending = safeJson(HELENA_STORAGE.pendingSync, {});
+      setLog(normalizeLog(pending[selectedDate]?.log || current, selectedDate));
       setHasPendingChanges(false);
+      setPendingSyncCount(Object.keys(pending).length);
       setHistory((data || []).map((row) => ({
         date: formatDateBr(row.log_date),
         logDate: row.log_date,
@@ -497,9 +567,20 @@ export default function PlanoHelena() {
   useEffect(() => {
     if (!hasAccess) return;
     localStorage.setItem(HELENA_STORAGE.selectedDate, selectedDate);
-    localStorage.setItem(HELENA_STORAGE.currentLog, JSON.stringify(log));
-    if (hasPendingChanges) localStorage.setItem(HELENA_STORAGE.draftLog, JSON.stringify(log));
+    const serialized = safeStringify(log);
+    if (!serialized.ok) {
+      setSaveError({ message: serialized.error?.message || 'Dados da Helena nao puderam ser serializados.' });
+      return;
+    }
+    localStorage.setItem(HELENA_STORAGE.currentLog, serialized.text);
+    if (hasPendingChanges) localStorage.setItem(HELENA_STORAGE.draftLog, serialized.text);
   }, [hasAccess, hasPendingChanges, log, selectedDate]);
+
+  useEffect(() => {
+    if (!hasAccess || attemptedPendingSync.current || pendingSyncCount === 0) return;
+    attemptedPendingSync.current = true;
+    syncPendingHelena();
+  }, [hasAccess, pendingSyncCount]);
 
   function grantAccess(event) {
     event.preventDefault();
@@ -599,10 +680,11 @@ export default function PlanoHelena() {
       id: `helena-meal-${Date.now()}`,
       name: `${HELENA_MEALS[meal]} Helena`,
       meal,
-      items: mealItems(log.meals, meal),
+      items: sanitizeHelenaLogForSave(mealItems(log.meals, meal)),
       saved_at: new Date().toISOString(),
     }, ...templates].slice(0, 12);
-    localStorage.setItem(HELENA_STORAGE.savedMeals, JSON.stringify(next));
+    const serialized = safeStringify(next);
+    if (serialized.ok) localStorage.setItem(HELENA_STORAGE.savedMeals, serialized.text);
     setSaveState('saved');
   }
 
@@ -613,19 +695,90 @@ export default function PlanoHelena() {
     patchLog({ meals });
   }
 
-  async function saveHelena(logToSave = log, dateToSave = selectedDate) {
-    setSaveState('saving');
-    const payload = rowPayload(logToSave, dateToSave);
-    const { error } = await supabase.from('daily_health_logs').upsert(payload, { onConflict: 'person,log_date' });
-    if (error) {
-      const backup = JSON.parse(localStorage.getItem(HELENA_STORAGE.offlineBackup) || '{}');
-      localStorage.setItem(HELENA_STORAGE.offlineBackup, JSON.stringify({ ...backup, [dateToSave]: logToSave }));
-      setSaveState('offline');
-      return;
+  function savePendingSync(dateToSave, cleanLog, payload, error) {
+    const pending = safeJson(HELENA_STORAGE.pendingSync, {});
+    const next = {
+      ...pending,
+      [dateToSave]: {
+        person: HELENA_PERSON,
+        log_date: dateToSave,
+        log: cleanLog,
+        payload,
+        saved_at: new Date().toISOString(),
+        error: {
+          message: error?.message || 'Erro desconhecido',
+          details: error?.details || '',
+          hint: error?.hint || '',
+          code: error?.code || '',
+        },
+      },
+    };
+    const serialized = safeStringify(next);
+    if (serialized.ok) {
+      localStorage.setItem(HELENA_STORAGE.pendingSync, serialized.text);
+      setPendingSyncCount(Object.keys(next).length);
     }
-    setSaveState('saved');
-    setHasPendingChanges(false);
-    localStorage.removeItem(HELENA_STORAGE.draftLog);
+    const meta = {
+      lastAttempt: new Date().toISOString(),
+      lastError: error?.message || '',
+      lastCode: error?.code || '',
+    };
+    localStorage.setItem(HELENA_STORAGE.syncMeta, safeStringify(meta).text);
+    setSyncMeta(meta);
+  }
+
+  async function saveHelena(logToSave = log, dateToSave = selectedDate) {
+    if (logToSave?.preventDefault) {
+      logToSave.preventDefault();
+      logToSave = log;
+      dateToSave = selectedDate;
+    }
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      const cleanLog = sanitizeHelenaLogForSave(logToSave);
+      const serializable = safeStringify(cleanLog);
+      if (!serializable.ok) throw new Error(serializable.error?.message || 'Log da Helena nao e serializavel.');
+      const payload = sanitizeHelenaLogForSave(rowPayload(cleanLog, dateToSave));
+      const payloadSerializable = safeStringify(payload);
+      if (!payloadSerializable.ok) throw new Error(payloadSerializable.error?.message || 'Payload da Helena nao e serializavel.');
+      const { error } = await supabase
+        .from('daily_health_logs')
+        .upsert(payload, { onConflict: 'person,log_date' })
+        .select()
+        .single();
+      if (error) {
+        console.error('Erro ao salvar Helena no Supabase:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          payload,
+        });
+        savePendingSync(dateToSave, cleanLog, payload, error);
+        setSaveState('offline');
+        setSaveError({
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          person: HELENA_PERSON,
+          logDate: dateToSave,
+          serializable: true,
+        });
+        return;
+      }
+      const backup = safeJson(HELENA_STORAGE.offlineBackup, {});
+      const backupSerialized = safeStringify({ ...backup, [dateToSave]: cleanLog });
+      if (backupSerialized.ok) localStorage.setItem(HELENA_STORAGE.offlineBackup, backupSerialized.text);
+      setSaveState('saved');
+      setHasPendingChanges(false);
+      localStorage.removeItem(HELENA_STORAGE.draftLog);
+    } catch (error) {
+      console.error('Erro local ao salvar Helena:', error);
+      setSaveError({ message: error.message || 'Erro local ao salvar Helena.', person: HELENA_PERSON, logDate: dateToSave, serializable: false });
+      setSaveState('error');
+    }
   }
 
   async function changeDate(nextDate) {
@@ -640,10 +793,67 @@ export default function PlanoHelena() {
     changeDate(dateKey(next));
   }
 
+  async function syncPendingHelena() {
+    const pending = safeJson(HELENA_STORAGE.pendingSync, {});
+    const entries = Object.entries(pending);
+    if (!entries.length) {
+      setNotificationStatus('Nao ha pendencias da Helena para sincronizar.');
+      return;
+    }
+    const remaining = { ...pending };
+    let lastError = null;
+    for (const [date, entry] of entries) {
+      const payload = sanitizeHelenaLogForSave(entry.payload || rowPayload(entry.log, date));
+      const serializable = safeStringify(payload);
+      if (!serializable.ok) {
+        lastError = { message: serializable.error?.message || 'Payload pendente nao serializavel.', code: 'LOCAL_SERIALIZE' };
+        continue;
+      }
+      const { error } = await supabase
+        .from('daily_health_logs')
+        .upsert(payload, { onConflict: 'person,log_date' })
+        .select()
+        .single();
+      if (error) {
+        console.error('Erro ao sincronizar pendencia da Helena:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          payload,
+        });
+        lastError = error;
+        remaining[date] = { ...entry, error, last_attempt: new Date().toISOString() };
+      } else {
+        delete remaining[date];
+      }
+    }
+    localStorage.setItem(HELENA_STORAGE.pendingSync, safeStringify(remaining).text);
+    const meta = {
+      lastAttempt: new Date().toISOString(),
+      lastError: lastError?.message || '',
+      lastCode: lastError?.code || '',
+    };
+    localStorage.setItem(HELENA_STORAGE.syncMeta, safeStringify(meta).text);
+    setSyncMeta(meta);
+    setPendingSyncCount(Object.keys(remaining).length);
+    setNotificationStatus(lastError ? 'Ainda ha pendencias da Helena. Veja o ultimo erro.' : 'Pendencias da Helena sincronizadas.');
+  }
+
+  function clearPendingHelena() {
+    const ok = window.confirm('Limpar pendencias locais da Helena? Isso pode apagar alteracoes ainda nao sincronizadas.');
+    if (!ok) return;
+    localStorage.removeItem(HELENA_STORAGE.pendingSync);
+    const meta = { lastAttempt: new Date().toISOString(), lastError: 'Pendencias limpas manualmente.', lastCode: 'CLEARED' };
+    localStorage.setItem(HELENA_STORAGE.syncMeta, safeStringify(meta).text);
+    setSyncMeta(meta);
+    setPendingSyncCount(0);
+  }
+
   function updateNotificationSettings(patch) {
     const next = { ...notificationSettings, ...patch };
     setNotificationSettings(next);
-    localStorage.setItem(HELENA_STORAGE.notificationSettings, JSON.stringify(next));
+    localStorage.setItem(HELENA_STORAGE.notificationSettings, safeStringify(next).text);
   }
 
   async function enableNotifications() {
@@ -659,7 +869,7 @@ export default function PlanoHelena() {
     const entry = { id: `${Date.now()}-${type}`, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), type, message };
     const next = [entry, ...debugLog].slice(0, 20);
     setDebugLog(next);
-    localStorage.setItem(HELENA_STORAGE.debugLog, JSON.stringify(next));
+    localStorage.setItem(HELENA_STORAGE.debugLog, safeStringify(next).text);
     localStorage.setItem(HELENA_STORAGE.lastNotificationAt, new Date().toISOString());
   }
 
@@ -709,7 +919,7 @@ export default function PlanoHelena() {
         }
       }));
     }
-    localStorage.setItem(HELENA_STORAGE.pwaSettings, JSON.stringify({ cacheClearedAt: new Date().toISOString() }));
+    localStorage.setItem(HELENA_STORAGE.pwaSettings, safeStringify({ cacheClearedAt: new Date().toISOString() }).text);
     window.location.href = `/planohelena?fresh=${Date.now()}`;
   }
 
@@ -801,11 +1011,20 @@ export default function PlanoHelena() {
             <h1 className="font-serif text-4xl font-bold text-slate-900">Plano Helena</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{HELENA_PROFILE.goal}</p>
           </div>
-          <button onClick={saveHelena} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">
+          <button onClick={() => saveHelena()} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">
             {saveState === 'saved' ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-            {saveState === 'saving' ? 'Salvando...' : saveState === 'offline' ? 'Backup local criado' : saveState === 'saved' ? 'Salvo' : 'Salvar Helena'}
+            {saveState === 'saving' ? 'Salvando...' : saveState === 'offline' ? 'Salvo neste aparelho' : saveState === 'error' ? 'Erro ao salvar' : saveState === 'saved' ? 'Salvo com sucesso' : 'Salvar Helena'}
           </button>
         </div>
+        {saveError && (
+          <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-xs font-bold leading-5 text-amber-900">
+            <p>Erro ao salvar. Veja detalhes.</p>
+            <p>Codigo: {saveError.code || '-'}</p>
+            <p>Mensagem: {saveError.message || '-'}</p>
+            <p>Hint: {saveError.hint || '-'}</p>
+            <p>Data: {saveError.logDate || selectedDate} | person: {saveError.person || HELENA_PERSON} | JSON serializavel: {saveError.serializable === false ? 'nao' : 'sim'}</p>
+          </div>
+        )}
       </section>
 
       <QuickNav items={[
@@ -885,7 +1104,19 @@ export default function PlanoHelena() {
       </CollapsibleSection>
 
       <CollapsibleSection title="Notificacoes" defaultOpen={false} storageKey={HELENA_STORAGE.collapsedSections} sectionId="notifications">
-        <HelenaNotificationSettings settings={notificationSettings} status={notificationStatus} debugLog={debugLog} onSettings={updateNotificationSettings} onEnable={enableNotifications} onTest={testNotification} onClearCache={clearHelenaCache} />
+        <HelenaNotificationSettings
+          settings={notificationSettings}
+          status={notificationStatus}
+          debugLog={debugLog}
+          pendingSyncCount={pendingSyncCount}
+          syncMeta={syncMeta}
+          onSettings={updateNotificationSettings}
+          onEnable={enableNotifications}
+          onTest={testNotification}
+          onClearCache={clearHelenaCache}
+          onSyncPending={syncPendingHelena}
+          onClearPending={clearPendingHelena}
+        />
         <div className="mt-4">
           <NotificationDiagnostics
             diagnostic={notificationDiagnostic}

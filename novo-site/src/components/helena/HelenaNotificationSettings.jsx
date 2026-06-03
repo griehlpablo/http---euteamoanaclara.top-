@@ -1,6 +1,6 @@
 import { Bell, RotateCcw } from 'lucide-react';
 
-export default function HelenaNotificationSettings({ settings, status, debugLog, onSettings, onEnable, onTest, onClearCache }) {
+export default function HelenaNotificationSettings({ settings, status, debugLog, pendingSyncCount = 0, syncMeta = {}, onSettings, onEnable, onTest, onClearCache, onSyncPending, onClearPending }) {
   return (
     <section className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -57,6 +57,23 @@ export default function HelenaNotificationSettings({ settings, status, debugLog,
       <p className="mb-3 rounded-2xl bg-white/80 p-3 text-xs font-bold leading-5 text-slate-600">
         {status || 'As notificacoes desta tela disparam apenas para Helena e usam planohelena_last_notification_at/planohelena_debug_log.'}
       </p>
+
+      <div className="mb-4 rounded-2xl bg-white/80 p-4 text-xs font-bold leading-5 text-slate-600">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-slate-900">Sincronizacao da Helena</p>
+            <p>Pendencias locais: {pendingSyncCount}</p>
+            <p>Ultima tentativa: {syncMeta.lastAttempt || '-'}</p>
+            <p>Ultimo erro: {syncMeta.lastError || '-'}</p>
+            <p>Codigo: {syncMeta.lastCode || '-'}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={onSyncPending} className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-bold text-white">Sincronizar pendencias</button>
+            <button type="button" onClick={onClearPending} className="rounded-2xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700">Limpar pendencias</button>
+          </div>
+        </div>
+        <p>Backup local: planohelena_pending_sync</p>
+      </div>
 
       <div className="max-h-32 overflow-auto rounded-2xl bg-slate-50 p-3 text-[11px] font-bold leading-5 text-slate-500">
         {debugLog.length ? debugLog.map((entry) => (

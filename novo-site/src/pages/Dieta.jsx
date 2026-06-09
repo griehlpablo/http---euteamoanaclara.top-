@@ -29,6 +29,16 @@ import FoodSearchCalculator from '../components/FoodSearchCalculator';
 import NotificationDiagnostics from '../components/NotificationDiagnostics';
 import QuickNav from '../components/QuickNav';
 import { calculateTotalHydration } from '../lib/hydrationCalculator';
+import {
+  APP_CACHE_VERSION,
+  assertSerializable,
+  buildDiagnosticText,
+  clearAppCachesAndReload,
+  getMonthDateRange,
+  safeParseLocalStorage,
+  sanitizeLogForSave,
+  supabaseErrorDetails,
+} from '../lib/healthPlanDiagnostics';
 import { buildNotificationDiagnostic } from '../lib/notificationPlanner';
 import { reportTimestampLines } from '../lib/reportTimestamp';
 
@@ -87,6 +97,11 @@ const DEFAULT_REMINDER_SETTINGS = {
 };
 
 const DIET_COLLAPSED_SECTIONS_KEY = 'diet_collapsed_sections';
+const DIET_CURRENT_LOG_KEY = 'diet_current_log';
+const DIET_DRAFT_LOG_KEY = 'diet_draft_log';
+const DIET_PENDING_SYNC_KEY = 'diet_pending_sync';
+const DIET_OFFLINE_BACKUP_KEY = 'diet-offline-backup';
+const DIET_REMINDER_SETTINGS_KEY = 'diet-reminder-settings';
 const DEVICE_NOTIFICATION_STORAGE_KEY = 'diet_notification_device_settings';
 const NOTIFICATION_DEBUG_LOG_KEY = 'diet_notification_debug_log';
 const LAST_NOTIFICATION_AT_KEY = 'diet_notification_last_at';
@@ -342,7 +357,10 @@ const DEFAULTS_BY_PERSON = {
 };
 
 function dateToKey(date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function parseLocalDate(value) {
@@ -356,7 +374,11 @@ function formatDateBr(value) {
 
 function cloneMeals(meals = EMPTY_MEALS) {
   return Object.fromEntries(
-    Object.entries({ ...EMPTY_MEALS, ...meals }).map(([key, items]) => [key, Array.isArray(items) ? items.map((item) => ({ ...item })) : []]),
+    Object.keys(EMPTY_MEALS).map((key) => {
+      const value = meals?.[key];
+      const items = Array.isArray(value) ? value : Array.isArray(value?.items) ? value.items : [];
+      return [key, items.map((item) => ({ ...item }))];
+    }),
   );
 }
 
@@ -405,21 +427,35 @@ function defaultLog(person, logDate) {
     ...DEFAULTS_BY_PERSON[person],
     log_date: logDate,
     meals: cloneMeals(DEFAULTS_BY_PERSON[person].meals),
-    totals: {},
+    totals: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      sugar: 0,
+      fiber: 0,
+      sodium: 0,
+      pure_water_ml: 0,
+      hydration_ml: 0,
+    },
   };
 }
 
 function normalizeLog(row, person, logDate) {
-  if (!row) return defaultLog(person, logDate);
+  const safePerson = PEOPLE[person] ? person : 'pablo';
+  const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(String(logDate || '')) ? logDate : dateToKey(new Date());
+  if (!row) return defaultLog(safePerson, safeDate);
   return {
-    ...defaultLog(person, logDate),
+    ...defaultLog(safePerson, safeDate),
     ...row,
+    person: safePerson,
+    log_date: row.log_date || row.logDate || safeDate,
     weight_kg: row.weight_kg ?? '',
     walked_km: row.walked_km ?? '',
     water_ml: row.water_ml ?? 0,
     meals: cloneMeals(row.meals),
     class_today: Boolean(row.meals?._meta?.class_today),
-    totals: row.totals || {},
+    totals: { ...defaultLog(safePerson, safeDate).totals, ...(row.totals || {}) },
   };
 }
 
@@ -740,11 +776,7 @@ function cloneDeviceNotificationSettings(settings = DEFAULT_DEVICE_NOTIFICATION_
 }
 
 function loadDeviceNotificationSettings() {
-  try {
-    return cloneDeviceNotificationSettings(JSON.parse(localStorage.getItem(DEVICE_NOTIFICATION_STORAGE_KEY) || 'null') || DEFAULT_DEVICE_NOTIFICATION_SETTINGS);
-  } catch {
-    return cloneDeviceNotificationSettings();
-  }
+  return cloneDeviceNotificationSettings(safeParseLocalStorage(DEVICE_NOTIFICATION_STORAGE_KEY, DEFAULT_DEVICE_NOTIFICATION_SETTINGS));
 }
 
 function saveDeviceNotificationSettings(settings) {
@@ -764,19 +796,11 @@ function isInsideQuietHours(quietHours, now = new Date()) {
 }
 
 function readNotificationDebugLog() {
-  try {
-    return JSON.parse(localStorage.getItem(NOTIFICATION_DEBUG_LOG_KEY) || '[]');
-  } catch {
-    return [];
-  }
+  return safeParseLocalStorage(NOTIFICATION_DEBUG_LOG_KEY, []);
 }
 
 function readLastNotificationAt() {
-  try {
-    return JSON.parse(localStorage.getItem(LAST_NOTIFICATION_AT_KEY) || '{}');
-  } catch {
-    return {};
-  }
+  return safeParseLocalStorage(LAST_NOTIFICATION_AT_KEY, {});
 }
 
 function formatEnabledPeople(settings) {
@@ -991,9 +1015,25 @@ function ProgressBar({ label, value, target, unit, tone = 'rose' }) {
 
 export default function Dieta() {
   const todayKey = dateToKey(new Date());
-  const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [diagnosticEvents, setDiagnosticEvents] = useState([]);
+  const addDiagnosticEvent = useCallback((event) => {
+    setDiagnosticEvents((events) => [{ time: new Date().toISOString(), ...event }, ...events].slice(0, 20));
+  }, []);
+  const [selectedDate, setSelectedDate] = useState(() => safeParseLocalStorage('diet_selected_date', todayKey, addDiagnosticEvent));
   const [monthDate, setMonthDate] = useState(parseLocalDate(todayKey));
-  const [logsByDate, setLogsByDate] = useState({});
+  const [logsByDate, setLogsByDate] = useState(() => {
+    const stored = safeParseLocalStorage(DIET_DRAFT_LOG_KEY, null, addDiagnosticEvent)
+      || safeParseLocalStorage(DIET_CURRENT_LOG_KEY, null, addDiagnosticEvent);
+    if (!stored) return {};
+    const date = stored.selectedDate || todayKey;
+    const logs = stored.logs || stored;
+    return {
+      [date]: {
+        pablo: normalizeLog(logs.pablo, 'pablo', date),
+        ana_clara: normalizeLog(logs.ana_clara, 'ana_clara', date),
+      },
+    };
+  });
   const [activePerson, setActivePerson] = useState('pablo');
   const [saveState, setSaveState] = useState('idle');
   const [loadState, setLoadState] = useState('loading');
@@ -1012,12 +1052,13 @@ export default function Dieta() {
   const [actionMessage, setActionMessage] = useState('');
   const [syncMessage, setSyncMessage] = useState('');
   const [eatNowSuggestion, setEatNowSuggestion] = useState('');
+  const [dataOrigin, setDataOrigin] = useState('vazio');
+  const [lastSupabaseCall, setLastSupabaseCall] = useState(null);
+  const [saveConfirmation, setSaveConfirmation] = useState(null);
+  const [cloudRows, setCloudRows] = useState([]);
+  const [cloudRowsError, setCloudRowsError] = useState(null);
   const [reminderSettings, setReminderSettings] = useState(() => {
-    try {
-      return { ...DEFAULT_REMINDER_SETTINGS, ...(JSON.parse(localStorage.getItem('diet-reminder-settings') || '{}')) };
-    } catch {
-      return DEFAULT_REMINDER_SETTINGS;
-    }
+    return { ...DEFAULT_REMINDER_SETTINGS, ...safeParseLocalStorage(DIET_REMINDER_SETTINGS_KEY, {}, addDiagnosticEvent) };
   });
   const didLoadRef = useRef(false);
   const saveTimerRef = useRef(null);
@@ -1039,35 +1080,68 @@ export default function Dieta() {
 
   const saveDay = useCallback(async () => {
     setSaveState('saving');
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    setSaveConfirmation(null);
+    try {
+      const { data: authData } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      const payload = sanitizeLogForSave(Object.values(selectedLogs).map((log) => buildLogPayload(log, selectedDate, authData?.user?.id || null)));
+      assertSerializable(payload);
+      setLastSupabaseCall({ operation: 'saveDay.upsert', table: 'daily_health_logs', person: 'pablo,ana_clara', log_date: selectedDate, at: new Date().toISOString() });
+      const { error } = await supabase
+        .from('daily_health_logs')
+        .upsert(payload, { onConflict: 'person,log_date' })
+        .select();
+      if (error) throw error;
 
-    const payload = Object.values(selectedLogs).map((log) => buildLogPayload(log, selectedDate, user?.id || null));
+      setLastSupabaseCall({ operation: 'saveDay.readBack', table: 'daily_health_logs', person: 'pablo,ana_clara', log_date: selectedDate, at: new Date().toISOString() });
+      const { data: confirmData, error: confirmError } = await supabase
+        .from('daily_health_logs')
+        .select('id,person,log_date,water_ml,totals,updated_at')
+        .eq('log_date', selectedDate)
+        .in('person', ['pablo', 'ana_clara']);
+      if (confirmError) throw confirmError;
 
-    const { error } = await supabase
-      .from('daily_health_logs')
-      .upsert(payload, { onConflict: 'person,log_date' })
-      .select();
-
-    setSaveState(error ? 'error' : 'saved');
-    if (error) {
-      const backup = JSON.parse(localStorage.getItem('diet-offline-backup') || '{}');
-      localStorage.setItem('diet-offline-backup', JSON.stringify({ ...backup, [selectedDate]: { logs: selectedLogs, updated_at: new Date().toISOString() } }));
+      const confirmedPeople = (confirmData || []).map((row) => row.person);
+      setSaveState(confirmedPeople.includes('pablo') && confirmedPeople.includes('ana_clara') ? 'confirmed' : 'saved');
+      setSaveConfirmation({ rows: confirmData || [], at: new Date().toISOString() });
+      setDataOrigin('Supabase');
+      localStorage.setItem(DIET_CURRENT_LOG_KEY, JSON.stringify({ selectedDate, logs: selectedLogs, saved_at: new Date().toISOString() }));
+      localStorage.removeItem(DIET_DRAFT_LOG_KEY);
+    } catch (error) {
+      const details = supabaseErrorDetails(error);
+      const backup = safeParseLocalStorage(DIET_PENDING_SYNC_KEY, {}, addDiagnosticEvent);
+      const nextBackup = {
+        ...backup,
+        [selectedDate]: {
+          logs: sanitizeLogForSave(selectedLogs),
+          updated_at: new Date().toISOString(),
+          error: details,
+        },
+      };
+      localStorage.setItem(DIET_PENDING_SYNC_KEY, JSON.stringify(nextBackup));
+      localStorage.setItem(DIET_OFFLINE_BACKUP_KEY, JSON.stringify(nextBackup));
+      setSaveState('offline');
+      setSaveConfirmation({ error: details, at: new Date().toISOString() });
+      setSyncMessage('Salvo apenas neste aparelho, aguardando sincronizacao.');
+      addDiagnosticEvent({ operation: 'saveDay', error: details });
     }
-  }, [selectedDate, selectedLogs]);
+  }, [addDiagnosticEvent, selectedDate, selectedLogs]);
 
   const syncOfflineBackups = useCallback(async () => {
-    const backup = JSON.parse(localStorage.getItem('diet-offline-backup') || '{}');
+    const backup = {
+      ...safeParseLocalStorage(DIET_OFFLINE_BACKUP_KEY, {}, addDiagnosticEvent),
+      ...safeParseLocalStorage(DIET_PENDING_SYNC_KEY, {}, addDiagnosticEvent),
+    };
     const entries = Object.entries(backup);
-    if (!entries.length) return;
+    if (!entries.length) {
+      setSyncMessage('Nao ha pendencias da dieta para sincronizar.');
+      return;
+    }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: authData } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
 
     const remaining = {};
     let synced = 0;
+    let lastError = null;
 
     for (const [date, value] of entries) {
       const logs = value.logs || value;
@@ -1087,64 +1161,98 @@ export default function Dieta() {
         continue;
       }
 
-      const payload = Object.values(logs).map((log) => buildLogPayload(normalizeLog(log, log.person, date), date, user?.id || null));
-      const { error } = await supabase
-        .from('daily_health_logs')
-        .upsert(payload, { onConflict: 'person,log_date' });
+      const payload = sanitizeLogForSave(Object.values(logs).map((log) => buildLogPayload(normalizeLog(log, log.person, date), date, authData?.user?.id || null)));
+      const { error } = await supabase.from('daily_health_logs').upsert(payload, { onConflict: 'person,log_date' }).select();
 
       if (error) {
-        remaining[date] = value;
+        lastError = error;
+        remaining[date] = { ...value, error: supabaseErrorDetails(error), last_attempt: new Date().toISOString() };
       } else {
         synced += 1;
       }
     }
 
     if (Object.keys(remaining).length) {
-      localStorage.setItem('diet-offline-backup', JSON.stringify(remaining));
+      localStorage.setItem(DIET_PENDING_SYNC_KEY, JSON.stringify(remaining));
+      localStorage.setItem(DIET_OFFLINE_BACKUP_KEY, JSON.stringify(remaining));
     } else {
-      localStorage.removeItem('diet-offline-backup');
+      localStorage.removeItem(DIET_PENDING_SYNC_KEY);
+      localStorage.removeItem(DIET_OFFLINE_BACKUP_KEY);
     }
-    if (synced) setSyncMessage('Dados offline sincronizados.');
-  }, []);
+    setSyncMessage(lastError ? 'Ainda ha pendencias. Veja diagnostico.' : synced ? 'Pendencias sincronizadas na nuvem.' : 'Nada novo sincronizado.');
+  }, [addDiagnosticEvent]);
 
   useEffect(() => {
     let mounted = true;
     async function loadLogs() {
       setLoadState('loading');
-      const firstDay = dateToKey(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1));
-      const lastDay = dateToKey(new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0));
-      const { data, error } = await supabase
-        .from('daily_health_logs')
-        .select('*')
-        .gte('log_date', firstDay)
-        .lte('log_date', lastDay);
+      const { startDate, endDate } = getMonthDateRange(dateToKey(monthDate));
+      try {
+        setLastSupabaseCall({ operation: 'loadDietMonth', table: 'daily_health_logs', person: 'pablo,ana_clara', startDate, endDate, at: new Date().toISOString() });
+        const { data, error } = await supabase
+          .from('daily_health_logs')
+          .select('*')
+          .in('person', ['pablo', 'ana_clara'])
+          .gte('log_date', startDate)
+          .lte('log_date', endDate);
 
-      if (!mounted) return;
-      if (error) {
-        setLoadState('error');
+        if (!mounted) return;
+        if (error) throw error;
+
+        setLogsByDate((previous) => {
+          const next = { ...previous };
+          for (const row of data || []) {
+            next[row.log_date] = {
+              ...(next[row.log_date] || {}),
+              [row.person]: normalizeLog(row, row.person, row.log_date),
+            };
+          }
+          if (!next[selectedDate]) {
+            next[selectedDate] = {
+              pablo: normalizeLog(null, 'pablo', selectedDate),
+              ana_clara: normalizeLog(null, 'ana_clara', selectedDate),
+            };
+          }
+          return next;
+        });
+        setDataOrigin((data || []).length ? 'Supabase' : 'Vazio');
+        setLoadState('ready');
         didLoadRef.current = true;
-        return;
-      }
-
-      setLogsByDate((previous) => {
-        const next = { ...previous };
-        for (const row of data || []) {
-          next[row.log_date] = {
-            ...(next[row.log_date] || {}),
-            [row.person]: normalizeLog(row, row.person, row.log_date),
-          };
+      } catch (error) {
+        if (!mounted) return;
+        const details = supabaseErrorDetails(error);
+        addDiagnosticEvent({ operation: 'loadDietMonth', range: { startDate, endDate }, error: details });
+        const local = safeParseLocalStorage(DIET_CURRENT_LOG_KEY, null, addDiagnosticEvent) || safeParseLocalStorage(DIET_DRAFT_LOG_KEY, null, addDiagnosticEvent);
+        if (local?.logs) {
+          setLogsByDate((previous) => ({
+            ...previous,
+            [local.selectedDate || selectedDate]: {
+              pablo: normalizeLog(local.logs.pablo, 'pablo', local.selectedDate || selectedDate),
+              ana_clara: normalizeLog(local.logs.ana_clara, 'ana_clara', local.selectedDate || selectedDate),
+            },
+          }));
+          setDataOrigin('LocalStorage');
+        } else {
+          setLogsByDate((previous) => ({
+            ...previous,
+            [selectedDate]: {
+              pablo: normalizeLog(null, 'pablo', selectedDate),
+              ana_clara: normalizeLog(null, 'ana_clara', selectedDate),
+            },
+          }));
+          setDataOrigin('Vazio');
         }
-        return next;
-      });
-      setLoadState('ready');
-      didLoadRef.current = true;
+        setLoadState('ready');
+        setSyncMessage('Historico mensal indisponivel. Abrindo o dia com dados locais/vazios.');
+        didLoadRef.current = true;
+      }
     }
 
     loadLogs();
     return () => {
       mounted = false;
     };
-  }, [monthDate]);
+  }, [addDiagnosticEvent, monthDate, selectedDate]);
 
   useEffect(() => {
     const timer = window.setTimeout(syncOfflineBackups, 0);
@@ -1194,6 +1302,8 @@ export default function Dieta() {
 
   useEffect(() => {
     if (!didLoadRef.current || dirtyVersion === 0) return;
+    localStorage.setItem('diet_selected_date', JSON.stringify(selectedDate));
+    localStorage.setItem(DIET_DRAFT_LOG_KEY, JSON.stringify({ selectedDate, logs: sanitizeLogForSave(selectedLogs), updated_at: new Date().toISOString() }));
     window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => {
       saveDay();
@@ -1603,17 +1713,78 @@ export default function Dieta() {
   async function clearAppCache() {
     const confirmed = window.confirm('Limpar cache do app e recarregar o plano do casal? Isso nao apaga registros do Supabase.');
     if (!confirmed) return;
-    if ('caches' in window) {
-      const names = await caches.keys();
-      await Promise.all(names.map((name) => caches.delete(name)));
+    await clearAppCachesAndReload('/dieta');
+  }
+
+  function clearLocalDietData() {
+    const confirmed = window.confirm('Limpar dados locais diet_ deste plano? Isso nao apaga Supabase.');
+    if (!confirmed) return;
+    Object.keys(localStorage).filter((key) => key.startsWith('diet_') || key.startsWith('diet-')).forEach((key) => localStorage.removeItem(key));
+    window.location.href = `/dieta?v=${Date.now()}`;
+  }
+
+  async function forceFetchDietFromCloud(person = activePerson) {
+    setLoadState('loading');
+    setLastSupabaseCall({ operation: 'forceFetchDietFromCloud', table: 'daily_health_logs', person, log_date: selectedDate, at: new Date().toISOString() });
+    const { data, error } = await supabase
+      .from('daily_health_logs')
+      .select('*')
+      .eq('person', person)
+      .eq('log_date', selectedDate)
+      .maybeSingle();
+    if (error) {
+      const details = supabaseErrorDetails(error);
+      addDiagnosticEvent({ operation: 'forceFetchDietFromCloud', person, error: details });
+      setSyncMessage(`Erro ao buscar da nuvem: ${details.message}`);
+      setLoadState('ready');
+      return;
     }
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(async (registration) => {
-        await registration.update().catch(() => undefined);
-      }));
+    setLogsByDate((previous) => ({
+      ...previous,
+      [selectedDate]: {
+        ...(previous[selectedDate] || {}),
+        [person]: normalizeLog(data, person, selectedDate),
+      },
+    }));
+    setDataOrigin(data ? 'Supabase' : 'Vazio');
+    setSyncMessage(data ? `${PEOPLE[person].short} carregado da nuvem.` : `Nenhum registro na nuvem para ${PEOPLE[person].short} nesta data.`);
+    setLoadState('ready');
+  }
+
+  async function fetchLatestDietCloudRows() {
+    setCloudRowsError(null);
+    setLastSupabaseCall({ operation: 'fetchLatestDietCloudRows', table: 'daily_health_logs', person: 'pablo,ana_clara', at: new Date().toISOString() });
+    const { data, error } = await supabase
+      .from('daily_health_logs')
+      .select('id,person,log_date,water_ml,totals,updated_at')
+      .in('person', ['pablo', 'ana_clara'])
+      .order('updated_at', { ascending: false })
+      .limit(10);
+    if (error) {
+      const details = supabaseErrorDetails(error);
+      setCloudRowsError(details);
+      addDiagnosticEvent({ operation: 'fetchLatestDietCloudRows', error: details });
+      return;
     }
-    window.location.href = `/dieta?fresh=${Date.now()}`;
+    setCloudRows(data || []);
+  }
+
+  async function copyDietDiagnostic() {
+    const text = buildDiagnosticText({
+      plan: 'casal',
+      activePerson,
+      selectedDate,
+      localStoragePrefix: 'diet_',
+      dataOrigin,
+      saveState,
+      saveConfirmation,
+      loadState,
+      lastSupabaseCall,
+      cloudRowsError,
+      diagnosticEvents,
+    });
+    await navigator.clipboard.writeText(text);
+    setActionMessage('Diagnostico copiado.');
   }
 
   useEffect(() => {
@@ -1701,9 +1872,19 @@ export default function Dieta() {
               <span>
                 {saveState === 'saving' && 'Salvando...'}
                 {saveState === 'saved' && 'Salvo no Supabase'}
+                {saveState === 'confirmed' && 'Confirmado na nuvem'}
+                {saveState === 'offline' && 'Salvo apenas neste aparelho'}
                 {saveState === 'error' && 'Erro ao salvar. Backup local criado.'}
                 {saveState === 'idle' && 'Pronto para registrar'}
               </span>
+            </div>
+            <div className="rounded-2xl bg-white/80 px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+              <p>Origem atual: {dataOrigin}</p>
+              <p>Pessoa ativa: {PEOPLE[activePerson].short} | Data: {selectedDate}</p>
+              <p>Cache/app: {APP_CACHE_VERSION}</p>
+              {saveConfirmation?.rows?.length ? (
+                <p>Ultima confirmacao: {saveConfirmation.rows.map((row) => `${row.person} ${row.water_ml}ml ${row.id || '-'}`).join(' | ')}</p>
+              ) : null}
             </div>
             {loadState === 'error' && (
               <p className="rounded-2xl bg-amber-100 px-4 py-3 text-xs font-bold text-amber-800">
@@ -1715,12 +1896,37 @@ export default function Dieta() {
                 {syncMessage}
               </p>
             )}
-            <button onClick={saveDay} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg">
-              <Save className="h-4 w-4" /> Salvar agora
+            <button onClick={() => saveDay()} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg">
+              <Save className="h-4 w-4" /> Salvar e confirmar na nuvem
+            </button>
+            <button onClick={() => forceFetchDietFromCloud(activePerson)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm">
+              Forcar buscar da nuvem
+            </button>
+            <button onClick={() => syncOfflineBackups()} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm">
+              Sincronizar pendencias
+            </button>
+            <button onClick={() => fetchLatestDietCloudRows()} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm">
+              Ver ultimos registros na nuvem
             </button>
             <button onClick={clearAppCache} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm">
-              <RotateCcw className="h-4 w-4" /> Limpar cache do app
+              <RotateCcw className="h-4 w-4" /> Limpar cache e recarregar
             </button>
+            <button onClick={clearLocalDietData} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-red-700 shadow-sm">
+              Limpar dados locais deste plano
+            </button>
+            <button onClick={copyDietDiagnostic} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm">
+              Copiar diagnostico
+            </button>
+            {cloudRows.length ? (
+              <div className="rounded-2xl bg-white/80 p-3 text-xs font-bold leading-5 text-slate-700">
+                {cloudRows.map((row) => (
+                  <p key={row.id || `${row.person}-${row.log_date}`}>{row.person} | {row.log_date} | agua {row.water_ml || 0}ml | {row.updated_at || '-'} | {row.id || '-'}</p>
+                ))}
+              </div>
+            ) : null}
+            {cloudRowsError ? (
+              <p className="rounded-2xl bg-red-50 px-4 py-3 text-xs font-bold text-red-800">Supabase: {cloudRowsError.code || '-'} {cloudRowsError.message}</p>
+            ) : null}
           </div>
         </div>
       </section>

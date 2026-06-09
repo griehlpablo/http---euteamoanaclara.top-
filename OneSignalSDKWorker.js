@@ -1,7 +1,7 @@
 /* global importScripts */
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-const CACHE_NAME = "diet-app-v6-helena-parity";
+const CACHE_NAME = "diet-app-v9-fix-dieta-and-helena-sync";
 const HELENA_ENTRY = "/planohelena/index.html";
 const CORE_ASSETS = [
   "/",
@@ -36,7 +36,9 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
-  // Requests to Open Food Facts and any other external origin must go straight to the browser.
+  if (url.hostname.includes("supabase.co") || url.hostname.includes("openfoodfacts.org")) return;
+  if (url.pathname.includes("/rest/v1/") || url.pathname.includes("/auth/v1/")) return;
+  // Requests to Open Food Facts, Supabase and any other external origin must go straight to the browser.
   if (url.origin !== self.location.origin) return;
 
   if (event.request.mode === "navigate") {

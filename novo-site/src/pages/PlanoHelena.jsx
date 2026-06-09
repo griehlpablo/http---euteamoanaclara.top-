@@ -17,6 +17,16 @@ import { findFood } from '../lib/foodDatabase';
 import { buildNotificationDiagnostic, buildWaterMessage, planWaterReminder } from '../lib/notificationPlanner';
 import { calculateFoodNutrition, nutritionForManualItem } from '../lib/nutrition';
 import { reportTimestampLines } from '../lib/reportTimestamp';
+import {
+  APP_CACHE_VERSION,
+  assertSerializable,
+  buildDiagnosticText,
+  clearAppCachesAndReload,
+  getMonthDateRange as getSafeMonthDateRange,
+  safeParseLocalStorage,
+  sanitizeLogForSave,
+  supabaseErrorDetails,
+} from '../lib/healthPlanDiagnostics';
 
 const HELENA_ACCESS_CODE = 'helena2026';
 
@@ -134,13 +144,7 @@ function normalizeMealItem(item = {}, meal = 'extras') {
 }
 
 function safeJson(key, fallback) {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch {
-    localStorage.removeItem(key);
-    return fallback;
-  }
+  return safeParseLocalStorage(key, fallback);
 }
 
 function isDomOrReactEvent(value) {
@@ -443,6 +447,11 @@ export default function PlanoHelena() {
   const [eatNow, setEatNow] = useState('');
   const [syncMeta, setSyncMeta] = useState(() => safeJson(HELENA_STORAGE.syncMeta, { lastAttempt: '', lastError: '' }));
   const [pendingSyncCount, setPendingSyncCount] = useState(() => Object.keys(safeJson(HELENA_STORAGE.pendingSync, {})).length);
+  const [dataOrigin, setDataOrigin] = useState('vazio');
+  const [lastSupabaseCall, setLastSupabaseCall] = useState(null);
+  const [saveConfirmation, setSaveConfirmation] = useState(null);
+  const [cloudRows, setCloudRows] = useState([]);
+  const [cloudRowsError, setCloudRowsError] = useState(null);
   const attemptedPendingSync = useRef(false);
   const [notificationSettings, setNotificationSettings] = useState(() => safeJson(HELENA_STORAGE.notificationSettings, null) || {
     enabled: true,
@@ -521,7 +530,8 @@ export default function PlanoHelena() {
     if (!hasAccess) return;
     let mounted = true;
     async function loadHelena() {
-      const { startDate, endDate } = getMonthDateRange(selectedDate);
+      const { startDate, endDate } = getSafeMonthDateRange(selectedDate);
+      setLastSupabaseCall({ operation: 'loadHelenaMonth', table: 'daily_health_logs', person: HELENA_PERSON, startDate, endDate, at: new Date().toISOString() });
       const { data, error } = await supabase
         .from('daily_health_logs')
         .select('*')
@@ -542,12 +552,14 @@ export default function PlanoHelena() {
         const backup = safeJson(HELENA_STORAGE.offlineBackup, {});
         const pending = safeJson(HELENA_STORAGE.pendingSync, {});
         setLog(backup[selectedDate] || defaultLog(selectedDate));
+        setDataOrigin(backup[selectedDate] ? 'LocalStorage' : 'Vazio');
         setPendingSyncCount(Object.keys(pending).length);
         return;
       }
       const current = (data || []).find((row) => row.log_date === selectedDate);
       const pending = safeJson(HELENA_STORAGE.pendingSync, {});
       setLog(normalizeLog(pending[selectedDate]?.log || current, selectedDate));
+      setDataOrigin(pending[selectedDate] ? 'LocalStorage pendente' : current ? 'Supabase' : 'Vazio');
       setHasPendingChanges(false);
       setPendingSyncCount(Object.keys(pending).length);
       setHistory((data || []).map((row) => ({
@@ -740,8 +752,10 @@ export default function PlanoHelena() {
       const serializable = safeStringify(cleanLog);
       if (!serializable.ok) throw new Error(serializable.error?.message || 'Log da Helena nao e serializavel.');
       const payload = sanitizeHelenaLogForSave(rowPayload(cleanLog, dateToSave));
+      assertSerializable(sanitizeLogForSave(payload));
       const payloadSerializable = safeStringify(payload);
       if (!payloadSerializable.ok) throw new Error(payloadSerializable.error?.message || 'Payload da Helena nao e serializavel.');
+      setLastSupabaseCall({ operation: 'saveHelena.upsert', table: 'daily_health_logs', person: HELENA_PERSON, log_date: dateToSave, at: new Date().toISOString() });
       const { error } = await supabase
         .from('daily_health_logs')
         .upsert(payload, { onConflict: 'person,log_date' })
@@ -768,15 +782,25 @@ export default function PlanoHelena() {
         });
         return;
       }
+      setLastSupabaseCall({ operation: 'saveHelena.readBack', table: 'daily_health_logs', person: HELENA_PERSON, log_date: dateToSave, at: new Date().toISOString() });
+      const { data: confirmData, error: confirmError } = await supabase
+        .from('daily_health_logs')
+        .select('id,person,log_date,water_ml,totals,updated_at')
+        .eq('person', HELENA_PERSON)
+        .eq('log_date', dateToSave)
+        .single();
+      if (confirmError) throw confirmError;
       const backup = safeJson(HELENA_STORAGE.offlineBackup, {});
       const backupSerialized = safeStringify({ ...backup, [dateToSave]: cleanLog });
       if (backupSerialized.ok) localStorage.setItem(HELENA_STORAGE.offlineBackup, backupSerialized.text);
-      setSaveState('saved');
+      setSaveState('confirmed');
+      setSaveConfirmation({ row: confirmData, at: new Date().toISOString() });
+      setDataOrigin('Supabase');
       setHasPendingChanges(false);
       localStorage.removeItem(HELENA_STORAGE.draftLog);
     } catch (error) {
       console.error('Erro local ao salvar Helena:', error);
-      setSaveError({ message: error.message || 'Erro local ao salvar Helena.', person: HELENA_PERSON, logDate: dateToSave, serializable: false });
+      setSaveError({ ...supabaseErrorDetails(error), message: error.message || 'Erro local ao salvar Helena.', person: HELENA_PERSON, logDate: dateToSave, serializable: false });
       setSaveState('error');
     }
   }
@@ -850,6 +874,62 @@ export default function PlanoHelena() {
     setPendingSyncCount(0);
   }
 
+  async function forceFetchHelenaFromCloud() {
+    setLastSupabaseCall({ operation: 'forceFetchHelenaFromCloud', table: 'daily_health_logs', person: HELENA_PERSON, log_date: selectedDate, at: new Date().toISOString() });
+    const { data, error } = await supabase
+      .from('daily_health_logs')
+      .select('*')
+      .eq('person', HELENA_PERSON)
+      .eq('log_date', selectedDate)
+      .maybeSingle();
+    if (error) {
+      const details = supabaseErrorDetails(error);
+      setSaveError({ ...details, person: HELENA_PERSON, logDate: selectedDate });
+      setNotificationStatus(`Erro ao buscar Helena da nuvem: ${details.message}`);
+      return;
+    }
+    setLog(normalizeLog(data, selectedDate));
+    setDataOrigin(data ? 'Supabase' : 'Vazio');
+    setHasPendingChanges(false);
+    setNotificationStatus(data ? 'Helena carregada da nuvem.' : 'Nenhum registro da Helena na nuvem para esta data.');
+  }
+
+  async function fetchLatestHelenaCloudRows() {
+    setCloudRowsError(null);
+    setLastSupabaseCall({ operation: 'fetchLatestHelenaCloudRows', table: 'daily_health_logs', person: HELENA_PERSON, at: new Date().toISOString() });
+    const { data, error } = await supabase
+      .from('daily_health_logs')
+      .select('id,person,log_date,water_ml,totals,updated_at')
+      .eq('person', HELENA_PERSON)
+      .order('updated_at', { ascending: false })
+      .limit(10);
+    if (error) {
+      const details = supabaseErrorDetails(error);
+      setCloudRowsError(details);
+      return;
+    }
+    setCloudRows(data || []);
+  }
+
+  async function copyHelenaDiagnostic() {
+    const text = buildDiagnosticText({
+      plan: 'Helena',
+      activePerson: HELENA_PERSON,
+      selectedDate,
+      localStoragePrefix: 'planohelena_',
+      dataOrigin,
+      saveState,
+      saveError,
+      saveConfirmation,
+      lastSupabaseCall,
+      syncMeta,
+      pendingSyncCount,
+      cloudRowsError,
+    });
+    await navigator.clipboard.writeText(text);
+    setNotificationStatus('Diagnostico da Helena copiado.');
+  }
+
   function updateNotificationSettings(patch) {
     const next = { ...notificationSettings, ...patch };
     setNotificationSettings(next);
@@ -906,21 +986,8 @@ export default function PlanoHelena() {
   async function clearHelenaCache() {
     const ok = window.confirm('Corrigir o atalho da Helena e limpar cache do app? Isso nao apaga registros salvos no Supabase.');
     if (!ok) return;
-    if ('caches' in window) {
-      const names = await caches.keys();
-      await Promise.all(names.map((name) => caches.delete(name)));
-    }
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(async (registration) => {
-        await registration.update().catch(() => undefined);
-        if (registration.scope.includes('/planohelena') || registration.scope.includes(window.location.origin)) {
-          await registration.unregister().catch(() => undefined);
-        }
-      }));
-    }
     localStorage.setItem(HELENA_STORAGE.pwaSettings, safeStringify({ cacheClearedAt: new Date().toISOString() }).text);
-    window.location.href = `/planohelena?fresh=${Date.now()}`;
+    await clearAppCachesAndReload('/planohelena');
   }
 
   function generateReport() {
@@ -1012,10 +1079,42 @@ export default function PlanoHelena() {
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{HELENA_PROFILE.goal}</p>
           </div>
           <button onClick={() => saveHelena()} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">
-            {saveState === 'saved' ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-            {saveState === 'saving' ? 'Salvando...' : saveState === 'offline' ? 'Salvo neste aparelho' : saveState === 'error' ? 'Erro ao salvar' : saveState === 'saved' ? 'Salvo com sucesso' : 'Salvar Helena'}
+            {saveState === 'confirmed' ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+            {saveState === 'saving' ? 'Salvando...' : saveState === 'offline' ? 'Salvo neste aparelho' : saveState === 'error' ? 'Erro ao salvar' : saveState === 'confirmed' ? 'Confirmado na nuvem' : 'Salvar e confirmar na nuvem'}
           </button>
         </div>
+        <div className="mt-4 grid gap-2 rounded-2xl bg-emerald-50 p-4 text-xs font-bold leading-5 text-emerald-900 sm:grid-cols-2">
+          <p>Origem atual: {dataOrigin}</p>
+          <p>person: {HELENA_PERSON} | data: {selectedDate}</p>
+          <p>Versao/cache: {APP_CACHE_VERSION}</p>
+          <p>Ultima chamada Supabase: {lastSupabaseCall?.operation || '-'}</p>
+          {saveConfirmation?.row ? (
+            <>
+              <p>id: {saveConfirmation.row.id || '-'}</p>
+              <p>updated_at: {saveConfirmation.row.updated_at || '-'}</p>
+              <p>water_ml: {saveConfirmation.row.water_ml || 0}</p>
+              <p>totals.pure_water_ml: {saveConfirmation.row.totals?.pure_water_ml || 0}</p>
+            </>
+          ) : null}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => saveHelena()} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">Salvar e confirmar na nuvem</button>
+          <button onClick={forceFetchHelenaFromCloud} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">Forcar buscar da nuvem</button>
+          <button onClick={syncPendingHelena} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">Sincronizar pendencias</button>
+          <button onClick={fetchLatestHelenaCloudRows} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">Ver ultimos registros na nuvem</button>
+          <button onClick={clearHelenaCache} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">Limpar cache e recarregar</button>
+          <button onClick={copyHelenaDiagnostic} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">Copiar diagnostico</button>
+        </div>
+        {cloudRows.length ? (
+          <div className="mt-3 rounded-2xl bg-white/80 p-3 text-xs font-bold leading-5 text-slate-700">
+            {cloudRows.map((row) => (
+              <p key={row.id || `${row.person}-${row.log_date}`}>{row.person} | {row.log_date} | agua {row.water_ml || 0}ml | agua pura {row.totals?.pure_water_ml || 0}ml | {row.updated_at || '-'} | {row.id || '-'}</p>
+            ))}
+          </div>
+        ) : null}
+        {cloudRowsError ? (
+          <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-xs font-bold text-red-800">Supabase: {cloudRowsError.code || '-'} {cloudRowsError.message}</p>
+        ) : null}
         {saveError && (
           <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-xs font-bold leading-5 text-amber-900">
             <p>Erro ao salvar. Veja detalhes.</p>

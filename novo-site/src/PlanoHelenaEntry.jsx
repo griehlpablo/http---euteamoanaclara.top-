@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+import ErrorBoundary from './components/ErrorBoundary';
 import HeartRain from './components/HeartRain';
 import PlanoHelena from './pages/PlanoHelena';
 
@@ -17,6 +18,8 @@ function HelenaApp() {
 
 createRoot(document.getElementById('helena-root')).render(
   <StrictMode>
-    <HelenaApp />
+    <ErrorBoundary>
+      <HelenaApp />
+    </ErrorBoundary>
   </StrictMode>,
 );

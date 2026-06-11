@@ -1,0 +1,156 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//euteamoanaclara.top//Brasil Volei Feminino//PT-BR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Brasil — Vôlei Feminino
+X-WR-CALDESC:Jogos da seleção brasileira de vôlei feminino
+X-WR-TIMEZONE:America/Sao_Paulo
+REFRESH-INTERVAL;VALUE=DURATION:PT1H
+X-PUBLISHED-TTL:PT1H
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-ned-20260603@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260603T230000Z
+DTEND:20260604T010000Z
+SUMMARY:🏐 Brasil 3 x 1 Holanda — VNL Feminina
+LOCATION:Ginásio Nilson Nelson\, Brasília\, Brasil
+DESCRIPTION:VNL Feminina 2026. Resultado: Brasil 3 x 1 Holanda. Parciais: 2
+ 5-17\, 25-15\, 25-27\, 25-23. Fonte: Volleyball World / FIVB.
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-dom-20260604@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260604T230000Z
+DTEND:20260605T010000Z
+SUMMARY:🏐 Brasil 3 x 1 República Dominicana — VNL Feminina
+LOCATION:Ginásio Nilson Nelson\, Brasília\, Brasil
+DESCRIPTION:VNL Feminina 2026. Resultado: Brasil 3 x 1 República Dominicana.
+  Parciais: 23-25\, 25-18\, 25-11\, 25-15. Fonte: Volleyball World / FIV
+ B.
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-bul-20260606@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260606T140000Z
+DTEND:20260606T160000Z
+SUMMARY:🏐 Brasil 3 x 0 Bulgária — VNL Feminina
+LOCATION:Ginásio Nilson Nelson\, Brasília\, Brasil
+DESCRIPTION:VNL Feminina 2026. Resultado: Brasil 3 x 0 Bulgária. Parciais:
+  25-23\, 25-17\, 25-13. Fonte: Volleyball World / FIVB.
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-ita-20260607@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260607T173000Z
+DTEND:20260607T193000Z
+SUMMARY:🏐 Brasil 3 x 2 Itália — VNL Feminina
+LOCATION:Ginásio Nilson Nelson\, Brasília\, Brasil
+DESCRIPTION:VNL Feminina 2026. Resultado: Brasil 3 x 2 Itália. Parciais: 25
+ -15\, 25-22\, 22-25\, 24-26\, 15-12. Fonte: Volleyball World / FIVB.
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-fra-20260617@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260617T130000Z
+DTEND:20260617T150000Z
+SUMMARY:🏐 VNL Feminina: França x Brasil
+LOCATION:Ankara Arena\, Ancara\, Turquia
+DESCRIPTION:VNL Feminina 2026. Jogo da fase preliminar. Horário original: 17/
+ 06/2026\, 16:00 na Turquia (10:00 no horário de Brasília).
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-bel-20260618@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260618T130000Z
+DTEND:20260618T150000Z
+SUMMARY:🏐 VNL Feminina: Bélgica x Brasil
+LOCATION:Ankara Arena\, Ancara\, Turquia
+DESCRIPTION:VNL Feminina 2026. Jogo da fase preliminar. Horário original: 18/
+ 06/2026\, 16:00 na Turquia (10:00 no horário de Brasília).
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-chn-20260620@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260620T130000Z
+DTEND:20260620T150000Z
+SUMMARY:🏐 VNL Feminina: China x Brasil
+LOCATION:Ankara Arena\, Ancara\, Turquia
+DESCRIPTION:VNL Feminina 2026. Jogo da fase preliminar. Horário original: 20/
+ 06/2026\, 16:00 na Turquia (10:00 no horário de Brasília).
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-ger-20260621@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260621T130000Z
+DTEND:20260621T150000Z
+SUMMARY:🏐 VNL Feminina: Alemanha x Brasil
+LOCATION:Ankara Arena\, Ancara\, Turquia
+DESCRIPTION:VNL Feminina 2026. Jogo da fase preliminar. Horário original: 21/
+ 06/2026\, 16:00 na Turquia (10:00 no horário de Brasília).
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-jpn-20260708@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260708T102000Z
+DTEND:20260708T122000Z
+SUMMARY:🏐 VNL Feminina: Japão x Brasil
+LOCATION:Asue Arena Osaka\, Osaka\, Japão
+DESCRIPTION:VNL Feminina 2026. Jogo da fase preliminar. Horário original: 08/
+ 07/2026\, 19:20 no Japão (07:20 no horário de Brasília).
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-pol-20260710@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260710T102000Z
+DTEND:20260710T122000Z
+SUMMARY:🏐 VNL Feminina: Polônia x Brasil
+LOCATION:Asue Arena Osaka\, Osaka\, Japão
+DESCRIPTION:VNL Feminina 2026. Jogo da fase preliminar. Horário original: 10/
+ 07/2026\, 19:20 no Japão (07:20 no horário de Brasília).
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-tha-20260711@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260711T063000Z
+DTEND:20260711T083000Z
+SUMMARY:🏐 VNL Feminina: Tailândia x Brasil
+LOCATION:Asue Arena Osaka\, Osaka\, Japão
+DESCRIPTION:VNL Feminina 2026. Jogo da fase preliminar. Horário original: 11/
+ 07/2026\, 15:30 no Japão (03:30 no horário de Brasília).
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:brasil-vnlf-2026-usa-20260712@euteamoanaclara.top
+DTSTAMP:20260611T233346Z
+DTSTART:20260712T030000Z
+DTEND:20260712T050000Z
+SUMMARY:🏐 VNL Feminina: EUA x Brasil
+LOCATION:Asue Arena Osaka\, Osaka\, Japão
+DESCRIPTION:VNL Feminina 2026. Jogo da fase preliminar. Horário original: 12/
+ 07/2026\, 12:00 no Japão (00:00 no horário de Brasília).
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR

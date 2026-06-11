@@ -1,0 +1,227 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//euteamoanaclara.top//Brasil Volei Feminino//PT-BR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:🇧🇷 Vôlei feminino do Brasil
+X-WR-CALDESC:Jogos da Seleção Brasileira feminina de vôlei na VNL 2026.
+X-WR-TIMEZONE:America/Sao_Paulo
+REFRESH-INTERVAL;VALUE=DURATION:PT12H
+X-PUBLISHED-TTL:PT12H
+BEGIN:VEVENT
+UID:vnl2026-bra-ned-20260603@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260603T230000Z
+DTEND:20260604T010000Z
+SUMMARY:🏐 Brasil x Holanda — VNL Feminina
+LOCATION:BRB Arena Nilson Nelson\, Brasília\, Brasil
+DESCRIPTION:Finalizado: Brasil 3 x 1 Holanda\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-bra-dom-20260604@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260604T230000Z
+DTEND:20260605T010000Z
+SUMMARY:🏐 Brasil x República Dominicana — VNL Feminina
+LOCATION:BRB Arena Nilson Nelson\, Brasília\, Brasil
+DESCRIPTION:Finalizado: Brasil 3 x 1 República Dominicana\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/26563/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-bra-bul-20260606@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260606T140000Z
+DTEND:20260606T160000Z
+SUMMARY:🏐 Brasil x Bulgária — VNL Feminina
+LOCATION:BRB Arena Nilson Nelson\, Brasília\, Brasil
+DESCRIPTION:Finalizado: Brasil 3 x 0 Bulgária\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-bra-ita-20260607@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260607T173000Z
+DTEND:20260607T193000Z
+SUMMARY:🏐 Brasil x Itália — VNL Feminina
+LOCATION:BRB Arena Nilson Nelson\, Brasília\, Brasil
+DESCRIPTION:Finalizado: Brasil 3 x 2 Itália\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/26582/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-fra-bra-20260617@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260617T130000Z
+DTEND:20260617T150000Z
+SUMMARY:🏐 França x Brasil — VNL Feminina
+LOCATION:Ankara Arena\, Ankara\, Turquia
+DESCRIPTION:Programado\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/26592/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-bel-bra-20260618@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260618T130000Z
+DTEND:20260618T150000Z
+SUMMARY:🏐 Bélgica x Brasil — VNL Feminina
+LOCATION:Ankara Arena\, Ankara\, Turquia
+DESCRIPTION:Programado\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-chn-bra-20260620@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260620T130000Z
+DTEND:20260620T150000Z
+SUMMARY:🏐 China x Brasil — VNL Feminina
+LOCATION:Ankara Arena\, Ankara\, Turquia
+DESCRIPTION:Programado\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-ger-bra-20260621@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260621T130000Z
+DTEND:20260621T150000Z
+SUMMARY:🏐 Alemanha x Brasil — VNL Feminina
+LOCATION:Ankara Arena\, Ankara\, Turquia
+DESCRIPTION:Programado\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-jpn-bra-20260708@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260708T102000Z
+DTEND:20260708T122000Z
+SUMMARY:🏐 Japão x Brasil — VNL Feminina
+LOCATION:Asue Arena Osaka\, Osaka\, Japão
+DESCRIPTION:Programado\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/26626/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-pol-bra-20260710@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260710T102000Z
+DTEND:20260710T122000Z
+SUMMARY:🏐 Polônia x Brasil — VNL Feminina
+LOCATION:Asue Arena Osaka\, Osaka\, Japão
+DESCRIPTION:Programado\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-tha-bra-20260711@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260711T063000Z
+DTEND:20260711T083000Z
+SUMMARY:🏐 Tailândia x Brasil — VNL Feminina
+LOCATION:Asue Arena Osaka\, Osaka\, Japão
+DESCRIPTION:Programado\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:vnl2026-usa-bra-20260712@euteamoanaclara.top
+DTSTAMP:20260611T120000Z
+DTSTART:20260712T030000Z
+DTEND:20260712T050000Z
+SUMMARY:🏐 Estados Unidos x Brasil — VNL Feminina
+LOCATION:Asue Arena Osaka\, Osaka\, Japão
+DESCRIPTION:Programado\nVNL Feminina 2026 — Seleção Brasileira.\nHorário ajustado automaticamente pelo fuso do aparelho.\nFonte: Volleyball World / tabela da VNL 2026.\nAtualizado em 11/06/2026.
+URL:https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem jogo do Brasil no vôlei feminino 🇧🇷🏐
+END:VALARM
+END:VEVENT
+END:VCALENDAR

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import OneSignal from 'react-onesignal';
 
 import Navbar from './components/Navbar';
@@ -7,6 +7,7 @@ import HeartRain from './components/HeartRain';
 import PinGate from './components/PinGate';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
+import Blog from './pages/Blog';
 import Central from './pages/Central';
 import Contagem from './pages/Contagem';
 import AssistenteCasal from './pages/AssistenteCasal';
@@ -87,6 +88,7 @@ export default function App() {
         <main className="pt-24 pb-12 px-4 max-w-5xl mx-auto relative z-10">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/blog" element={<Blog />} />
             <Route path="/central" element={protectedPage(<Central />)} />
             <Route path="/contagem" element={protectedPage(<Contagem />)} />
             <Route path="/assistente" element={protectedPage(<AssistenteCasal />)} />
@@ -106,6 +108,15 @@ export default function App() {
             <Route path="/surpresa-diaria" element={protectedPage(<SurpresaDiaria />)} />
             <Route path="/dieta" element={protectedDieta} />
           </Routes>
+          <footer className="mt-10 border-t border-slate-200/70 pt-6 text-center text-sm text-slate-500 dark:border-slate-700/70 dark:text-slate-400">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link to="/blog" className="text-slate-600 transition hover:text-rose-600">
+                Blog
+              </Link>
+              <span className="hidden sm:inline-block">•</span>
+              <span>Conteúdo leve, público e amigável para o casal.</span>
+            </div>
+          </footer>
         </main>
       </Router>
     </div>

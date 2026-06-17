@@ -27,7 +27,21 @@ export default function Navbar({ theme, toggleTheme }) {
         <Link to="/" className="font-serif italic text-xl text-brand-dark dark:text-slate-200 flex items-center gap-2">
           A & P <Heart className="w-5 h-5 text-brand fill-current animate-pulse" />
         </Link>
-        
+
+        <Link
+          to="/blog"
+          className="inline-flex sm:hidden items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-rose-200 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
+        >
+          Blog
+        </Link>
+
+        <Link
+          to="/blog"
+          className="hidden sm:inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-sm font-medium text-slate-600 transition hover:border-rose-200 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
+        >
+          Blog
+        </Link>
+
         <div className="flex items-center gap-2">
           <button 
             onClick={toggleMusic}

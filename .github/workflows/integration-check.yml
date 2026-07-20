@@ -24,72 +24,73 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          source = Path('novo-site/src/supabase.js').read_text(encoding='utf-8')
-          url = re.search(r"const defaultUrl = '([^']+)'", source).group(1)
-          key_block = re.search(r"const defaultKey = \[(.*?)\]\.join", source, re.S).group(1)
-          key = ''.join(re.findall(r"'([^']*)'", key_block))
-          headers = {
-              'apikey': key,
-              'Authorization': f'Bearer {key}',
-              'Content-Type': 'application/json',
-              'Prefer': 'return=representation',
-          }
           results = []
           chat_id = None
           message_id = None
 
-          def request(method, path, payload=None, headers_override=None):
-              body = None if payload is None else json.dumps(payload).encode()
-              request_headers = dict(headers)
-              if headers_override:
-                  request_headers.update(headers_override)
-              req = urllib.request.Request(url + path, data=body, method=method, headers=request_headers)
-              try:
-                  with urllib.request.urlopen(req, timeout=25) as response:
-                      return response.status, response.read().decode()
-              except urllib.error.HTTPError as error:
-                  return error.code, error.read().decode()
-
           try:
-              status, body = request('GET', '/rest/v1/chats?select=id&limit=1')
-              results.append(f'supabase_read_status={status}')
+              source = Path('novo-site/src/supabase.js').read_text(encoding='utf-8')
+              url = re.search(r"const defaultUrl = [\"']([^\"']+)[\"']", source).group(1)
+              key_block = re.search(r"const defaultKey = \[(.*?)\]\.join", source, re.S).group(1)
+              key = ''.join(re.findall(r"[\"']([^\"']*)[\"']", key_block))
+              headers = {
+                  'apikey': key,
+                  'Authorization': f'Bearer {key}',
+                  'Content-Type': 'application/json',
+                  'Prefer': 'return=representation',
+              }
 
-              stamp = datetime.now(timezone.utc).isoformat()
-              status, body = request('POST', '/rest/v1/chats', [{
-                  'title': 'Verificação temporária',
-                  'createdAt': stamp,
-              }])
-              results.append(f'supabase_chat_insert_status={status}')
-              if status in (200, 201):
-                  chat_id = json.loads(body)[0]['id']
+              def request(method, path, payload=None):
+                  body = None if payload is None else json.dumps(payload).encode()
+                  req = urllib.request.Request(url + path, data=body, method=method, headers=headers)
+                  try:
+                      with urllib.request.urlopen(req, timeout=25) as response:
+                          return response.status, response.read().decode()
+                  except urllib.error.HTTPError as error:
+                      return error.code, error.read().decode()
 
-              if chat_id:
-                  status, body = request('POST', '/rest/v1/mensagens', [{
-                      'chat_id': chat_id,
-                      'role': 'user',
-                      'text': 'Mensagem temporária de verificação',
+              try:
+                  status, body = request('GET', '/rest/v1/chats?select=id&limit=1')
+                  results.append(f'supabase_read_status={status}')
+
+                  stamp = datetime.now(timezone.utc).isoformat()
+                  status, body = request('POST', '/rest/v1/chats', [{
+                      'title': 'Verificação temporária',
                       'createdAt': stamp,
                   }])
-                  results.append(f'supabase_message_insert_status={status}')
+                  results.append(f'supabase_chat_insert_status={status}')
                   if status in (200, 201):
-                      message_id = json.loads(body)[0]['id']
-          finally:
-              if message_id:
-                  status, _ = request('DELETE', f'/rest/v1/mensagens?id=eq.{message_id}')
-                  results.append(f'supabase_message_delete_status={status}')
-              if chat_id:
-                  status, _ = request('DELETE', f'/rest/v1/chats?id=eq.{chat_id}')
-                  results.append(f'supabase_chat_delete_status={status}')
+                      chat_id = json.loads(body)[0]['id']
 
-          for host in ['https://euteamoanaclara.top', 'https://www.euteamoanaclara.top']:
-              try:
-                  req = urllib.request.Request(host + '/api/notify', method='GET')
-                  with urllib.request.urlopen(req, timeout=25) as response:
-                      results.append(f'notify_route_{host}_status={response.status}')
-              except urllib.error.HTTPError as error:
-                  results.append(f'notify_route_{host}_status={error.code}')
-              except Exception as error:
-                  results.append(f'notify_route_{host}_error={type(error).__name__}')
+                  if chat_id:
+                      status, body = request('POST', '/rest/v1/mensagens', [{
+                          'chat_id': chat_id,
+                          'role': 'user',
+                          'text': 'Mensagem temporária de verificação',
+                          'createdAt': stamp,
+                      }])
+                      results.append(f'supabase_message_insert_status={status}')
+                      if status in (200, 201):
+                          message_id = json.loads(body)[0]['id']
+              finally:
+                  if message_id:
+                      status, _ = request('DELETE', f'/rest/v1/mensagens?id=eq.{message_id}')
+                      results.append(f'supabase_message_delete_status={status}')
+                  if chat_id:
+                      status, _ = request('DELETE', f'/rest/v1/chats?id=eq.{chat_id}')
+                      results.append(f'supabase_chat_delete_status={status}')
+
+              for host in ['https://euteamoanaclara.top', 'https://www.euteamoanaclara.top']:
+                  try:
+                      req = urllib.request.Request(host + '/api/notify', method='GET')
+                      with urllib.request.urlopen(req, timeout=25) as response:
+                          results.append(f'notify_route_{host}_status={response.status}')
+                  except urllib.error.HTTPError as error:
+                      results.append(f'notify_route_{host}_status={error.code}')
+                  except Exception as error:
+                      results.append(f'notify_route_{host}_error={type(error).__name__}')
+          except Exception as error:
+              results.append(f'check_error={type(error).__name__}:{error}')
 
           Path('_integration_check.txt').write_text('\n'.join(results) + '\n', encoding='utf-8')
           PY

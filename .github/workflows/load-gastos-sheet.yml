@@ -22,20 +22,11 @@ jobs:
           gastos_path = Path('novo-site/src/pages/Gastos.jsx')
           gastos = gastos_path.read_text(encoding='utf-8')
 
-          old_delete_helper = '''const deleteSyncedExpense = async (id) => {
-            const response = await fetch("/api/gastos", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "deleteExpense", expenseId: id }),
-            });
-
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result.ok) {
-              throw new Error(result.error || `Erro HTTP ${response.status}`);
-            }
-            return result;
-          };'''
-          new_delete_helper = '''const deleteSyncedExpense = async (entry) => {
+          helper_start = gastos.find('const deleteSyncedExpense = async')
+          helper_end = gastos.find('\n\nconst syncExpense = async', helper_start)
+          if helper_start < 0 or helper_end < 0:
+              raise RuntimeError('Função de exclusão sincronizada não encontrada')
+          helpers = '''const deleteSyncedExpense = async (entry) => {
             const response = await fetch("/api/gastos", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -69,9 +60,7 @@ jobs:
               ? result.entries.map((entry) => ({ ...entry, synced: true }))
               : [];
           };'''
-          if old_delete_helper not in gastos:
-              raise RuntimeError('Função de exclusão sincronizada não encontrada')
-          gastos = gastos.replace(old_delete_helper, new_delete_helper, 1)
+          gastos = gastos[:helper_start] + helpers + gastos[helper_end:]
 
           state_marker = '  const [deletingId, setDeletingId] = useState("");'
           if 'const [isLoadingEntries, setIsLoadingEntries]' not in gastos:
@@ -86,7 +75,7 @@ jobs:
           effect_marker = '''  useEffect(() => {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
           }, [entries]);'''
-          load_effect = '''  const refreshSheetEntries = async ({ silent = false } = {}) => {
+          refresh = '''  const refreshSheetEntries = async ({ silent = false } = {}) => {
             if (!silent) setIsLoadingEntries(true);
 
             try {
@@ -126,98 +115,84 @@ jobs:
           if 'const refreshSheetEntries' not in gastos:
               if effect_marker not in gastos:
                   raise RuntimeError('Efeito de armazenamento não encontrado')
-              gastos = gastos.replace(effect_marker, load_effect + effect_marker, 1)
+              gastos = gastos.replace(effect_marker, refresh + effect_marker, 1)
 
-          old_sync = '''      await syncExpense(entry);
-              setMessage(
-                `Registrado e sincronizado na planilha: ${entry.description} por ${currency.format(entry.amount)}.`,
-              );'''
-          new_sync = '''      const syncResult = await syncExpense(entry);
+          sync_line = '      await syncExpense(entry);'
+          sync_replacement = '''      const syncResult = await syncExpense(entry);
               setEntries((previous) =>
                 previous.map((item) =>
                   item.id === entry.id
                     ? { ...item, synced: true, sheetRow: syncResult.row || null }
                     : item,
                 ),
-              );
-              setMessage(
-                `Registrado e sincronizado na planilha: ${entry.description} por ${currency.format(entry.amount)}.`,
               );'''
-          if old_sync not in gastos:
-              raise RuntimeError('Trecho de sincronização após cadastro não encontrado')
-          gastos = gastos.replace(old_sync, new_sync, 1)
+          if sync_line not in gastos:
+              raise RuntimeError('Sincronização após cadastro não encontrada')
+          gastos = gastos.replace(sync_line, sync_replacement, 1)
 
+          if 'const synced = isMarkedAsSynced(entry.id);' not in gastos:
+              raise RuntimeError('Verificação de sincronização não encontrada')
           gastos = gastos.replace(
-              '    const synced = isMarkedAsSynced(entry.id);',
-              '    const synced = Boolean(entry.synced || isMarkedAsSynced(entry.id));',
+              'const synced = isMarkedAsSynced(entry.id);',
+              'const synced = Boolean(entry.synced || isMarkedAsSynced(entry.id));',
               1,
           )
+          if 'await deleteSyncedExpense(entry.id);' not in gastos:
+              raise RuntimeError('Chamada de exclusão antiga não encontrada')
           gastos = gastos.replace(
-              '      if (synced) await deleteSyncedExpense(entry.id);',
-              '      if (synced) await deleteSyncedExpense(entry);',
+              'await deleteSyncedExpense(entry.id);',
+              'await deleteSyncedExpense(entry);',
               1,
           )
 
-          old_empty = '''              {entries.length === 0 ? (
-                            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-8 text-center text-sm text-slate-400">
-                              Nenhuma compra registrada neste aparelho.
-                            </div>'''
-          new_empty = '''              {isLoadingEntries ? (
-                            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-8 text-center text-sm text-slate-400">
-                              <Loader2 className="mx-auto mb-2 animate-spin" size={20} />
-                              Carregando lançamentos da planilha...
-                            </div>
-                          ) : entries.length === 0 ? (
-                            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-8 text-center text-sm text-slate-400">
-                              Nenhuma compra encontrada na planilha.
-                            </div>'''
-          if old_empty not in gastos:
-              raise RuntimeError('Estado vazio da lista não encontrado')
-          gastos = gastos.replace(old_empty, new_empty, 1)
-
+          empty_condition = '{entries.length === 0 ? ('
+          loading_condition = '''{isLoadingEntries ? (
+                          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-8 text-center text-sm text-slate-400">
+                            <Loader2 className="mx-auto mb-2 animate-spin" size={20} />
+                            Carregando lançamentos da planilha...
+                          </div>
+                        ) : entries.length === 0 ? ('''
+          if empty_condition not in gastos:
+              raise RuntimeError('Condição da lista vazia não encontrada')
+          gastos = gastos.replace(empty_condition, loading_condition, 1)
+          gastos = gastos.replace(
+              'Nenhuma compra registrada neste aparelho.',
+              'Nenhuma compra encontrada na planilha.',
+              1,
+          )
           gastos_path.write_text(gastos, encoding='utf-8')
 
           api_path = Path('api/gastos.js')
           api = api_path.read_text(encoding='utf-8')
-          old_valid = '''    const validDelete =
+          delete_line = '''    const validDelete =
               action === "deleteExpense" &&
-              Boolean(String(body?.expenseId || "").trim());
-
-            if (!validAppend && !validDelete) {
-              return json({ ok: false, error: "Lançamento ou ação inválida." }, 400);
-            }
-
-            const upstreamPayload = {
-              action,
-              token,
-              ...(validAppend
+              Boolean(String(body?.expenseId || "").trim());'''
+          if delete_line not in api:
+              raise RuntimeError('Validação de exclusão da API não encontrada')
+          api = api.replace(
+              delete_line,
+              delete_line + '\n    const validList = action === "listExpenses";',
+              1,
+          )
+          api = api.replace(
+              'if (!validAppend && !validDelete) {',
+              'if (!validAppend && !validDelete && !validList) {',
+              1,
+          )
+          old_payload = '''      ...(validAppend
                 ? { expense: body.expense }
-                : { expenseId: String(body.expenseId).trim() }),
-            };'''
-          new_valid = '''    const validDelete =
-              action === "deleteExpense" &&
-              Boolean(String(body?.expenseId || "").trim());
-            const validList = action === "listExpenses";
-
-            if (!validAppend && !validDelete && !validList) {
-              return json({ ok: false, error: "Lançamento ou ação inválida." }, 400);
-            }
-
-            const upstreamPayload = {
-              action,
-              token,
-              ...(validAppend
+                : { expenseId: String(body.expenseId).trim() }),'''
+          new_payload = '''      ...(validAppend
                 ? { expense: body.expense }
                 : validDelete
                   ? {
                       expenseId: String(body.expenseId).trim(),
                       row: Number(body.row) || null,
                     }
-                  : {}),
-            };'''
-          if old_valid not in api:
-              raise RuntimeError('Validação atual da API não encontrada')
-          api = api.replace(old_valid, new_valid, 1)
+                  : {}),'''
+          if old_payload not in api:
+              raise RuntimeError('Payload da API não encontrado')
+          api = api.replace(old_payload, new_payload, 1)
           api = api.replace(
               '        missing: Boolean(result.missing),',
               '        missing: Boolean(result.missing),\n        entries: Array.isArray(result.entries) ? result.entries : [],',
@@ -264,9 +239,7 @@ jobs:
             Object.keys(properties).forEach(function (key) {
               if (key.indexOf(CONFIG.DEDUPE_PREFIX) !== 0) return;
               const row = Number(properties[key]);
-              if (Number.isInteger(row)) {
-                idsByRow[row] = key.slice(CONFIG.DEDUPE_PREFIX.length);
-              }
+              if (Number.isInteger(row)) idsByRow[row] = key.slice(CONFIG.DEDUPE_PREFIX.length);
             });
 
             const values = sheet
@@ -298,9 +271,7 @@ jobs:
               });
             });
 
-            entries.sort(function (a, b) {
-              return b.sheetRow - a.sheetRow;
-            });
+            entries.sort(function (a, b) { return b.sheetRow - a.sheetRow; });
             return { entries: entries };
           }
 
@@ -316,7 +287,6 @@ jobs:
               const dedupeKey = CONFIG.DEDUPE_PREFIX + id;
               const storedRow = properties.getProperty(dedupeKey);
               const row = Number(storedRow || requestedRow);
-
               if (!Number.isInteger(row) || row < CONFIG.FIRST_DATA_ROW) {
                 return { deleted: false, missing: true };
               }
@@ -338,11 +308,9 @@ jobs:
             if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
               return Utilities.formatDate(value, Session.getScriptTimeZone() || 'America/Sao_Paulo', 'yyyy-MM-dd');
             }
-
             const text = String(value || '').trim();
             const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
             if (iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
-
             const brazilian = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(text);
             if (brazilian) return brazilian[3] + '-' + brazilian[2] + '-' + brazilian[1];
             return '';

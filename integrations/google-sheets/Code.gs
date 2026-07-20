@@ -156,7 +156,8 @@ function deleteExpense_(expenseId, requestedRow) {
     const properties = PropertiesService.getScriptProperties();
     const dedupeKey = CONFIG.DEDUPE_PREFIX + id;
     const storedRow = properties.getProperty(dedupeKey);
-    const row = Number(storedRow || requestedRow);
+    const legacyRowMatch = /^sheet-row-(\d+)$/.exec(id);
+    const row = Number(storedRow || requestedRow || (legacyRowMatch && legacyRowMatch[1]));
 
     if (!Number.isInteger(row) || row < CONFIG.FIRST_DATA_ROW) {
       return { deleted: false, missing: true };

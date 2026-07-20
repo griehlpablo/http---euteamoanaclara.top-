@@ -18,26 +18,13 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           gastos_path = Path('novo-site/src/pages/Gastos.jsx')
           gastos = gastos_path.read_text(encoding='utf-8')
 
-          old_helpers = '''const markAsSynced = (id) => {
-            const synced = readJson(SHEET_SYNCED_KEY, []);
-            const next = new Set(Array.isArray(synced) ? synced : []);
-            next.add(id);
-            localStorage.setItem(SHEET_SYNCED_KEY, JSON.stringify([...next]));
-          };
-
-          const syncExpense = async (entry) => {'''
-          new_helpers = '''const markAsSynced = (id) => {
-            const synced = readJson(SHEET_SYNCED_KEY, []);
-            const next = new Set(Array.isArray(synced) ? synced : []);
-            next.add(id);
-            localStorage.setItem(SHEET_SYNCED_KEY, JSON.stringify([...next]));
-          };
-
-          const isMarkedAsSynced = (id) => {
+          helper_marker = 'const syncExpense = async (entry) => {'
+          helpers = '''const isMarkedAsSynced = (id) => {
             const synced = readJson(SHEET_SYNCED_KEY, []);
             return Array.isArray(synced) && synced.includes(id);
           };
@@ -62,27 +49,26 @@ jobs:
             return result;
           };
 
-          const syncExpense = async (entry) => {'''
-          if old_helpers not in gastos:
-              raise RuntimeError('Bloco de sincronização não encontrado em Gastos.jsx')
-          gastos = gastos.replace(old_helpers, new_helpers, 1)
+          '''
+          if 'const deleteSyncedExpense' not in gastos:
+              if helper_marker not in gastos:
+                  raise RuntimeError('Marcador de sincronização não encontrado')
+              gastos = gastos.replace(helper_marker, helpers + helper_marker, 1)
 
-          old_state = '''  const [isSaving, setIsSaving] = useState(false);
-            const [isAnalyzing, setIsAnalyzing] = useState(false);'''
-          new_state = '''  const [isSaving, setIsSaving] = useState(false);
-            const [deletingId, setDeletingId] = useState('');
-            const [isAnalyzing, setIsAnalyzing] = useState(false);'''
-          if old_state not in gastos:
-              raise RuntimeError('Estados do formulário não encontrados')
-          gastos = gastos.replace(old_state, new_state, 1)
+          state_marker = '  const [isSaving, setIsSaving] = useState(false);'
+          if 'const [deletingId, setDeletingId]' not in gastos:
+              if state_marker not in gastos:
+                  raise RuntimeError('Estado de salvamento não encontrado')
+              gastos = gastos.replace(
+                  state_marker,
+                  state_marker + "\n  const [deletingId, setDeletingId] = useState('');",
+                  1,
+              )
 
-          old_delete = '''  const deleteEntry = (id) => {
-            if (!window.confirm("Apagar este lançamento deste aparelho?")) return;
-            setEntries((previous) => previous.filter((entry) => entry.id !== id));
-            setMessage(
-              "Lançamento removido deste aparelho. A exclusão não altera uma linha já enviada à planilha.",
-            );
-          };'''
+          delete_start = gastos.find('  const deleteEntry = (id) => {')
+          delete_end = gastos.find('\n\n  const exportCsv', delete_start)
+          if delete_start < 0 or delete_end < 0:
+              raise RuntimeError('Função antiga de exclusão não encontrada')
           new_delete = '''  const deleteEntry = async (entry) => {
             const synced = isMarkedAsSynced(entry.id);
             const confirmation = synced
@@ -110,101 +96,83 @@ jobs:
               setDeletingId('');
             }
           };'''
-          if old_delete not in gastos:
-              raise RuntimeError('Função de exclusão não encontrada')
-          gastos = gastos.replace(old_delete, new_delete, 1)
+          gastos = gastos[:delete_start] + new_delete + gastos[delete_end:]
 
-          old_button = '''                    <button
-                                onClick={() => deleteEntry(entry.id)}
-                                className="rounded-full p-2 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                title="Apagar lançamento"
-                              >
-                                <Trash2 size={17} />
-                              </button>'''
-          new_button = '''                    <button
-                                type="button"
-                                onClick={() => deleteEntry(entry)}
-                                disabled={deletingId === entry.id}
-                                className="rounded-full p-2 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors disabled:cursor-wait disabled:opacity-50"
-                                title="Apagar do site e da planilha"
-                              >
-                                {deletingId === entry.id ? (
-                                  <Loader2 size={17} className="animate-spin" />
-                                ) : (
-                                  <Trash2 size={17} />
-                                )}
-                              </button>'''
-          if old_button not in gastos:
-              raise RuntimeError('Botão de exclusão não encontrado')
-          gastos = gastos.replace(old_button, new_button, 1)
+          button_pattern = re.compile(
+              r'''<button\s+onClick=\{\(\) => deleteEntry\(entry\.id\)\}\s+className="rounded-full p-2 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"\s+title="Apagar lançamento"\s*>\s*<Trash2 size=\{17\} />\s*</button>''',
+              re.S,
+          )
+          new_button = '''<button
+                        type="button"
+                        onClick={() => deleteEntry(entry)}
+                        disabled={deletingId === entry.id}
+                        className="rounded-full p-2 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors disabled:cursor-wait disabled:opacity-50"
+                        title="Apagar do site e da planilha"
+                      >
+                        {deletingId === entry.id ? (
+                          <Loader2 size={17} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={17} />
+                        )}
+                      </button>'''
+          gastos, count = button_pattern.subn(new_button, gastos, count=1)
+          if count != 1:
+              raise RuntimeError('Botão antigo de exclusão não encontrado')
           gastos_path.write_text(gastos, encoding='utf-8')
 
           api_path = Path('api/gastos.js')
           api = api_path.read_text(encoding='utf-8')
-
-          old_validation = '''    if (body?.action !== 'appendExpense' || !isValidExpense(body?.expense)) {
-                return json({ ok: false, error: 'Lançamento inválido.' }, 400);
-              }
-
-              const upstreamPayload = {
-                action: 'appendExpense',
-                token,
-                expense: body.expense,
-              };'''
+          validation_start = api.find("    if (body?.action !== 'appendExpense'")
+          validation_end = api.find('\n\n    try {', validation_start)
+          if validation_start < 0 or validation_end < 0:
+              raise RuntimeError('Validação antiga da API não encontrada')
           new_validation = '''    const action = body?.action;
-              const validAppend = action === 'appendExpense' && isValidExpense(body?.expense);
-              const validDelete =
-                action === 'deleteExpense' && Boolean(String(body?.expenseId || '').trim());
+            const validAppend = action === 'appendExpense' && isValidExpense(body?.expense);
+            const validDelete =
+              action === 'deleteExpense' && Boolean(String(body?.expenseId || '').trim());
 
-              if (!validAppend && !validDelete) {
-                return json({ ok: false, error: 'Lançamento ou ação inválida.' }, 400);
-              }
+            if (!validAppend && !validDelete) {
+              return json({ ok: false, error: 'Lançamento ou ação inválida.' }, 400);
+            }
 
-              const upstreamPayload = {
-                action,
-                token,
-                ...(validAppend
-                  ? { expense: body.expense }
-                  : { expenseId: String(body.expenseId).trim() }),
-              };'''
-          if old_validation not in api:
-              raise RuntimeError('Validação da API não encontrada')
-          api = api.replace(old_validation, new_validation, 1)
-
-          old_return = '''      return json({ ok: true, row: result.row, duplicate: Boolean(result.duplicate) });'''
-          new_return = '''      return json({
+            const upstreamPayload = {
+              action,
+              token,
+              ...(validAppend
+                ? { expense: body.expense }
+                : { expenseId: String(body.expenseId).trim() }),
+            };'''
+          api = api[:validation_start] + new_validation + api[validation_end:]
+          api = api.replace(
+              '      return json({ ok: true, row: result.row, duplicate: Boolean(result.duplicate) });',
+              '''      return json({
                 ok: true,
                 row: result.row,
                 duplicate: Boolean(result.duplicate),
                 deleted: Boolean(result.deleted),
                 missing: Boolean(result.missing),
-              });'''
-          if old_return not in api:
-              raise RuntimeError('Retorno da API não encontrado')
-          api = api.replace(old_return, new_return, 1)
+              });''',
+              1,
+          )
           api_path.write_text(api, encoding='utf-8')
 
           code_path = Path('integrations/google-sheets/Code.gs')
           code = code_path.read_text(encoding='utf-8')
-
-          old_action = '''    if (payload.action !== 'appendExpense') {
-                throw new Error('Ação não reconhecida.');
-              }
-
-              const result = appendExpense_(payload.expense || {});'''
+          action_start = code.find("    if (payload.action !== 'appendExpense')")
+          action_end = code.find('\n    return jsonResponse_', action_start)
+          if action_start < 0 or action_end < 0:
+              raise RuntimeError('Ação antiga do Apps Script não encontrada')
           new_action = '''    let result;
-              if (payload.action === 'appendExpense') {
-                result = appendExpense_(payload.expense || {});
-              } else if (payload.action === 'deleteExpense') {
-                result = deleteExpense_(payload.expenseId);
-              } else {
-                throw new Error('Ação não reconhecida.');
-              }'''
-          if old_action not in code:
-              raise RuntimeError('Seleção de ação do Apps Script não encontrada')
-          code = code.replace(old_action, new_action, 1)
+            if (payload.action === 'appendExpense') {
+              result = appendExpense_(payload.expense || {});
+            } else if (payload.action === 'deleteExpense') {
+              result = deleteExpense_(payload.expenseId);
+            } else {
+              throw new Error('Ação não reconhecida.');
+            }'''
+          code = code[:action_start] + new_action + code[action_end:]
 
-          marker = '''function findNextEmptyRow_(sheet) {'''
+          marker = 'function findNextEmptyRow_(sheet) {'
           delete_function = '''function deleteExpense_(expenseId) {
             const id = String(expenseId || '').trim();
             if (!id) throw new Error('Identificador do lançamento ausente.');
@@ -216,7 +184,6 @@ jobs:
               const properties = PropertiesService.getScriptProperties();
               const dedupeKey = CONFIG.DEDUPE_PREFIX + id;
               const storedRow = properties.getProperty(dedupeKey);
-
               if (!storedRow) return { deleted: false, missing: true };
 
               const row = Number(storedRow);
@@ -231,7 +198,6 @@ jobs:
               sheet.getRange(row, 1, 1, 11).clearContent();
               properties.deleteProperty(dedupeKey);
               SpreadsheetApp.flush();
-
               return { deleted: true, missing: false, row };
             } finally {
               lock.releaseLock();
@@ -239,9 +205,10 @@ jobs:
           }
 
           function findNextEmptyRow_(sheet) {'''
-          if marker not in code:
-              raise RuntimeError('Ponto de inserção do Apps Script não encontrado')
-          code = code.replace(marker, delete_function, 1)
+          if 'function deleteExpense_' not in code:
+              if marker not in code:
+                  raise RuntimeError('Marcador de linha do Apps Script não encontrado')
+              code = code.replace(marker, delete_function, 1)
           code_path.write_text(code, encoding='utf-8')
           PY
 

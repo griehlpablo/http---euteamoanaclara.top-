@@ -78,8 +78,9 @@ export default {
     const validDelete =
       action === "deleteExpense" &&
       Boolean(String(body?.expenseId || "").trim());
+    const validList = action === "listExpenses";
 
-    if (!validAppend && !validDelete) {
+    if (!validAppend && !validDelete && !validList) {
       return json({ ok: false, error: "Lançamento ou ação inválida." }, 400);
     }
 
@@ -88,7 +89,12 @@ export default {
       token,
       ...(validAppend
         ? { expense: body.expense }
-        : { expenseId: String(body.expenseId).trim() }),
+        : validDelete
+          ? {
+              expenseId: String(body.expenseId).trim(),
+              row: Number(body.row) || null,
+            }
+          : {}),
     };
 
     try {
@@ -128,6 +134,7 @@ export default {
         duplicate: Boolean(result.duplicate),
         deleted: Boolean(result.deleted),
         missing: Boolean(result.missing),
+        entries: Array.isArray(result.entries) ? result.entries : [],
       });
     } catch (error) {
       return json(

@@ -1,0 +1,249 @@
+name: Manutenção do código
+
+on:
+  push:
+    paths:
+      - .github/workflows/code-maintenance.yml
+
+permissions:
+  contents: write
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Atualizar Cupido e integrações
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          def read(path):
+              return Path(path).read_text(encoding='utf-8')
+
+          def write(path, content):
+              Path(path).write_text(content.rstrip() + '\n', encoding='utf-8')
+
+          gemini_path = 'novo-site/src/services/gemini.js'
+          gemini = read(gemini_path)
+          gemini = gemini.replace("STANDARD: 'gemini-flash-latest'", "STANDARD: 'gemini-3.1-flash-lite'")
+          gemini = re.sub(
+              r"const DEFAULT_SYSTEM_INSTRUCTION = .*?;\n",
+              "const DEFAULT_SYSTEM_INSTRUCTION = 'Você é o Cupido Virtual do site de Pablo e Ana Clara. Seja prestativo, inteligente, gentil e levemente romântico. Dê respostas curtas e práticas, exceto quando pedirem receita, roteiro ou detalhes. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. Evite repetir sugestões. Quando Ana pedir para avisar Pablo, confirme o envio e inclua [AVISAR_PABLO] no fim da resposta.';\n",
+              gemini,
+              count=1,
+          )
+          runtime = """const getRuntimeContext = () => {
+            const now = new Date();
+            const localDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const daysSince = (year, month, day) => Math.max(0, Math.floor(
+              (localDay.getTime() - new Date(year, month - 1, day).getTime()) / 86400000,
+            ));
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'não informado';
+            const currentDateTime = new Intl.DateTimeFormat('pt-BR', {
+              dateStyle: 'full',
+              timeStyle: 'long',
+            }).format(now);
+
+            return [
+              `Data e hora do aparelho: ${currentDateTime}.`,
+              `Fuso horário: ${timeZone}.`,
+              `Pablo e Ana ficaram pela primeira vez há ${daysSince(2023, 7, 6)} dias, em 06/07/2023.`,
+              `Eles namoram há ${daysSince(2023, 9, 23)} dias, desde 23/09/2023.`,
+              'Use esses dados para perguntas sobre hoje, horário, aniversário ou duração do relacionamento. Não invente outra data.',
+            ].join(' ');
+          };
+
+          """
+          if 'const getRuntimeContext = () =>' not in gemini:
+              anchor = 'const formatHistory = '
+              if anchor not in gemini:
+                  raise RuntimeError('Ponto de inserção do contexto não encontrado.')
+              gemini = gemini.replace(anchor, runtime + anchor, 1)
+          old_instruction = '  const systemInstruction = options.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION;'
+          new_instruction = "  const systemInstruction = [\n    options.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION,\n    options.includeRuntimeContext === false ? '' : getRuntimeContext(),\n  ].filter(Boolean).join(' ');"
+          if old_instruction in gemini:
+              gemini = gemini.replace(old_instruction, new_instruction)
+          write(gemini_path, gemini)
+
+          write('novo-site/vite.config.js', """
+          import { resolve } from 'node:path';
+          import { defineConfig } from 'vite';
+          import react from '@vitejs/plugin-react';
+
+          export default defineConfig({
+            plugins: [react()],
+            build: {
+              rollupOptions: {
+                input: {
+                  main: resolve(__dirname, 'index.html'),
+                  planohelena: resolve(__dirname, 'planohelena/index.html'),
+                },
+                external: ['dashjs', 'hls.js', 'flv.js'],
+              },
+            },
+          });
+          """)
+
+          assistant_path = 'novo-site/src/pages/AssistenteCasal.jsx'
+          assistant = read(assistant_path)
+          assistant = assistant.replace(', Cpu, FileText', ', FileText')
+          assistant = assistant.replace(
+              "const LOCAL_MESSAGES_KEY = 'cupido-virtual-messages-v1';",
+              "const LOCAL_MESSAGES_KEY = 'cupido-virtual-messages-v1';\nconst LOCAL_MIGRATION_KEY = 'cupido-virtual-supabase-migration-v1';",
+          )
+          assistant = assistant.replace("  const [currentModelName, setCurrentModelName] = useState('');\n", '')
+          assistant = assistant.replace('      setCurrentModelName(apiResult.modelUsed);\n', '')
+
+          file_reader_end = "  reader.onerror = (error) => reject(error);\n});"
+          migration = file_reader_end + """
+
+          const migrateLocalChats = async () => {
+            if (localStorage.getItem(LOCAL_MIGRATION_KEY) === 'done') return;
+
+            let localChats = readLocalJson(LOCAL_CHATS_KEY, []);
+            if (!Array.isArray(localChats) || !localChats.length) {
+              localStorage.setItem(LOCAL_MIGRATION_KEY, 'done');
+              return;
+            }
+
+            const messageStore = readLocalMessageStore();
+            for (const localChat of [...localChats].reverse()) {
+              const { data: remoteChat, error: chatError } = await supabase
+                .from('chats')
+                .insert([{
+                  title: localChat.title || 'Nova Conversa',
+                  createdAt: localChat.createdAt || new Date().toISOString(),
+                }])
+                .select()
+                .single();
+              if (chatError) throw chatError;
+
+              const localMessages = Array.isArray(messageStore[localChat.id])
+                ? messageStore[localChat.id]
+                : [];
+              const payload = localMessages.map((message) => ({
+                chat_id: remoteChat.id,
+                role: message.role,
+                text: message.text || '',
+                imageUrl: message.imageUrl?.startsWith('data:') ? null : message.imageUrl || null,
+                fileType: message.fileType || null,
+                createdAt: message.createdAt || new Date().toISOString(),
+              }));
+
+              if (payload.length) {
+                const { error: messageError } = await supabase.from('mensagens').insert(payload);
+                if (messageError) throw messageError;
+              }
+
+              localChats = localChats.filter((chat) => chat.id !== localChat.id);
+              saveLocalChats(localChats);
+              delete messageStore[localChat.id];
+              localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(messageStore));
+            }
+
+            localStorage.removeItem(LOCAL_CHATS_KEY);
+            localStorage.removeItem(LOCAL_MESSAGES_KEY);
+            localStorage.setItem(LOCAL_MIGRATION_KEY, 'done');
+          };"""
+          if 'const migrateLocalChats = async () =>' not in assistant:
+              if file_reader_end not in assistant:
+                  raise RuntimeError('Leitor de arquivos do Cupido não encontrado.')
+              assistant = assistant.replace(file_reader_end, migration, 1)
+
+          load_anchor = "    (async () => {\n      const { data, error } = await supabase.from('chats').select('*').order('createdAt', { ascending: false });"
+          load_replacement = """    (async () => {
+              try {
+                await migrateLocalChats();
+              } catch (error) {
+                console.warn('Não foi possível migrar as conversas locais:', error);
+              }
+              const { data, error } = await supabase.from('chats').select('*').order('createdAt', { ascending: false });"""
+          if load_anchor not in assistant:
+              raise RuntimeError('Carregamento das conversas não encontrado.')
+          assistant = assistant.replace(load_anchor, load_replacement, 1)
+
+          notification_pattern = re.compile(
+              r"      if \(botResponse\.includes\('\[AVISAR_PABLO\]'\)\) \{[\s\S]*?\n      \}",
+              re.M,
+          )
+          notification_replacement = """      const hasNotificationTag = botResponse.includes('[AVISAR_PABLO]');
+              const notificationRequested = /\\b(?:avisa|avise|avisar|notifica|notifique|notificar|manda|mande|mandar|fala|fale|falar|pede|peça|pedir)\\b[\\s\\S]{0,60}\\bpablo\\b/i.test(prompt);
+              if (hasNotificationTag) botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
+
+              if (hasNotificationTag || notificationRequested) {
+                const notificationResult = await sendPartnerNotification({
+                  targetUser: 'pablo',
+                  title: 'Recado da Ana pelo Cupido 💘',
+                  message: `${prompt || 'Ana enviou um arquivo'} — ${botResponse}`,
+                  data: { source: 'assistente-casal', chatId: activeChatId },
+                });
+
+                if (notificationResult.whatsApp?.ok) {
+                  botResponse += '\\n\\nRecado enviado ao Pablo pelo WhatsApp. 💌';
+                } else if (notificationResult.push?.ok) {
+                  botResponse += '\\n\\nEnviei uma notificação ao Pablo, mas o WhatsApp não confirmou o recebimento.';
+                } else {
+                  botResponse += '\\n\\nNão consegui entregar o recado ao Pablo agora.';
+                }
+              }"""
+          assistant, count = notification_pattern.subn(notification_replacement, assistant, count=1)
+          if count != 1:
+              raise RuntimeError('Bloco de notificação do Cupido não encontrado.')
+
+          assistant = re.sub(
+              r"\s*\{!isSupabaseConfigured && <span[^\n]+\n\s*\{currentModelName && <span[^\n]+\n",
+              "\n            <span className=\"text-[10px] text-slate-400\">\n              {isSupabaseConfigured ? 'Conversas sincronizadas na nuvem' : 'Conversas salvas neste navegador'}\n            </span>\n",
+              assistant,
+              count=1,
+          )
+          write(assistant_path, assistant)
+
+          links_path = 'novo-site/src/pages/Links.jsx'
+          links = read(links_path)
+          links = links.replace(
+              "import { supabase } from '../supabase';",
+              "import { supabase } from '../supabase';\nimport { callGeminiAPI } from '../services/gemini';",
+          )
+          replacement = """const summarizeLink = async (rawUrl, rawTitle, rawDescription) => {
+            const prompt = `Analise o produto e a origem do link. Resuma o título em até 5 palavras, a descrição em até 15 palavras e classifique a confiabilidade do domínio como high, medium ou low. Retorne somente JSON no formato {"title":"","description":"","trust":"medium"}. Link: ${rawUrl} Título: ${rawTitle} Descrição: ${rawDescription}`;
+
+            try {
+              const result = await callGeminiAPI([], prompt, null, null, {
+                includeRuntimeContext: false,
+                systemInstruction: 'Analise links de compras e responda somente com JSON válido, sem bloco de código ou explicação.',
+              });
+              const sanitized = String(result.text || '').replace(/```json|```/gi, '').trim();
+              const parsed = JSON.parse(sanitized);
+              if (!['high', 'medium', 'low'].includes(parsed.trust)) parsed.trust = 'medium';
+              return parsed;
+            } catch (error) {
+              console.error('Erro ao analisar link:', error);
+              return { title: rawTitle, description: rawDescription, trust: 'medium' };
+            }
+          };
+
+          export default function Links()"""
+          links, count = re.subn(
+              r"const callGeminiForSummarization = async[\s\S]*?\n};\n\nexport default function Links\(\)",
+              replacement,
+              links,
+              count=1,
+          )
+          if count != 1:
+              raise RuntimeError('Analisador de links não encontrado.')
+          links = links.replace('callGeminiForSummarization(', 'summarizeLink(')
+          write(links_path, links)
+          PY
+
+      - name: Salvar alterações
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add novo-site/src novo-site/vite.config.js
+          git commit -m "refactor: organizar Cupido e integrações"
+          git push

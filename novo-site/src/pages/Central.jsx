@@ -4,7 +4,7 @@ import {
   Clock, ImageIcon, MessageCircleHeart, ArrowLeft,
   TrendingUp, GitMerge, Link as LinkIcon, Sparkles,
   SmilePlus, Gift, Activity, Ticket, ListChecks,
-  CalendarDays, Gamepad2, HeartPulse,
+  CalendarDays, Gamepad2, HeartPulse, WalletCards,
 } from 'lucide-react';
 
 const glassClasses = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
@@ -15,6 +15,7 @@ const cards = [
   { path: '/quiz', icon: Gamepad2, title: 'Quiz do Casal', desc: 'Perguntas para testar a sintonia.' },
   { path: '/surpresa-diaria', icon: Gift, title: 'Surpresa Diária', desc: 'Uma missão, cupom ou carinho por dia.' },
   { path: '/dieta', icon: HeartPulse, title: 'Plano do Casal', desc: 'Dieta, rotina, treino e água do dia.' },
+  { path: '/gastos', icon: WalletCards, title: 'Gastos do Casal', desc: 'Registre compras e acompanhe o total do mês.' },
   { path: '/galeria', icon: ImageIcon, title: 'Memórias', desc: 'Os nossos melhores momentos.' },
   { path: '/assistente', icon: Sparkles, title: 'Cupido Virtual ✨', desc: 'IA para dicas de encontros.' },
   { path: '/retrospectiva', icon: TrendingUp, title: 'Retrospectiva', desc: 'A nossa história em números.' },

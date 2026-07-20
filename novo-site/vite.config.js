@@ -1,17 +1,16 @@
-
-import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { resolve } from "node:path";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        planohelena: resolve(__dirname, 'planohelena/index.html'),
+        main: resolve(__dirname, "index.html"),
+        planohelena: resolve(__dirname, "planohelena/index.html"),
       },
-      external: ['dashjs', 'hls.js', 'flv.js'],
+      external: ["dashjs", "hls.js", "flv.js"],
     },
   },
 });

@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Link as LinkIcon, ExternalLink, Plus, Trash2, ShieldCheck, ShieldAlert, Shield } from 'lucide-react';
-import { supabase } from '../supabase';
-import { callGeminiAPI } from '../services/gemini';
+import React, { useState, useEffect } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowLeft,
+  Link as LinkIcon,
+  ExternalLink,
+  Plus,
+  Trash2,
+  ShieldCheck,
+  ShieldAlert,
+  Shield,
+} from "lucide-react";
+import { supabase } from "../supabase";
+import { callGeminiAPI } from "../services/gemini";
 
-const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
+const GLASS_CLASSES =
+  "bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg";
 
 const summarizeLink = async (rawUrl, rawTitle, rawDescription) => {
   const prompt = `Analise o produto e a origem do link. Resuma o título em até 5 palavras, a descrição em até 15 palavras e classifique a confiabilidade do domínio como high, medium ou low. Retorne somente JSON no formato {"title":"","description":"","trust":"medium"}. Link: ${rawUrl} Título: ${rawTitle} Descrição: ${rawDescription}`;
@@ -13,34 +23,38 @@ const summarizeLink = async (rawUrl, rawTitle, rawDescription) => {
   try {
     const result = await callGeminiAPI([], prompt, null, null, {
       includeRuntimeContext: false,
-      systemInstruction: 'Analise links de compras e responda somente com JSON válido, sem bloco de código ou explicação.',
+      systemInstruction:
+        "Analise links de compras e responda somente com JSON válido, sem bloco de código ou explicação.",
     });
-    const sanitized = String(result.text || '').replace(/```json|```/gi, '').trim();
+    const sanitized = String(result.text || "")
+      .replace(/```json|```/gi, "")
+      .trim();
     const parsed = JSON.parse(sanitized);
-    if (!['high', 'medium', 'low'].includes(parsed.trust)) parsed.trust = 'medium';
+    if (!["high", "medium", "low"].includes(parsed.trust))
+      parsed.trust = "medium";
     return parsed;
   } catch (error) {
-    console.error('Erro ao analisar link:', error);
-    return { title: rawTitle, description: rawDescription, trust: 'medium' };
+    console.error("Erro ao analisar link:", error);
+    return { title: rawTitle, description: rawDescription, trust: "medium" };
   }
 };
 
 export default function Links() {
   const [links, setLinks] = useState([]);
-  const [newUrl, setNewUrl] = useState('');
+  const [newUrl, setNewUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [loadingStatus, setLoadingStatus] = useState('');
+  const [loadingStatus, setLoadingStatus] = useState("");
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       const { data, error } = await supabase
-        .from('links')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("links")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) {
-        console.error('Supabase error fetching links:', error);
+        console.error("Supabase error fetching links:", error);
         setLoading(false);
         return;
       }
@@ -48,7 +62,9 @@ export default function Links() {
       setLoading(false);
     })();
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -56,17 +72,18 @@ export default function Links() {
     if (!newUrl.trim()) return;
 
     setSubmitting(true);
-    setLoadingStatus('Buscando link...');
+    setLoadingStatus("Buscando link...");
 
     try {
-      const urlMicrolink = "https://api.microlink.io/?url=" + encodeURIComponent(newUrl);
+      const urlMicrolink =
+        "https://api.microlink.io/?url=" + encodeURIComponent(newUrl);
       const response = await fetch(urlMicrolink);
       const data = await response.json();
 
-      let rawTitle = 'Link sem título';
-      let rawDescription = 'Sem descrição';
+      let rawTitle = "Link sem título";
+      let rawDescription = "Sem descrição";
       let image = null;
-      let trustLevel = 'medium'; // Padrão se a IA falhar
+      let trustLevel = "medium"; // Padrão se a IA falhar
 
       if (data && data.data) {
         rawTitle = data.data.title || rawTitle;
@@ -77,64 +94,70 @@ export default function Links() {
       }
 
       try {
-        setLoadingStatus('Analisando segurança...');
-        const summarized = await summarizeLink(newUrl, rawTitle, rawDescription);
+        setLoadingStatus("Analisando segurança...");
+        const summarized = await summarizeLink(
+          newUrl,
+          rawTitle,
+          rawDescription,
+        );
         rawTitle = summarized.title || rawTitle;
         rawDescription = summarized.description || rawDescription;
-        trustLevel = summarized.trust || 'medium';
+        trustLevel = summarized.trust || "medium";
       } catch (aiError) {
-        console.error('Erro ao resumir com IA:', aiError);
+        console.error("Erro ao resumir com IA:", aiError);
       }
 
-      if (trustLevel === 'low') {
-        const proceed = window.confirm("⚠️ ALERTA DE SEGURANÇA ⚠️\n\nA Inteligência Artificial detectou que este site tem BAIXA confiabilidade (pode ser golpe ou loja falsa).\n\nTem certeza que deseja adicionar esse link à sua lista?");
+      if (trustLevel === "low") {
+        const proceed = window.confirm(
+          "⚠️ ALERTA DE SEGURANÇA ⚠️\n\nA Inteligência Artificial detectou que este site tem BAIXA confiabilidade (pode ser golpe ou loja falsa).\n\nTem certeza que deseja adicionar esse link à sua lista?",
+        );
         if (!proceed) {
           setSubmitting(false);
-          setLoadingStatus('');
+          setLoadingStatus("");
           return; // Aborta a adição
         }
       }
 
-      const { error: insertError } = await supabase.from('links').insert([
+      const { error: insertError } = await supabase.from("links").insert([
         {
           url: newUrl.trim(),
           title: rawTitle,
           description: rawDescription,
           image: image,
-          trust: trustLevel
-        }
+          trust: trustLevel,
+        },
       ]);
       if (insertError) throw insertError;
 
-      setNewUrl('');
+      setNewUrl("");
     } catch (error) {
-      console.error('Erro ao adicionar link:', error);
-      alert('Erro ao adicionar link. Verifique a URL e tente novamente.');
+      console.error("Erro ao adicionar link:", error);
+      alert("Erro ao adicionar link. Verifique a URL e tente novamente.");
     } finally {
       setSubmitting(false);
-      setLoadingStatus('');
+      setLoadingStatus("");
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      const { error } = await supabase.from('links').delete().eq('id', id);
+      const { error } = await supabase.from("links").delete().eq("id", id);
       if (error) throw error;
-      setLinks(prev => prev.filter(l => l.id !== id));
+      setLinks((prev) => prev.filter((l) => l.id !== id));
     } catch (error) {
-      console.error('Erro ao deletar link:', error);
+      console.error("Erro ao deletar link:", error);
     }
   };
 
   const renderTrustBadge = (trust) => {
-    if (trust === 'high') {
+    if (trust === "high") {
       return (
         <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full w-max">
           <ShieldCheck size={12} /> Site Confiável
         </span>
       );
     }
-    if (trust === 'low') {
+    if (trust === "low") {
       return (
         <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full w-max">
           <ShieldAlert size={12} /> Suspeito
@@ -150,37 +173,39 @@ export default function Links() {
 
   if (loading) {
     return (
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         className="min-h-[60vh] flex items-center justify-center"
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
-          <p className="text-slate-500 dark:text-slate-400">Carregando links...</p>
+          <p className="text-slate-500 dark:text-slate-400">
+            Carregando links...
+          </p>
         </div>
       </motion.div>
     );
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} 
-      animate={{ opacity: 1, y: 0 }} 
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       className="max-w-4xl mx-auto py-8 px-4"
     >
       <div className="text-center mb-8">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }} 
-          animate={{ opacity: 1, y: 0 }} 
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2 font-serif"
         >
           🔗 Smart Wishlist
         </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0, y: -10 }} 
-          animate={{ opacity: 1, y: 0 }} 
+        <motion.p
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="text-slate-500 dark:text-slate-400"
         >
@@ -188,11 +213,11 @@ export default function Links() {
         </motion.p>
       </div>
 
-      <motion.form 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
+      <motion.form
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        onSubmit={handleSubmit} 
+        onSubmit={handleSubmit}
         className={GLASS_CLASSES + " rounded-3xl p-6 mb-8 max-w-2xl mx-auto"}
       >
         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
@@ -219,7 +244,7 @@ export default function Links() {
             {submitting ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                {loadingStatus || 'Adicionando...'}
+                {loadingStatus || "Adicionando..."}
               </>
             ) : (
               <>
@@ -233,12 +258,14 @@ export default function Links() {
 
       <AnimatePresence mode="popLayout">
         {links.length === 0 ? (
-          <motion.div 
-            key="empty" 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={GLASS_CLASSES + " rounded-3xl p-12 text-center max-w-2xl mx-auto"}
+            className={
+              GLASS_CLASSES + " rounded-3xl p-12 text-center max-w-2xl mx-auto"
+            }
           >
             <LinkIcon className="w-16 h-16 text-slate-400 mx-auto mb-4" />
             <p className="text-lg text-slate-600 dark:text-slate-400">
@@ -248,22 +275,27 @@ export default function Links() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {links.map((link, index) => (
-              <motion.div 
+              <motion.div
                 key={link.id}
                 layout
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: index * 0.05 }}
-                className={GLASS_CLASSES + " rounded-3xl p-5 overflow-hidden flex flex-col h-full relative"}
+                className={
+                  GLASS_CLASSES +
+                  " rounded-3xl p-5 overflow-hidden flex flex-col h-full relative"
+                }
               >
                 {link.image && (
                   <div className="w-full h-40 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 relative">
-                    <img 
-                      src={link.image} 
-                      alt={link.title} 
+                    <img
+                      src={link.image}
+                      alt={link.title}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
                     />
                   </div>
                 )}
@@ -274,20 +306,18 @@ export default function Links() {
                       {link.title}
                     </h3>
                   </div>
-                  
+
                   {/* Badge de segurança fica logo abaixo do título */}
-                  <div className="mb-3">
-                    {renderTrustBadge(link.trust)}
-                  </div>
+                  <div className="mb-3">{renderTrustBadge(link.trust)}</div>
 
                   <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4 flex-1">
                     {link.description}
                   </p>
-                  
+
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 dark:border-slate-700">
-                    <a 
-                      href={link.url} 
-                      target="_blank" 
+                    <a
+                      href={link.url}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-rose-500 hover:text-rose-600 font-bold text-sm transition-colors"
                     >
@@ -313,8 +343,8 @@ export default function Links() {
       </AnimatePresence>
 
       <div className="mt-12 text-center">
-        <RouterLink 
-          to="/central" 
+        <RouterLink
+          to="/central"
           className="inline-flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors text-xs font-bold uppercase tracking-widest bg-white/40 dark:bg-slate-800/40 px-6 py-3 rounded-full backdrop-blur-sm border border-slate-100 dark:border-slate-700"
         >
           <ArrowLeft className="w-4 h-4" /> Voltar ao Menu

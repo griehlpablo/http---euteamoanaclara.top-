@@ -15,7 +15,7 @@ const cards = [
   { path: '/quiz', icon: Gamepad2, title: 'Quiz do Casal', desc: 'Perguntas para testar a sintonia.' },
   { path: '/surpresa-diaria', icon: Gift, title: 'Surpresa Diária', desc: 'Uma missão, cupom ou carinho por dia.' },
   { path: '/dieta', icon: HeartPulse, title: 'Plano do Casal', desc: 'Dieta, rotina, treino e água do dia.' },
-  { path: '/gastos', icon: WalletCards, title: 'Gastos do Casal', desc: 'Registre compras e acompanhe o total do mês.' },
+  { path: '/gastos.html?v=20260720-3', external: true, icon: WalletCards, title: 'Gastos do Casal', desc: 'Registre compras e acompanhe o total do mês.' },
   { path: '/galeria', icon: ImageIcon, title: 'Memórias', desc: 'Os nossos melhores momentos.' },
   { path: '/assistente', icon: Sparkles, title: 'Cupido Virtual ✨', desc: 'IA para dicas de encontros.' },
   { path: '/retrospectiva', icon: TrendingUp, title: 'Retrospectiva', desc: 'A nossa história em números.' },
@@ -30,7 +30,21 @@ const cards = [
   { path: '/potepapel', icon: MessageCircleHeart, title: 'Pote de Papel', desc: 'Mensagens doces aleatórias.' },
 ];
 
+function CardContent({ card }) {
+  return (
+    <>
+      <div className="bg-rose-50 dark:bg-slate-800 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 text-rose-500 group-hover:scale-110 transition-transform group-hover:bg-rose-100 dark:group-hover:bg-slate-700">
+        <card.icon className="w-7 h-7" />
+      </div>
+      <h3 className="font-serif text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">{card.title}</h3>
+      <p className="text-slate-400 text-[11px] leading-relaxed">{card.desc}</p>
+    </>
+  );
+}
+
 export default function Central() {
+  const cardClasses = `${glassClasses} dark:bg-slate-900/60 dark:border-slate-700 p-6 rounded-[2.5rem] hover:-translate-y-2 transition-transform block border border-transparent hover:border-rose-200 group`;
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative z-10 pt-6">
       <div className="text-center mb-12">
@@ -39,17 +53,13 @@ export default function Central() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-2">
-        {cards.map((card) => (
-          <Link
-            key={card.path}
-            to={card.path}
-            className={`${glassClasses} dark:bg-slate-900/60 dark:border-slate-700 p-6 rounded-[2.5rem] hover:-translate-y-2 transition-transform block border border-transparent hover:border-rose-200 group`}
-          >
-            <div className="bg-rose-50 dark:bg-slate-800 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 text-rose-500 group-hover:scale-110 transition-transform group-hover:bg-rose-100 dark:group-hover:bg-slate-700">
-              <card.icon className="w-7 h-7" />
-            </div>
-            <h3 className="font-serif text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">{card.title}</h3>
-            <p className="text-slate-400 text-[11px] leading-relaxed">{card.desc}</p>
+        {cards.map((card) => card.external ? (
+          <a key={card.path} href={card.path} className={cardClasses}>
+            <CardContent card={card} />
+          </a>
+        ) : (
+          <Link key={card.path} to={card.path} className={cardClasses}>
+            <CardContent card={card} />
           </Link>
         ))}
       </div>

@@ -25,6 +25,50 @@ jobs:
       - name: Baixar repositório
         uses: actions/checkout@v4
 
+      - name: Finalizar integração da Milka
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          mural_path = Path('novo-site/src/pages/Mural.jsx')
+          mural = mural_path.read_text(encoding='utf-8')
+          old_query = ".select('*')\n        .order('timestamp', { ascending: false });"
+          new_query = ".select('*')\n        .not('author', 'like', 'milka:%')\n        .order('timestamp', { ascending: false });"
+          if old_query in mural:
+              mural_path.write_text(mural.replace(old_query, new_query, 1), encoding='utf-8')
+
+          milka_path = Path('novo-site/src/pages/MilkaMaria.jsx')
+          milka = milka_path.read_text(encoding='utf-8')
+          old_block = """    setActivities(activityRows);
+    if (Array.isArray(scheduleRow?.schedules) && scheduleRow.schedules.length) {
+      setSchedules(scheduleRow.schedules);
+    }
+    setLoading(false);"""
+          new_block = """    setActivities(activityRows);
+    if (Array.isArray(scheduleRow?.schedules) && scheduleRow.schedules.length) {
+      setSchedules(scheduleRow.schedules);
+    } else {
+      const timestamp = new Date().toISOString();
+      await supabase.from('mural').insert([
+        {
+          text: JSON.stringify({
+            kind: 'milka-schedule-set',
+            schedules: DEFAULT_SCHEDULES,
+            updatedAt: timestamp,
+          }),
+          author: 'milka:schedule',
+          imageUrl: null,
+          timestamp,
+          likes: [],
+        },
+      ]);
+      setSchedules(DEFAULT_SCHEDULES);
+    }
+    setLoading(false);"""
+          if old_block in milka:
+              milka_path.write_text(milka.replace(old_block, new_block, 1), encoding='utf-8')
+          PY
+
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
@@ -36,6 +80,10 @@ jobs:
         working-directory: novo-site
         run: npm ci
 
+      - name: Formatar arquivos da Milka
+        working-directory: novo-site
+        run: npx --yes prettier@3.6.2 --write src/pages/MilkaMaria.jsx src/pages/Mural.jsx src/App.jsx src/pages/Central.jsx
+
       - name: Verificar configuração do Supabase
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -44,7 +92,7 @@ jobs:
           if [ -n "$VITE_SUPABASE_URL" ] && [ -n "$VITE_SUPABASE_ANON_KEY" ]; then
             echo "Supabase configurado para este build."
           else
-            echo "Aviso: secrets do Supabase ausentes. O site será publicado sem sincronização, mas não ficará em branco."
+            echo "O build usará a configuração pública de reserva do Supabase."
           fi
 
       - name: Compilar e copiar para a raiz

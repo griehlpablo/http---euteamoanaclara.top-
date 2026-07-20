@@ -25,9 +25,21 @@ import LinhaDoTempo from './pages/LinhaDoTempo';
 import QuizCasal from './pages/QuizCasal';
 import SurpresaDiaria from './pages/SurpresaDiaria';
 import Dieta from './pages/Dieta';
+import { supabase } from './supabase';
+
+const REALTIME_ROUTE_TABLES = {
+  '/bucketlist': ['bucketlist'],
+  '/capsula': ['capsula'],
+  '/potepapel': ['potepapel'],
+  '/links': ['links'],
+  '/mural': ['mural'],
+  '/cupons': ['cupons'],
+  '/galeria': ['gallery'],
+};
 
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [syncVersion, setSyncVersion] = useState(0);
 
   useEffect(() => {
     const redirect = sessionStorage.getItem('spaRedirect');
@@ -37,6 +49,36 @@ export default function App() {
     sessionStorage.removeItem('spaRedirect');
     window.history.replaceState(null, '', nextPath);
     window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
+
+  useEffect(() => {
+    let refreshTimer;
+    const channel = supabase
+      .channel('site-public-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public' },
+        (payload) => {
+          const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+          const watchedTables = REALTIME_ROUTE_TABLES[currentPath] || [];
+          if (!watchedTables.includes(payload.table)) return;
+
+          window.clearTimeout(refreshTimer);
+          refreshTimer = window.setTimeout(() => {
+            setSyncVersion((version) => version + 1);
+          }, 350);
+        },
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('Sincronizacao em tempo real indisponivel:', status);
+        }
+      });
+
+    return () => {
+      window.clearTimeout(refreshTimer);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -74,7 +116,7 @@ export default function App() {
       <Router>
         <Navbar theme={theme} toggleTheme={toggleTheme} />
         <main className="pt-24 pb-12 px-4 max-w-5xl mx-auto relative z-10">
-          <Routes>
+          <Routes key={syncVersion}>
             <Route path="/" element={<Home />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/central" element={<Central />} />

@@ -205,15 +205,227 @@ novo-site/src/pages/Dieta.jsx:1864:literal:Calendario diario com alimentacao, tr
 novo-site/src/pages/Dieta.jsx:2606:literal:<CollapsibleSection title="Exportar relatorio" subtitle="Texto pronto para mandar ao ChatGPT." defaultOpen={false} storageKey={DIET_COLLAPSED_SECTIONS_KEY} sectionId="export">
 novo-site/src/pages/Dieta.jsx:2609:literal:<h2 className="font-serif text-3xl font-bold text-slate-900">Exportar dia para o ChatGPT</h2>
 novo-site/src/pages/Galeria.jsx:15:meta-comment:// A MÁGICA AQUI: O estado inicial agora é 'carousel' ao invés de 'grid'
+novo-site/src/pages/Genealogia.jsx:82:meta-comment:// COMPONENTE DE NÓ DA ÁRVORE (ESTILO FAMILYSEARCH)
 novo-site/src/pages/Links.jsx:15:meta-comment:// O prompt agora pede o resumo E a análise de confiabilidade baseada na URL
 novo-site/src/pages/Mural.jsx:52:meta-comment:// COMPONENTE: Avatar com Fallback
+novo-site/src/pages/Mural.jsx:94:meta-comment:// COMPONENTE PRINCIPAL: MURAL
 novo-site/src/pages/PlanoHelena.jsx:1046:literal:'Pergunta para o ChatGPT: Analise meu dia e me diga o que ajustar ainda hoje ou amanha.',
 novo-site/src/pages/Retrospectiva.jsx:86:meta-comment:// NOVO: PRÉ-CARREGAMENTO (Image Preloading)
 novo-site/testar_cupido.sh:4:meta-comment:# Substitua pela sua API Key nova
 supabase/migrations/20260720_fix_sync_constraints.sql:1:meta-comment:-- Correcoes de compatibilidade e sincronizacao do Supabase
 
-TOTAL_MATCHES=18
+TOTAL_MATCHES=20
 
-[SUPABASE_RECOVERY]
-ANON_KEY=
-ANON_KEY_FOUND=no
+[COMMENTS]
+OneSignalSDKWorker.js:1:/* global importScripts */
+OneSignalSDKWorker.js:41:// Requests to Open Food Facts, Supabase and any other external origin must go straight to the browser.
+SUPABASE_TABLES_CHECKLIST.md:1:# Supabase Tables Checklist
+gastos-sync.js:36:#${ROOT_ID}{position:fixed;right:18px;bottom:18px;z-index:99999;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#334155}
+gastos-sync.js:37:#${ROOT_ID} *{box-sizing:border-box}
+gastos-sync.js:38:#${ROOT_ID} .gs-toggle{display:flex;align-items:center;gap:9px;border:0;border-radius:999px;padding:12px 16px;background:#059669;color:white;font-weight:800;cursor:pointer;box-shadow:0 14px 35px rgba(5,150,105,.3)}
+gastos-sync.js:39:#${ROOT_ID} .gs-count{display:inline-flex;min-width:22px;height:22px;padding:0 6px;align-items:center;justify-content:center;border-radius:999px;background:rgba(255,255,255,.22);font-size:12px}
+gastos-sync.js:40:#${ROOT_ID} .gs-panel{display:none;width:min(370px,calc(100vw - 24px));margin-bottom:10px;border:1px solid rgba(255,255,255,.85);border-radius:24px;padding:18px;background:rgba(255,255,255,.96);box-shadow:0 25px 70px rgba(71,30,52,.25);backdrop-filter:blur(18px)}
+gastos-sync.js:41:#${ROOT_ID}.open .gs-panel{display:block}
+gastos-sync.js:42:#${ROOT_ID} h3{margin:0;font-family:Georgia,serif;font-size:21px;color:#1e293b}
+gastos-sync.js:43:#${ROOT_ID} p{margin:6px 0 0;font-size:12px;line-height:1.55;color:#64748b}
+gastos-sync.js:44:#${ROOT_ID} .gs-status{margin:14px 0;border-radius:15px;padding:10px 12px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:700}
+gastos-sync.js:45:#${ROOT_ID} .gs-status.error{background:#fff1f2;color:#be123c}
+gastos-sync.js:46:#${ROOT_ID} .gs-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+gastos-sync.js:47:#${ROOT_ID} .gs-button,#${ROOT_ID} .gs-link{display:flex;align-items:center;justify-content:center;min-height:42px;border:0;border-radius:14px;padding:10px 12px;text-decoration:none;font-size:12px;font-weight:850;cursor:pointer}
+gastos-sync.js:48:#${ROOT_ID} .gs-sync{background:#059669;color:white}.gs-link{background:#f1f5f9;color:#334155}
+gastos-sync.js:49:#${ROOT_ID} .gs-help{margin-top:12px;padding-top:11px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8}
+gastos.html:12:* { box-sizing:border-box; }
+integrations/google-sheets/README.md:1:# Sincronização de gastos com Google Planilhas
+integrations/google-sheets/README.md:7:## 1. Criar o Apps Script
+integrations/google-sheets/README.md:15:## 2. Criar o código secreto
+integrations/google-sheets/README.md:25:## 3. Implantar como aplicativo da Web
+integrations/google-sheets/README.md:34:## 4. Configurar no site
+integrations/google-sheets/README.md:44:## Funcionamento
+novo-site/README.md:1:# React + Vite
+novo-site/README.md:10:## React Compiler
+novo-site/README.md:14:## Expanding the ESLint configuration
+novo-site/src/App.css:59:#center {
+novo-site/src/App.css:73:#next-steps {
+novo-site/src/App.css:98:#docs {
+novo-site/src/App.css:107:#next-steps ul {
+novo-site/src/App.css:156:#spacer {
+novo-site/src/lib/healthPlanDiagnostics.js:38:// Ignore secondary storage failures; the caller still receives fallback.
+novo-site/src/pages/Galeria.jsx:15:// A MÁGICA AQUI: O estado inicial agora é 'carousel' ao invés de 'grid'
+novo-site/src/pages/Genealogia.jsx:6:// ==========================================
+novo-site/src/pages/Genealogia.jsx:7:// DADOS DA ÁRVORE (CORRIGIDOS E MAPEADOS)
+novo-site/src/pages/Genealogia.jsx:8:// ==========================================
+novo-site/src/pages/Genealogia.jsx:9:// ==========================================
+novo-site/src/pages/Genealogia.jsx:10:// DADOS DA ÁRVORE (EXPANDIDOS COM TRISAVÓS E TETRAVÓS)
+novo-site/src/pages/Genealogia.jsx:11:// ==========================================
+novo-site/src/pages/Genealogia.jsx:81:// ==========================================
+novo-site/src/pages/Genealogia.jsx:82:// COMPONENTE DE NÓ DA ÁRVORE (ESTILO FAMILYSEARCH)
+novo-site/src/pages/Genealogia.jsx:83:// ==========================================
+novo-site/src/pages/Genealogia.jsx:148:// ==========================================
+novo-site/src/pages/Genealogia.jsx:149:// PÁGINA PRINCIPAL
+novo-site/src/pages/Genealogia.jsx:150:// ==========================================
+novo-site/src/pages/Home.jsx:265:// Spawn notes if shaking
+novo-site/src/pages/Humor.jsx:14:// Nossos eixos de humor (1 a 5)
+novo-site/src/pages/Humor.jsx:21:// Define quem é o alvo
+novo-site/src/pages/Humor.jsx:26:// Sincroniza quem está logado no localStorage
+novo-site/src/pages/Humor.jsx:31:// Busca os dados do Supabase
+novo-site/src/pages/Humor.jsx:37:// Busca MEU humor
+novo-site/src/pages/Humor.jsx:50:// Busca humor do PARCEIRO
+novo-site/src/pages/Humor.jsx:70:// ==========================================
+novo-site/src/pages/Humor.jsx:71:// O ALGORITMO DO MANUAL DE SOBREVIVÊNCIA
+novo-site/src/pages/Humor.jsx:72:// ==========================================
+novo-site/src/pages/Humor.jsx:77:// ALERTA VERMELHO
+novo-site/src/pages/Humor.jsx:88:// BOMBA-RELÓGIO
+novo-site/src/pages/Humor.jsx:99:// ANJINHO
+novo-site/src/pages/Humor.jsx:110:// MODO PREGUIÇA
+novo-site/src/pages/Humor.jsx:121:// CLIMA ESTÁVEL
+novo-site/src/pages/Humor.jsx:132:// MISTURA
+novo-site/src/pages/Humor.jsx:159:// FUNÇÃO DE NOTIFICAÇÃO (ENVIA RESUMIDO)
+novo-site/src/pages/Humor.jsx:161:// Pega as frases baseadas no MEU humor atual para avisar o outro
+novo-site/src/pages/Links.jsx:15:// O prompt agora pede o resumo E a análise de confiabilidade baseada na URL
+novo-site/src/pages/Links.jsx:121:// Trava de segurança para sites perigosos!
+novo-site/src/pages/Links.jsx:162:// Função para renderizar a etiqueta de segurança correta
+novo-site/src/pages/Mural.jsx:9:// ==========================================
+novo-site/src/pages/Mural.jsx:10:// CONSTANTES
+novo-site/src/pages/Mural.jsx:11:// ==========================================
+novo-site/src/pages/Mural.jsx:14:// ==========================================
+novo-site/src/pages/Mural.jsx:15:// USER PROFILES
+novo-site/src/pages/Mural.jsx:16:// ==========================================
+novo-site/src/pages/Mural.jsx:32:// ==========================================
+novo-site/src/pages/Mural.jsx:33:// HELPER: Formatar Timestamp
+novo-site/src/pages/Mural.jsx:34:// ==========================================
+novo-site/src/pages/Mural.jsx:51:// ==========================================
+novo-site/src/pages/Mural.jsx:52:// COMPONENTE: Avatar com Fallback
+novo-site/src/pages/Mural.jsx:53:// ==========================================
+novo-site/src/pages/Mural.jsx:93:// ==========================================
+novo-site/src/pages/Mural.jsx:94:// COMPONENTE PRINCIPAL: MURAL
+novo-site/src/pages/Mural.jsx:95:// ==========================================
+novo-site/src/pages/Mural.jsx:110:// Fechar picker de emoji ao clicar fora
+novo-site/src/pages/Mural.jsx:123:// Ajustar largura do picker de emoji
+novo-site/src/pages/Mural.jsx:134:// OneSignal Login
+novo-site/src/pages/Mural.jsx:145:// Limpar URL do preview de imagem
+novo-site/src/pages/Mural.jsx:154:// Buscar posts (Supabase)
+novo-site/src/pages/Mural.jsx:174:// Manipular seleção de imagem
+novo-site/src/pages/Mural.jsx:184:// Limpar imagem selecionada
+novo-site/src/pages/Mural.jsx:196:// Manipular clique no emoji
+novo-site/src/pages/Mural.jsx:202:// Publicar post
+novo-site/src/pages/Mural.jsx:256:// Toggle Like
+novo-site/src/pages/Mural.jsx:303:// ==========================================
+novo-site/src/pages/Mural.jsx:304:// TELA 1: SELEÇÃO DE PERFIL
+novo-site/src/pages/Mural.jsx:305:// ==========================================
+novo-site/src/pages/Mural.jsx:375:// ==========================================
+novo-site/src/pages/Mural.jsx:376:// TELA 2: TIMELINE (MURAL)
+novo-site/src/pages/Mural.jsx:377:// ==========================================
+novo-site/src/pages/Retrospectiva.jsx:20:// 1. CÁLCULO DE DATAS
+novo-site/src/pages/Retrospectiva.jsx:49:// 2. BUSCAR FOTOS DA GALERIA
+novo-site/src/pages/Retrospectiva.jsx:86:// NOVO: PRÉ-CARREGAMENTO (Image Preloading)
+novo-site/src/pages/Retrospectiva.jsx:97:// 3. MOTOR DO CARROSSEL & SLIDESHOW FINAL
+novo-site/src/pages/Satisfacao.jsx:64:// Busca níveis atuais (pablo e ana)
+novo-site/src/pages/Satisfacao.jsx:77:// Busca notas de cadeia
+novo-site/src/pages/Satisfacao.jsx:90:// Busca histórico
+novo-site/src/pages/Satisfacao.jsx:114:// Se tiver msgManual (como na fiança), envia ela. Senão, envia o resumo do nível.
+novo-site/src/pages/Satisfacao.jsx:134:// Atualiza/insere o nível atual
+novo-site/src/pages/Satisfacao.jsx:143:// Insere no histórico
+novo-site/src/pages/Satisfacao.jsx:156:// Atualiza estado local
+novo-site/src/pages/Satisfacao.jsx:160:// Notificação Automática
+novo-site/src/pages/Satisfacao.jsx:172:// Salva no banco de dados
+novo-site/src/pages/Satisfacao.jsx:181:// Atualiza estado local
+novo-site/src/pages/Satisfacao.jsx:184:// Envia a notificação com O TEXTO DA FIANÇA!
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:47:-- Current project tables are configured without RLS for simple shared use.
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:48:-- To keep the new page working the same way right now:
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:51:-- Safer auth-ready setup for later:
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:52:-- 1. Enable login in the app.
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:53:-- 2. Run the block below instead of the DISABLE statement above.
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:54:--
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:55:-- ALTER TABLE daily_health_logs ENABLE ROW LEVEL SECURITY;
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:56:--
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:57:-- CREATE POLICY "Users can read their own health logs"
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:58:--   ON daily_health_logs
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:59:--   FOR SELECT
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:60:--   USING (auth.uid() = user_id);
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:61:--
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:62:-- CREATE POLICY "Users can insert their own health logs"
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:63:--   ON daily_health_logs
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:64:--   FOR INSERT
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:65:--   WITH CHECK (auth.uid() = user_id);
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:66:--
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:67:-- CREATE POLICY "Users can update their own health logs"
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:68:--   ON daily_health_logs
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:69:--   FOR UPDATE
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:70:--   USING (auth.uid() = user_id)
+novo-site/supabase/migrations/20260601_daily_health_logs.sql:71:--   WITH CHECK (auth.uid() = user_id);
+novo-site/supabase_schema.sql:1:-- Supabase schema generated from Firestore usage in project
+novo-site/supabase_schema.sql:2:-- Enable pgcrypto for gen_random_uuid()
+novo-site/supabase_schema.sql:5:-- Table: chats
+novo-site/supabase_schema.sql:12:-- Table: mensagens (messages, previously a subcollection under chats)
+novo-site/supabase_schema.sql:23:-- Table: links
+novo-site/supabase_schema.sql:34:-- Table: mural
+novo-site/supabase_schema.sql:44:-- Table: bucketlist
+novo-site/supabase_schema.sql:52:-- Table: capsula (capsula do tempo)
+novo-site/supabase_schema.sql:61:-- Table: potepapel
+novo-site/supabase_schema.sql:68:-- Table: cupons
+novo-site/supabase_schema.sql:79:-- Table: gallery (Galeria de fotos para páginas de imagem)
+novo-site/supabase_schema.sql:89:-- Table: humor (Radar de Humor - armazena carencia, estresse, energia)
+novo-site/supabase_schema.sql:99:-- Table: satisfacao_current (Termômetro do Amor - nível atual)
+novo-site/supabase_schema.sql:107:-- Table: satisfacao_notes (Fiança da Cadeia - notas/missões)
+novo-site/supabase_schema.sql:115:-- Table: satisfacao_history (Histórico de satisfação)
+novo-site/supabase_schema.sql:124:-- Compatibility columns for Firestore camelCase field names
+novo-site/supabase_schema.sql:142:-- Disable Row Level Security (RLS) for initial testing
+novo-site/supabase_schema.sql:157:-- Optional: small indexes to support common ordering queries
+novo-site/supabase_schema.sql:166:-- End of schema
+novo-site/supabase_schema.sql:168:-- GENERAL SCHEMA REPAIR - SAFE TO RUN MULTIPLE TIMES
+novo-site/supabase_schema.sql:169:-- Does not delete data. Does not touch humor/satisfacao tables.
+novo-site/tailwind.config.js:1:/** @type {import('tailwindcss').Config} */
+novo-site/testar_cupido.sh:4:# Substitua pela sua API Key nova
+supabase/migrations/20260601_daily_health_logs.sql:47:-- Current project tables are configured without RLS for simple shared use.
+supabase/migrations/20260601_daily_health_logs.sql:48:-- To keep the new page working the same way right now:
+supabase/migrations/20260601_daily_health_logs.sql:51:-- Safer auth-ready setup for later:
+supabase/migrations/20260601_daily_health_logs.sql:52:-- 1. Enable login in the app.
+supabase/migrations/20260601_daily_health_logs.sql:53:-- 2. Run the block below instead of the DISABLE statement above.
+supabase/migrations/20260601_daily_health_logs.sql:54:--
+supabase/migrations/20260601_daily_health_logs.sql:55:-- ALTER TABLE daily_health_logs ENABLE ROW LEVEL SECURITY;
+supabase/migrations/20260601_daily_health_logs.sql:56:--
+supabase/migrations/20260601_daily_health_logs.sql:57:-- CREATE POLICY "Users can read their own health logs"
+supabase/migrations/20260601_daily_health_logs.sql:58:--   ON daily_health_logs
+supabase/migrations/20260601_daily_health_logs.sql:59:--   FOR SELECT
+supabase/migrations/20260601_daily_health_logs.sql:60:--   USING (auth.uid() = user_id);
+supabase/migrations/20260601_daily_health_logs.sql:61:--
+supabase/migrations/20260601_daily_health_logs.sql:62:-- CREATE POLICY "Users can insert their own health logs"
+supabase/migrations/20260601_daily_health_logs.sql:63:--   ON daily_health_logs
+supabase/migrations/20260601_daily_health_logs.sql:64:--   FOR INSERT
+supabase/migrations/20260601_daily_health_logs.sql:65:--   WITH CHECK (auth.uid() = user_id);
+supabase/migrations/20260601_daily_health_logs.sql:66:--
+supabase/migrations/20260601_daily_health_logs.sql:67:-- CREATE POLICY "Users can update their own health logs"
+supabase/migrations/20260601_daily_health_logs.sql:68:--   ON daily_health_logs
+supabase/migrations/20260601_daily_health_logs.sql:69:--   FOR UPDATE
+supabase/migrations/20260601_daily_health_logs.sql:70:--   USING (auth.uid() = user_id)
+supabase/migrations/20260601_daily_health_logs.sql:71:--   WITH CHECK (auth.uid() = user_id);
+supabase/migrations/20260720_fix_sync_constraints.sql:1:-- Correcoes de compatibilidade e sincronizacao do Supabase
+supabase/migrations/20260720_fix_sync_constraints.sql:2:-- Seguro para executar mais de uma vez.
+supabase/migrations/20260720_fix_sync_constraints.sql:4:-- 1) O frontend grava 'high', 'medium' e 'low' em links.trust.
+supabase/migrations/20260720_fix_sync_constraints.sql:5:-- O schema antigo criou a coluna como integer, causando falha nos inserts.
+supabase/migrations/20260720_fix_sync_constraints.sql:24:-- 2) Os upserts usam onConflict: user_id. Para isso, user_id precisa ser unico.
+supabase/migrations/20260720_fix_sync_constraints.sql:25:-- Mantem a linha mais recente em caso de duplicidade.
+supabase/migrations/20260720_fix_sync_constraints.sql:59:-- 3) Garante a chave usada pelo upsert da dieta.
+supabase/migrations/20260720_fix_sync_constraints.sql:63:-- 4) Habilita o Realtime apenas nas tabelas que podem atualizar a tela
+supabase/migrations/20260720_fix_sync_constraints.sql:64:-- sem interromper fluxos longos como o assistente e a dieta.
+supabase/migrations/repair_supabase_schema_general.sql:1:-- GENERAL SCHEMA REPAIR - SAFE TO RUN MULTIPLE TIMES
+supabase/migrations/repair_supabase_schema_general.sql:2:-- Does not delete data. Does not touch humor/satisfacao tables.
+supabase/migrations/repair_supabase_schema_general.sql:6:-- chats
+supabase/migrations/repair_supabase_schema_general.sql:20:-- mensagens
+supabase/migrations/repair_supabase_schema_general.sql:65:-- links
+supabase/migrations/repair_supabase_schema_general.sql:88:-- mural
+supabase/migrations/repair_supabase_schema_general.sql:113:-- bucketlist
+supabase/migrations/repair_supabase_schema_general.sql:132:-- capsula
+supabase/migrations/repair_supabase_schema_general.sql:153:-- potepapel
+supabase/migrations/repair_supabase_schema_general.sql:167:-- cupons
+supabase/migrations/repair_supabase_schema_general.sql:190:-- gallery
+supabase/migrations/repair_supabase_schema_general.sql:208:-- indexes
+supabase/migrations/repair_supabase_schema_general.sql:219:-- RLS disabled to keep compatibility with the current site behavior.
+
+TOTAL_COMMENTS=204
+
+[SUPABASE_HISTORY_RECOVERY]
+PUBLISHABLE_KEY=sb_publishable_G80SeJmG0_jsyrZojvINtg_HW1pYt67
+PUBLISHABLE_KEY_PATH=assets/QuickNav-BJgQG5XH.js
+ANON_KEY_COUNT=0
+PUBLISHABLE_KEY_COUNT=1

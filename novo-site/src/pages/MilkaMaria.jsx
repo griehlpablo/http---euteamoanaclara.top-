@@ -22,7 +22,7 @@ const DEVICE_PERSON_KEY = "milka-device-person-v1";
 const LOCAL_REMINDERS_KEY = "milka-local-reminders-v1";
 const STORAGE_BUCKET = "mural";
 const STORAGE_PATH = "milka/data.json";
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 
 const PEOPLE = ["Pedro", "Ana", "Pablo"];
 const HOME_WINDOWS = {
@@ -78,52 +78,111 @@ const ACTIONS = {
 
 const DEFAULT_SCHEDULES = [
   {
+    id: "litter-morning",
+    action: "litter",
+    label: "Limpar a areia pela manhã",
+    time: "06:00",
+    enabled: true,
+    notify: ["Pedro"],
+    details: "Retirar fezes e torrões. É a primeira limpeza do dia.",
+  },
+  {
     id: "food-morning",
     action: "food",
     label: "Ração da manhã",
-    time: "07:00",
+    time: "06:15",
     enabled: true,
     notify: ["Pablo"],
+    details:
+      "17 g de ração seca: 2 colheres medidoras de sopa rasas + 2 de chá rasas.",
   },
   {
     id: "water-morning",
     action: "water",
-    label: "Trocar a água",
-    time: "07:10",
+    label: "Trocar a água pela manhã",
+    time: "06:20",
     enabled: true,
     notify: ["Pablo"],
+    details: "Descartar a água antiga, lavar o pote e colocar água fresca.",
   },
   {
-    id: "litter-midday",
-    action: "litter",
-    label: "Limpar a areia ao meio-dia",
+    id: "sachet-midday",
+    action: "sachet",
+    label: "Refeição do meio-dia",
     time: "12:15",
     enabled: true,
     notify: ["Pablo"],
+    details:
+      "½ sachê + 8 g de ração seca: 1 colher medidora de sopa rasa + 1 de chá rasa.",
+  },
+  {
+    id: "water-midday",
+    action: "water",
+    label: "Conferir a água ao meio-dia",
+    time: "12:25",
+    enabled: true,
+    notify: ["Pablo"],
+    details: "Conferir o nível e a sujeira; completar ou trocar se necessário.",
   },
   {
     id: "sachet-afternoon",
     action: "sachet",
-    label: "Sachê da tarde",
-    time: "13:10",
-    enabled: true,
-    notify: ["Ana"],
-  },
-  {
-    id: "food-evening",
-    action: "food",
-    label: "Ração da noite",
-    time: "18:00",
+    label: "Refeição do fim da tarde",
+    time: "17:10",
     enabled: true,
     notify: ["Pedro"],
+    details:
+      "½ sachê + 8 g de ração seca: 1 colher medidora de sopa rasa + 1 de chá rasa.",
+  },
+  {
+    id: "water-evening",
+    action: "water",
+    label: "Trocar a água à noite",
+    time: "18:00",
+    enabled: true,
+    notify: ["Ana"],
+    details: "Colocar água fresca novamente e lavar o pote se estiver sujo.",
   },
   {
     id: "litter-evening",
     action: "litter",
     label: "Limpar a areia à noite",
+    time: "18:15",
+    enabled: true,
+    notify: ["Pedro"],
+    details: "Retirar fezes e torrões pela segunda vez no dia.",
+  },
+  {
+    id: "food-night",
+    action: "food",
+    label: "Ração antes de dormir",
     time: "21:00",
     enabled: true,
     notify: ["Ana"],
+    details:
+      "17 g de ração seca: 2 colheres medidoras de sopa rasas + 2 de chá rasas.",
+  },
+];
+const FEEDING_GUIDE = [
+  {
+    time: "06:15",
+    meal: "17 g de ração seca",
+    measure: "2 colheres de sopa rasas + 2 colheres de chá rasas",
+  },
+  {
+    time: "12:15",
+    meal: "½ sachê + 8 g de ração seca",
+    measure: "1 colher de sopa rasa + 1 colher de chá rasa",
+  },
+  {
+    time: "17:10",
+    meal: "½ sachê + 8 g de ração seca",
+    measure: "1 colher de sopa rasa + 1 colher de chá rasa",
+  },
+  {
+    time: "21:00",
+    meal: "17 g de ração seca",
+    measure: "2 colheres de sopa rasas + 2 colheres de chá rasas",
   },
 ];
 
@@ -365,7 +424,7 @@ export default function MilkaMaria() {
 
         await showDeviceNotification(
           "Cuidados da Milka Maria 🐾",
-          `${person}, está na hora de ${item.label.toLowerCase()}.`,
+          `${person}, está na hora de ${item.label.toLowerCase()}. ${item.details || ""}`.trim(),
           `milka-${item.id}-${dateKey}`,
         );
         sent[key] = new Date().toISOString();
@@ -614,6 +673,68 @@ export default function MilkaMaria() {
         })}
       </section>
 
+      <section className="rounded-[2rem] border border-amber-100 bg-amber-50/85 p-5 shadow-xl dark:border-amber-900/60 dark:bg-slate-800/80">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-slate-800 dark:text-slate-100">
+              Alimentação diária da Milka
+            </h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              Plano inicial para aproximadamente 4–5 meses: 50 g de ração seca +
+              1 sachê por dia, divididos em quatro refeições.
+            </p>
+          </div>
+          <span className="w-fit rounded-full bg-amber-200 px-3 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900 dark:text-amber-100">
+            Baseado nos rótulos enviados
+          </span>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {FEEDING_GUIDE.map((item) => (
+            <div
+              key={item.time}
+              className="rounded-2xl bg-white/85 p-4 dark:bg-slate-900/70"
+            >
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                {item.time}
+              </p>
+              <p className="mt-1 font-bold text-slate-800 dark:text-slate-100">
+                {item.meal}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                Sem balança: {item.measure}.
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 space-y-2 rounded-2xl bg-white/75 p-4 text-sm leading-relaxed text-slate-600 dark:bg-slate-900/70 dark:text-slate-300">
+          <p>
+            <strong>Total diário:</strong> aproximadamente 50 g de ração seca e
+            1 sachê. O rótulo da ração recomenda 66–69 g por dia para 4–5 meses,
+            e o sachê informa que substitui cerca de 18 g de ração seca.
+          </p>
+          <p>
+            <strong>Como medir:</strong> o pacote informa que 200 ml pesam cerca
+            de 84 g. Uma colher <strong>medidora</strong> de sopa de 15 ml
+            equivale a aproximadamente 6,3 g, e uma de chá de 5 ml a
+            aproximadamente 2,1 g. Talheres comuns podem variar.
+          </p>
+          <p>
+            <strong>Sachê aberto:</strong> guardar a metade restante tampada na
+            geladeira e usar em até 24 horas. Água limpa deve ficar disponível o
+            tempo todo.
+          </p>
+          <p>
+            <strong>Água e areia:</strong> trocar a água de manhã e à noite,
+            conferir ao meio-dia e retirar fezes e torrões da areia duas vezes
+            por dia.
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Esta é uma referência inicial. Ajuste com o veterinário depois de
+            confirmar a idade, o peso e a condição corporal da Milka.
+          </p>
+        </div>
+      </section>
+
       <section className="rounded-[2rem] border border-white/70 bg-white/75 p-5 shadow-xl dark:border-slate-700 dark:bg-slate-800/75">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-2xl bg-rose-50 p-3 text-rose-500 dark:bg-slate-900">
@@ -723,7 +844,13 @@ export default function MilkaMaria() {
                 <p className="font-bold text-slate-800 dark:text-slate-100">
                   {item.label}
                 </p>
-                <p className="text-xs text-slate-400">
+                {item.details && (
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                    {item.details}
+                  </p>
+                )}
+
+                <p className="mt-1 text-xs text-slate-400">
                   Todos os dias · Avisar:{" "}
                   {item.notify?.length ? item.notify.join(", ") : "ninguém"}
                 </p>

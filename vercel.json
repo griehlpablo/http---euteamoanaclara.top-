@@ -1,11 +1,41 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
-    { "path": "/api/milka-reminders", "schedule": "0 10 * * *" },
-    { "path": "/api/milka-reminders", "schedule": "10 10 * * *" },
-    { "path": "/api/milka-reminders", "schedule": "15 15 * * *" },
-    { "path": "/api/milka-reminders", "schedule": "10 16 * * *" },
-    { "path": "/api/milka-reminders", "schedule": "0 21 * * *" },
-    { "path": "/api/milka-reminders", "schedule": "0 0 * * *" }
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "15 9 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "20 9 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "15 15 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "25 15 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "10 20 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "15 21 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "0 0 * * *"
+    }
   ]
 }

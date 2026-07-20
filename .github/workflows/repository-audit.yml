@@ -143,12 +143,13 @@ jobs:
               process.stdin.write((sha + '\n').encode())
               process.stdin.flush()
               header = process.stdout.readline().decode().strip().split()
-              if len(header) < 3 or header[1] != 'blob':
+              if len(header) < 3:
                   continue
+              object_type = header[1]
               size = int(header[2])
               data = process.stdout.read(size)
               process.stdout.read(1)
-              if size > 25_000_000:
+              if object_type != 'blob' or size > 25_000_000:
                   continue
               for token_bytes in jwt_pattern.findall(data):
                   token = token_bytes.decode()

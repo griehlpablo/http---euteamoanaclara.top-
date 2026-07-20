@@ -26,7 +26,7 @@ import QuizCasal from './pages/QuizCasal';
 import SurpresaDiaria from './pages/SurpresaDiaria';
 import Dieta from './pages/Dieta';
 import Gastos from './pages/Gastos';
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 
 const REALTIME_ROUTE_TABLES = {
   '/bucketlist': ['bucketlist'],
@@ -65,6 +65,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return undefined;
+
     let refreshTimer;
     const channel = supabase
       .channel('site-public-sync')

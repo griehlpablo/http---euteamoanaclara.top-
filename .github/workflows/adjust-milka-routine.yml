@@ -1,0 +1,298 @@
+name: Ajustar rotina da Milka
+
+on:
+  push:
+    paths:
+      - .github/workflows/adjust-milka-routine.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ajustar horários e responsáveis
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('novo-site/src/pages/MilkaMaria.jsx')
+          source = path.read_text(encoding='utf-8')
+
+          source = source.replace(
+            "const STORAGE_PATH = 'milka/data.json';\n\nconst PEOPLE = ['Pedro', 'Ana', 'Pablo'];",
+            """const STORAGE_PATH = 'milka/data.json';
+          const DATA_VERSION = 2;
+
+          const PEOPLE = ['Pedro', 'Ana', 'Pablo'];
+          const HOME_WINDOWS = {
+            Pablo: 'Antes das 07:30, das 12:00 às 13:00 e após 16:30',
+            Ana: 'Antes das 06:30 e após 13:00',
+            Pedro: 'Antes das 06:30 e após 17:00',
+          };""",
+            1,
+          )
+
+          old_schedules = """const DEFAULT_SCHEDULES = [
+            { id: 'food-morning', action: 'food', label: 'Ração da manhã', time: '08:00', enabled: true, notify: PEOPLE },
+            { id: 'water-morning', action: 'water', label: 'Trocar a água', time: '09:00', enabled: true, notify: PEOPLE },
+            { id: 'sachet-evening', action: 'sachet', label: 'Sachê', time: '19:00', enabled: true, notify: PEOPLE },
+            { id: 'food-evening', action: 'food', label: 'Ração da noite', time: '20:00', enabled: true, notify: PEOPLE },
+            { id: 'litter-evening', action: 'litter', label: 'Limpar a areia', time: '21:00', enabled: true, notify: PEOPLE },
+          ];"""
+          new_schedules = """const DEFAULT_SCHEDULES = [
+            { id: 'food-morning', action: 'food', label: 'Ração da manhã', time: '07:00', enabled: true, notify: ['Pablo'] },
+            { id: 'water-morning', action: 'water', label: 'Trocar a água', time: '07:10', enabled: true, notify: ['Pablo'] },
+            { id: 'litter-midday', action: 'litter', label: 'Limpar a areia ao meio-dia', time: '12:15', enabled: true, notify: ['Pablo'] },
+            { id: 'sachet-afternoon', action: 'sachet', label: 'Sachê da tarde', time: '13:10', enabled: true, notify: ['Ana'] },
+            { id: 'food-evening', action: 'food', label: 'Ração da noite', time: '18:00', enabled: true, notify: ['Pedro'] },
+            { id: 'litter-evening', action: 'litter', label: 'Limpar a areia à noite', time: '21:00', enabled: true, notify: ['Ana'] },
+          ];"""
+          if old_schedules not in source:
+            raise RuntimeError('Cronograma padrão antigo não encontrado')
+          source = source.replace(old_schedules, new_schedules, 1)
+
+          old_data = """const emptyData = () => ({
+            version: 1,
+            activities: [],
+            schedules: DEFAULT_SCHEDULES,
+            updatedAt: new Date().toISOString(),
+          });
+
+          const normalizeData = (value) => ({
+            version: 1,
+            activities: Array.isArray(value?.activities) ? value.activities : [],
+            schedules: Array.isArray(value?.schedules) && value.schedules.length
+              ? value.schedules
+              : DEFAULT_SCHEDULES,
+            updatedAt: value?.updatedAt || new Date().toISOString(),
+          });"""
+          new_data = """const emptyData = () => ({
+            version: DATA_VERSION,
+            activities: [],
+            schedules: DEFAULT_SCHEDULES,
+            updatedAt: new Date().toISOString(),
+          });
+
+          const normalizeData = (value) => {
+            const storedVersion = Number(value?.version || 1);
+            const needsWrite = storedVersion < DATA_VERSION;
+            const savedSchedules = Array.isArray(value?.schedules) ? value.schedules : [];
+
+            return {
+              version: DATA_VERSION,
+              activities: Array.isArray(value?.activities) ? value.activities : [],
+              schedules: needsWrite || !savedSchedules.length
+                ? DEFAULT_SCHEDULES
+                : savedSchedules.map((item) => ({
+                    ...item,
+                    notify:
+                      Array.isArray(item.notify) && item.notify.length
+                        ? item.notify.filter((name) => PEOPLE.includes(name))
+                        : PEOPLE,
+                  })),
+              updatedAt: value?.updatedAt || new Date().toISOString(),
+              needsWrite,
+            };
+          };"""
+          if old_data not in source:
+            raise RuntimeError('Estrutura de dados antiga não encontrada')
+          source = source.replace(old_data, new_data, 1)
+
+          old_write = """const writeCloudData = async (value) => {
+            const next = normalizeData({ ...value, updatedAt: new Date().toISOString() });
+            const blob = new Blob([JSON.stringify(next)], { type: 'application/json' });"""
+          new_write = """const writeCloudData = async (value) => {
+            const normalized = normalizeData({ ...value, version: DATA_VERSION, updatedAt: new Date().toISOString() });
+            const { needsWrite: _needsWrite, ...next } = normalized;
+            const blob = new Blob([JSON.stringify(next)], { type: 'application/json' });"""
+          if old_write not in source:
+            raise RuntimeError('Gravação na nuvem não encontrada')
+          source = source.replace(old_write, new_write, 1)
+
+          old_load = """      let cloudData = await readCloudData();
+                if (!cloudData) cloudData = await writeCloudData(emptyData());
+                applyData(cloudData);"""
+          new_load = """      let cloudData = await readCloudData();
+                if (!cloudData) {
+                  cloudData = await writeCloudData(emptyData());
+                } else if (cloudData.needsWrite) {
+                  cloudData = await writeCloudData(cloudData);
+                }
+                applyData(cloudData);"""
+          if old_load not in source:
+            raise RuntimeError('Carregamento da nuvem não encontrado')
+          source = source.replace(old_load, new_load, 1)
+
+          update_marker = """  const saveSchedules = async () => {"""
+          toggle_function = """  const toggleSchedulePerson = (id, name) => {
+            setSchedules((current) =>
+              current.map((item) => {
+                if (item.id !== id) return item;
+                const notify = Array.isArray(item.notify) ? item.notify : [];
+                return {
+                  ...item,
+                  notify: notify.includes(name)
+                    ? notify.filter((personName) => personName !== name)
+                    : [...notify, name],
+                };
+              }),
+            );
+          };
+
+          """
+          if update_marker not in source:
+            raise RuntimeError('Ponto de inserção dos responsáveis não encontrado')
+          source = source.replace(update_marker, toggle_function + update_marker, 1)
+
+          person_section_end = """      </section>
+
+                <section className=\"grid gap-4 sm:grid-cols-2 lg:grid-cols-4\">"""
+          routine_section = """      </section>
+
+                <section className=\"rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-lg dark:border-slate-700 dark:bg-slate-800/70\">
+                  <h2 className=\"font-serif text-xl font-bold text-slate-800 dark:text-slate-100\">Rotina de quem está em casa</h2>
+                  <div className=\"mt-3 grid gap-3 md:grid-cols-3\">
+                    {PEOPLE.map((name) => (
+                      <div key={name} className=\"rounded-2xl bg-rose-50/80 px-4 py-3 dark:bg-slate-900/70\">
+                        <p className=\"font-bold text-rose-600 dark:text-rose-300\">{name}</p>
+                        <p className=\"mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400\">{HOME_WINDOWS[name]}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className=\"grid gap-4 sm:grid-cols-2 lg:grid-cols-4\">"""
+          if person_section_end not in source:
+            raise RuntimeError('Fim da seleção de pessoa não encontrado')
+          source = source.replace(person_section_end, routine_section, 1)
+
+          source = source.replace(
+            "Os horários são compartilhados. Cada aparelho ativa as próprias notificações.",
+            "Os horários e responsáveis são compartilhados. Cada celular recebe apenas as tarefas marcadas para aquela pessoa.",
+            1,
+          )
+
+          old_notify_text = """                <p className=\"text-xs text-slate-400\">Todos os dias · Pedro, Ana e Pablo</p>"""
+          new_notify_text = """                <p className=\"text-xs text-slate-400\">
+                                  Todos os dias · Avisar: {item.notify?.length ? item.notify.join(', ') : 'ninguém'}
+                                </p>
+                                <div className=\"mt-2 flex flex-wrap gap-1.5\">
+                                  {PEOPLE.map((name) => {
+                                    const selected = item.notify?.includes(name);
+                                    return (
+                                      <button
+                                        key={name}
+                                        type=\"button\"
+                                        onClick={() => toggleSchedulePerson(item.id, name)}
+                                        className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition ${
+                                          selected
+                                            ? 'bg-violet-600 text-white'
+                                            : 'bg-white text-slate-400 dark:bg-slate-800'
+                                        }`}
+                                      >
+                                        {name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>"""
+          if old_notify_text not in source:
+            raise RuntimeError('Texto dos responsáveis não encontrado')
+          source = source.replace(old_notify_text, new_notify_text, 1)
+
+          path.write_text(source, encoding='utf-8')
+
+          api_path = Path('api/milka-reminders.js')
+          api = api_path.read_text(encoding='utf-8')
+          old_api_schedules = """const DEFAULT_SCHEDULES = [
+            { id: 'food-morning', action: 'food', label: 'Ração da manhã', time: '08:00', enabled: true },
+            { id: 'water-morning', action: 'water', label: 'Trocar a água', time: '09:00', enabled: true },
+            { id: 'sachet-evening', action: 'sachet', label: 'Sachê', time: '19:00', enabled: true },
+            { id: 'food-evening', action: 'food', label: 'Ração da noite', time: '20:00', enabled: true },
+            { id: 'litter-evening', action: 'litter', label: 'Limpar a areia', time: '21:00', enabled: true },
+          ];"""
+          new_api_schedules = """const DEFAULT_SCHEDULES = [
+            { id: 'food-morning', action: 'food', label: 'Ração da manhã', time: '07:00', enabled: true, notify: ['Pablo'] },
+            { id: 'water-morning', action: 'water', label: 'Trocar a água', time: '07:10', enabled: true, notify: ['Pablo'] },
+            { id: 'litter-midday', action: 'litter', label: 'Limpar a areia ao meio-dia', time: '12:15', enabled: true, notify: ['Pablo'] },
+            { id: 'sachet-afternoon', action: 'sachet', label: 'Sachê da tarde', time: '13:10', enabled: true, notify: ['Ana'] },
+            { id: 'food-evening', action: 'food', label: 'Ração da noite', time: '18:00', enabled: true, notify: ['Pedro'] },
+            { id: 'litter-evening', action: 'litter', label: 'Limpar a areia à noite', time: '21:00', enabled: true, notify: ['Ana'] },
+          ];"""
+          if old_api_schedules not in api:
+            raise RuntimeError('Cronograma da API não encontrado')
+          api = api.replace(old_api_schedules, new_api_schedules, 1)
+
+          api = api.replace(
+            "    hour: Number(values.hour),\n  };",
+            "    hour: Number(values.hour),\n    minute: Number(values.minute),\n  };",
+            1,
+          )
+          api = api.replace(
+            "    hour: '2-digit',\n    hourCycle: 'h23',",
+            "    hour: '2-digit',\n    minute: '2-digit',\n    hourCycle: 'h23',",
+            1,
+          )
+          api = api.replace(
+            "      targetUser: target,",
+            "      targetUser: String(target).toLowerCase(),",
+            1,
+          )
+          api = api.replace(
+            "      const { dateKey, hour } = getBrasiliaParts(now);",
+            "      const { dateKey, hour, minute } = getBrasiliaParts(now);",
+            1,
+          )
+          api = api.replace(
+            "        if (!item.enabled || Number(String(item.time).slice(0, 2)) !== hour) continue;",
+            """        const [itemHour, itemMinute] = String(item.time).split(':').map(Number);
+                  if (!item.enabled || itemHour !== hour || itemMinute !== minute) continue;""",
+            1,
+          )
+          old_deliveries = """        const deliveries = await Promise.all([
+                    sendPush('ana', item),
+                    sendPush('pablo', item),
+                  ]);"""
+          new_deliveries = """        const targets = Array.isArray(item.notify) && item.notify.length ? item.notify : ['Ana', 'Pablo'];
+                  const deliveries = await Promise.all(targets.map((target) => sendPush(target, item)));"""
+          if old_deliveries not in api:
+            raise RuntimeError('Destinatários antigos da API não encontrados')
+          api = api.replace(old_deliveries, new_deliveries, 1)
+          api = api.replace(
+            "return json({ ok: true, dateKey, hour, checked: data.schedules.length, results });",
+            "return json({ ok: true, dateKey, hour, minute, checked: data.schedules.length, results });",
+            1,
+          )
+          api_path.write_text(api, encoding='utf-8')
+
+          Path('vercel.json').write_text('''{
+            "$schema": "https://openapi.vercel.sh/vercel.json",
+            "crons": [
+              { "path": "/api/milka-reminders", "schedule": "0 10 * * *" },
+              { "path": "/api/milka-reminders", "schedule": "10 10 * * *" },
+              { "path": "/api/milka-reminders", "schedule": "15 15 * * *" },
+              { "path": "/api/milka-reminders", "schedule": "10 16 * * *" },
+              { "path": "/api/milka-reminders", "schedule": "0 21 * * *" },
+              { "path": "/api/milka-reminders", "schedule": "0 0 * * *" }
+            ]
+          }
+          ''', encoding='utf-8')
+          PY
+
+      - name: Formatar e testar
+        working-directory: novo-site
+        run: |
+          npx --yes prettier@3.6.2 --write src/pages/MilkaMaria.jsx ../api/milka-reminders.js ../vercel.json
+          npm ci
+          npm run build:root
+
+      - name: Salvar alterações
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add novo-site/src/pages/MilkaMaria.jsx api/milka-reminders.js vercel.json assets index.html
+          git commit -m "feat: adaptar rotina da Milka aos horários da casa"
+          git push

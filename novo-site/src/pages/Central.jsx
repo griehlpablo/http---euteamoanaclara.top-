@@ -15,7 +15,7 @@ const cards = [
   { path: '/quiz', icon: Gamepad2, title: 'Quiz do Casal', desc: 'Perguntas para testar a sintonia.' },
   { path: '/surpresa-diaria', icon: Gift, title: 'Surpresa Diária', desc: 'Uma missão, cupom ou carinho por dia.' },
   { path: '/dieta', icon: HeartPulse, title: 'Plano do Casal', desc: 'Dieta, rotina, treino e água do dia.' },
-  { path: '/gastos.html?v=20260720-3', external: true, icon: WalletCards, title: 'Gastos do Casal', desc: 'Registre compras e acompanhe o total do mês.' },
+  { path: '/gastos', icon: WalletCards, title: 'Gastos do Casal', desc: 'Registre compras e acompanhe o total do mês.' },
   { path: '/galeria', icon: ImageIcon, title: 'Memórias', desc: 'Os nossos melhores momentos.' },
   { path: '/assistente', icon: Sparkles, title: 'Cupido Virtual ✨', desc: 'IA para dicas de encontros.' },
   { path: '/retrospectiva', icon: TrendingUp, title: 'Retrospectiva', desc: 'A nossa história em números.' },
@@ -53,11 +53,7 @@ export default function Central() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-2">
-        {cards.map((card) => card.external ? (
-          <a key={card.path} href={card.path} className={cardClasses}>
-            <CardContent card={card} />
-          </a>
-        ) : (
+        {cards.map((card) => (
           <Link key={card.path} to={card.path} className={cardClasses}>
             <CardContent card={card} />
           </Link>

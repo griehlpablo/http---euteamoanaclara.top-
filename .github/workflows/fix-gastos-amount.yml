@@ -1,0 +1,106 @@
+name: Corrigir valores dos gastos
+
+on:
+  push:
+    paths:
+      - .github/workflows/fix-gastos-amount.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Corrigir interpretação monetária
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('novo-site/src/pages/Gastos.jsx')
+          source = path.read_text(encoding='utf-8')
+
+          old_parser = """const parseAmount = (value) => {
+            const normalized = String(value || '')
+              .replace(/\\s/g, '')
+              .replace(/\\./g, '')
+              .replace(',', '.');
+            const number = Number(normalized);
+            return Number.isFinite(number) ? number : 0;
+          };"""
+
+          new_parser = """const parseAmount = (value) => {
+            if (typeof value === 'number') {
+              return Number.isFinite(value) ? value : 0;
+            }
+
+            const raw = String(value ?? '')
+              .trim()
+              .replace(/[^\\d,.-]/g, '');
+
+            if (!raw) return 0;
+
+            const commaIndex = raw.lastIndexOf(',');
+            const dotIndex = raw.lastIndexOf('.');
+            let normalized = raw;
+
+            if (commaIndex >= 0 && dotIndex >= 0) {
+              normalized =
+                commaIndex > dotIndex
+                  ? raw.replace(/\\./g, '').replace(',', '.')
+                  : raw.replace(/,/g, '');
+            } else if (commaIndex >= 0) {
+              normalized = raw.replace(/\\./g, '').replace(',', '.');
+            } else if ((raw.match(/\\./g) || []).length > 1) {
+              normalized = raw.replace(/\\./g, '');
+            } else if (dotIndex >= 0) {
+              const decimalPlaces = raw.length - dotIndex - 1;
+              normalized = decimalPlaces === 3 ? raw.replace('.', '') : raw;
+            }
+
+            const number = Number(normalized);
+            return Number.isFinite(number) ? number : 0;
+          };
+
+          const extractExplicitAmount = (text) => {
+            const source = String(text || '');
+            const decimalMatch = source.match(
+              /(?:R\\$\\s*)?(\\d{1,3}(?:\\.\\d{3})*,\\d{1,2}|\\d+[.,]\\d{1,2})(?!\\d)/i,
+            );
+            if (decimalMatch) return parseAmount(decimalMatch[1]);
+
+            const reaisMatch = source.match(/\\b(\\d+(?:\\.\\d{3})*)\\s*(?:reais?|conto)\\b/i);
+            return reaisMatch ? parseAmount(reaisMatch[1]) : 0;
+          };"""
+
+          if old_parser not in source:
+              raise RuntimeError('Conversor monetário esperado não foi encontrado')
+          source = source.replace(old_parser, new_parser, 1)
+
+          old_amount = """      const amount = parseAmount(parsed.amount);"""
+          new_amount = """      const amountFromText = extractExplicitAmount(quickEntry);
+                const amount = amountFromText || parseAmount(parsed.amount);"""
+
+          if old_amount not in source:
+              raise RuntimeError('Leitura do valor interpretado não foi encontrada')
+          source = source.replace(old_amount, new_amount, 1)
+
+          path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Formatar e testar build
+        working-directory: novo-site
+        run: |
+          npx --yes prettier@3.6.2 --write src/pages/Gastos.jsx
+          npm ci
+          npm run build:root
+
+      - name: Salvar correção
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add novo-site/src/pages/Gastos.jsx assets index.html
+          git commit -m "fix: corrigir valores decimais no assistente financeiro"
+          git push

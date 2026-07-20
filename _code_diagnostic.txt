@@ -1,0 +1,7 @@
+gemini_format_anchor=True
+gemini_instruction=True
+assistant_file_reader=True
+assistant_load=True
+assistant_notification_count=1
+assistant_status_count=1
+links_function_count=1

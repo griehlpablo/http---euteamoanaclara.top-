@@ -43,9 +43,13 @@ jobs:
           meta_comment = re.compile(
               r'\b(?:novo|nova|adicionado|adicionada|corrigido|corrigida|alterado|alterada|'
               r'agora|tempor[aá]rio|fallback|compatibilidade|melhoria|ajuste|observa[cç][aã]o|'
-              r'importante|todo|fixme|hack)\b',
+              r'importante|todo|fixme|hack|m[aá]gica|componente)\b',
               re.IGNORECASE,
           )
+          source_extensions = {
+              '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.css', '.scss', '.html',
+              '.sql', '.sh', '.yml', '.yaml', '.toml', '.gs', '.py', '.md',
+          }
 
           report = []
           report.append('REPOSITORY FILE AUDIT')
@@ -74,6 +78,7 @@ jobs:
           report.append('[MATCHES]')
 
           matches = 0
+          comments = []
           for path in files:
               file_path = Path(path)
               try:
@@ -90,36 +95,85 @@ jobs:
                   reasons = []
                   if literal_patterns.search(line):
                       reasons.append('literal')
-                  if comment_prefix.search(line) and meta_comment.search(line):
+                  is_comment = bool(comment_prefix.search(line))
+                  if is_comment and meta_comment.search(line):
                       reasons.append('meta-comment')
                   if reasons:
                       matches += 1
                       compact = line.strip().replace('\t', ' ')
                       report.append(f'{path}:{number}:{"+".join(reasons)}:{compact[:500]}')
+                  if (
+                      is_comment
+                      and file_path.suffix.lower() in source_extensions
+                      and not path.startswith('assets/')
+                      and not path.startswith('novo-site/public/')
+                      and path != '.github/workflows/repository-audit.yml'
+                  ):
+                      comments.append(f'{path}:{number}:{line.strip()[:500]}')
 
           report.append('')
           report.append(f'TOTAL_MATCHES={matches}')
           report.append('')
-          report.append('[SUPABASE_RECOVERY]')
+          report.append('[COMMENTS]')
+          report.extend(comments)
+          report.append('')
+          report.append(f'TOTAL_COMMENTS={len(comments)}')
+          report.append('')
+          report.append('[SUPABASE_HISTORY_RECOVERY]')
 
-          old_asset = subprocess.check_output([
-              'git', 'show',
-              '4aaab7cc7ed6ee001c2390e259fc2486e48ed429:assets/main-C3WGilLr.js',
-          ]).decode('utf-8', errors='ignore')
-          tokens = re.findall(r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', old_asset)
-          anon_key = ''
-          for token in tokens:
-              try:
-                  payload_part = token.split('.')[1]
-                  payload_part += '=' * (-len(payload_part) % 4)
-                  payload = json.loads(base64.urlsafe_b64decode(payload_part))
-              except Exception:
+          object_lines = subprocess.check_output(['git', 'rev-list', '--objects', '--all']).decode().splitlines()
+          object_paths = {}
+          for line in object_lines:
+              parts = line.split(' ', 1)
+              object_paths.setdefault(parts[0], parts[1] if len(parts) > 1 else '')
+
+          process = subprocess.Popen(
+              ['git', 'cat-file', '--batch'],
+              stdin=subprocess.PIPE,
+              stdout=subprocess.PIPE,
+          )
+          assert process.stdin and process.stdout
+
+          anon_keys = {}
+          publishable_keys = {}
+          jwt_pattern = re.compile(rb'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+')
+          publishable_pattern = re.compile(rb'sb_publishable_[A-Za-z0-9_-]+')
+
+          for sha, path in object_paths.items():
+              process.stdin.write((sha + '\n').encode())
+              process.stdin.flush()
+              header = process.stdout.readline().decode().strip().split()
+              if len(header) < 3 or header[1] != 'blob':
                   continue
-              if payload.get('role') == 'anon':
-                  anon_key = token
-                  break
-          report.append(f'ANON_KEY={anon_key}')
-          report.append(f'ANON_KEY_FOUND={"yes" if anon_key else "no"}')
+              size = int(header[2])
+              data = process.stdout.read(size)
+              process.stdout.read(1)
+              if size > 25_000_000:
+                  continue
+              for token_bytes in jwt_pattern.findall(data):
+                  token = token_bytes.decode()
+                  try:
+                      payload_part = token.split('.')[1]
+                      payload_part += '=' * (-len(payload_part) % 4)
+                      payload = json.loads(base64.urlsafe_b64decode(payload_part))
+                  except Exception:
+                      continue
+                  if payload.get('role') == 'anon':
+                      anon_keys.setdefault(token, path)
+              for token_bytes in publishable_pattern.findall(data):
+                  publishable_keys.setdefault(token_bytes.decode(), path)
+
+          process.stdin.close()
+          process.wait()
+
+          for key, path in anon_keys.items():
+              report.append(f'ANON_KEY={key}')
+              report.append(f'ANON_KEY_PATH={path}')
+          for key, path in publishable_keys.items():
+              report.append(f'PUBLISHABLE_KEY={key}')
+              report.append(f'PUBLISHABLE_KEY_PATH={path}')
+          report.append(f'ANON_KEY_COUNT={len(anon_keys)}')
+          report.append(f'PUBLISHABLE_KEY_COUNT={len(publishable_keys)}')
 
           Path('_repository_audit.txt').write_text('\n'.join(report) + '\n', encoding='utf-8')
           PY
@@ -129,5 +183,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add _repository_audit.txt
-          git commit -m "chore: registrar auditoria temporária [skip ci]"
+          git commit -m "chore: atualizar auditoria temporária [skip ci]"
           git push

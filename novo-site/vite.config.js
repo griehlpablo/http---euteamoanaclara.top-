@@ -4,6 +4,14 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: [
+      {
+        find: /\/services\/gemini$/,
+        replacement: resolve(__dirname, 'src/services/gemini-flash-lite.js'),
+      },
+    ],
+  },
   build: {
     rollupOptions: {
       input: {

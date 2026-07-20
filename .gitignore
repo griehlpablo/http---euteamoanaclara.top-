@@ -1,0 +1,19 @@
+# Dependências e builds locais
+node_modules/
+dist/
+.vite/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Metadados locais do Supabase
+supabase/.temp/
+novo-site/supabase/.temp/
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

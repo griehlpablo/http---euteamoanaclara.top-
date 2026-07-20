@@ -191,7 +191,7 @@ jobs:
                   botResponse += '\\n\\nNão consegui entregar o recado ao Pablo agora.';
                 }
               }"""
-          assistant, count = notification_pattern.subn(notification_replacement, assistant, count=1)
+          assistant, count = notification_pattern.subn(lambda _match: notification_replacement, assistant, count=1)
           if count != 1:
               raise RuntimeError('Bloco de notificação do Cupido não encontrado.')
 
@@ -230,7 +230,7 @@ jobs:
           export default function Links()"""
           links, count = re.subn(
               r"const callGeminiForSummarization = async[\s\S]*?\n};\n\nexport default function Links\(\)",
-              replacement,
+              lambda _match: replacement,
               links,
               count=1,
           )

@@ -59,3 +59,37 @@ create unique index if not exists satisfacao_notes_user_id_key
 -- 3) Garante a chave usada pelo upsert da dieta.
 create unique index if not exists daily_health_logs_person_log_date_key
   on public.daily_health_logs (person, log_date);
+
+-- 4) Habilita o Realtime apenas nas tabelas que podem atualizar a tela
+-- sem interromper fluxos longos como o assistente e a dieta.
+do $$
+declare
+  table_name text;
+begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    raise notice 'Publication supabase_realtime nao encontrada; pulando configuracao de Realtime.';
+    return;
+  end if;
+
+  foreach table_name in array array[
+    'bucketlist',
+    'capsula',
+    'potepapel',
+    'links',
+    'mural',
+    'cupons',
+    'gallery'
+  ]
+  loop
+    if to_regclass(format('public.%I', table_name)) is not null
+       and not exists (
+         select 1
+         from pg_publication_tables
+         where pubname = 'supabase_realtime'
+           and schemaname = 'public'
+           and tablename = table_name
+       ) then
+      execute format('alter publication supabase_realtime add table public.%I', table_name);
+    end if;
+  end loop;
+end $$;

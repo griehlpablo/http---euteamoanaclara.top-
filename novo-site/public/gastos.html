@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Gastos do Casal</title>
+  <style>
+    :root { color-scheme: light; --rose:#f43f5e; --rose2:#ec4899; --ink:#334155; --muted:#94a3b8; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:linear-gradient(135deg,#fff1f2,#fce7f3); }
+    .top { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px max(18px,calc((100vw - 1080px)/2)); background:rgba(255,255,255,.82); backdrop-filter:blur(18px); box-shadow:0 8px 28px rgba(100,30,60,.08); }
+    .brand { font-family:Georgia,serif; color:var(--rose); font-weight:700; }
+    .top a { color:#64748b; text-decoration:none; font-weight:700; font-size:14px; }
+    main { width:min(1080px,calc(100% - 28px)); margin:32px auto 56px; }
+    .heading { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:22px; }
+    h1 { margin:0; font-family:Georgia,serif; font-size:clamp(30px,5vw,48px); color:#1e293b; }
+    .subtitle { margin:6px 0 0; color:#64748b; }
+    .back { display:inline-flex; align-items:center; justify-content:center; min-width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.82); box-shadow:0 8px 24px rgba(100,30,60,.12); text-decoration:none; color:var(--rose); font-size:22px; }
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:18px; }
+    .card,.panel { background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.9); box-shadow:0 16px 40px rgba(100,30,60,.10); backdrop-filter:blur(16px); }
+    .card { border-radius:26px; padding:20px; }
+    .label { color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
+    .value { margin-top:8px; font-size:30px; font-weight:900; color:var(--rose); }
+    .small-value { margin-top:8px; font-size:20px; font-weight:850; }
+    .layout { display:grid; grid-template-columns:1.08fr .92fr; gap:18px; }
+    .panel { border-radius:30px; padding:22px; }
+    h2 { margin:0 0 18px; font-family:Georgia,serif; font-size:27px; color:#1e293b; }
+    .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .full { grid-column:1/-1; }
+    label span { display:block; margin-bottom:6px; color:#64748b; font-size:11px; font-weight:850; text-transform:uppercase; letter-spacing:.08em; }
+    input,select { width:100%; border:1px solid rgba(255,255,255,.95); border-radius:17px; background:rgba(255,255,255,.92); padding:13px 14px; color:#1e293b; font:inherit; outline:none; box-shadow:0 4px 16px rgba(100,30,60,.05); }
+    input:focus,select:focus { box-shadow:0 0 0 3px rgba(244,63,94,.16); }
+    .primary { width:100%; margin-top:16px; border:0; border-radius:17px; padding:15px; color:#fff; font-size:16px; font-weight:900; cursor:pointer; background:linear-gradient(90deg,var(--rose),var(--rose2)); box-shadow:0 12px 28px rgba(244,63,94,.27); }
+    .message { display:none; margin-top:14px; border-radius:16px; padding:12px 14px; background:#fff1f2; color:#be123c; font-size:14px; font-weight:700; }
+    .list { display:flex; flex-direction:column; gap:10px; max-height:500px; overflow:auto; padding-right:3px; }
+    .empty { padding:34px 16px; border:2px dashed #e2e8f0; border-radius:20px; color:var(--muted); text-align:center; }
+    .entry { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:start; padding:14px; border-radius:20px; background:rgba(255,255,255,.92); border:1px solid #fff; }
+    .entry-title { font-weight:900; color:#1e293b; }
+    .meta { margin-top:4px; color:#94a3b8; font-size:12px; line-height:1.45; }
+    .amount { white-space:nowrap; color:var(--rose); font-weight:900; }
+    .delete { border:0; background:transparent; color:#cbd5e1; cursor:pointer; font-size:18px; }
+    .delete:hover { color:#ef4444; }
+    .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+    .secondary { display:flex; align-items:center; justify-content:center; min-height:46px; border:0; border-radius:16px; padding:12px; color:white; text-decoration:none; cursor:pointer; font-weight:850; background:#334155; }
+    .sheet { background:#059669; }
+    .notice { margin-top:14px; color:#94a3b8; font-size:12px; line-height:1.55; }
+    .version { margin-top:28px; color:#cbd5e1; text-align:center; font-size:11px; }
+    @media (max-width:780px) { .cards,.layout { grid-template-columns:1fr; } .cards { grid-template-columns:1fr 1fr; } .cards .card:last-child { grid-column:1/-1; } }
+    @media (max-width:520px) { main { width:min(100% - 18px,1080px); margin-top:20px; } .heading { align-items:flex-start; } .cards,.grid,.actions { grid-template-columns:1fr; } .cards .card:last-child,.full { grid-column:auto; } .panel { padding:17px; border-radius:24px; } .entry { grid-template-columns:1fr auto; } .delete { grid-column:2; } }
+  </style>
+</head>
+<body>
+  <header class="top"><div class="brand">A &amp; P ❤</div><a href="/central">Central do casal</a></header>
+  <main>
+    <div class="heading">
+      <a class="back" href="/central" aria-label="Voltar">←</a>
+      <div style="text-align:right"><h1>Gastos do Casal</h1><p class="subtitle">Registro rápido de compras feitas por Pablo e Ana.</p></div>
+    </div>
+
+    <section class="cards">
+      <div class="card"><div class="label">Gasto no mês</div><div class="value" id="monthTotal">R$ 0,00</div></div>
+      <div class="card"><div class="label">Lançamentos</div><div class="value" id="monthCount">0</div></div>
+      <div class="card"><div class="label">Maior categoria</div><div class="small-value" id="topCategory">—</div><div class="meta" id="topCategoryValue">Nenhum gasto ainda</div></div>
+    </section>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>Registrar compra</h2>
+        <form id="expenseForm">
+          <div class="grid">
+            <label class="full"><span>Descrição</span><input id="description" placeholder="Ex.: Coca-Cola 1 L retornável" required></label>
+            <label><span>Valor</span><input id="amount" inputmode="decimal" placeholder="0,00" required></label>
+            <label><span>Data</span><input id="date" type="date" required></label>
+            <label><span>Categoria</span><select id="category"></select></label>
+            <label><span>Quem pagou</span><select id="person"><option>Pablo</option><option>Ana</option></select></label>
+            <label><span>Conta</span><select id="account"></select></label>
+            <label><span>Pagamento</span><select id="paymentMethod"></select></label>
+            <label class="full"><span>Observações</span><input id="notes" placeholder="Opcional"></label>
+          </div>
+          <div class="message" id="message"></div>
+          <button class="primary" type="submit">Registrar gasto</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Lançamentos recentes</h2>
+        <div class="list" id="entries"></div>
+        <div class="actions">
+          <button class="secondary" id="exportButton" type="button">Exportar CSV</button>
+          <a class="secondary sheet" href="https://docs.google.com/spreadsheets/d/1z5Z3pmTMMVJpX0CSulH4AhnJPoU6zmeKLdJeWPsq6y0/edit" target="_blank" rel="noopener">Abrir planilha</a>
+        </div>
+        <p class="notice">Os registros ficam salvos neste navegador. Não informe número de cartão, senha ou outros dados bancários sensíveis.</p>
+      </section>
+    </div>
+    <div class="version">versão gastos-20260720-3</div>
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'financas-casal-lancamentos-v1';
+      const categories = ['Mercado','Delivery','Energéticos','Transporte','Lazer','Compras pessoais','Saúde','Assinaturas','Outros/imprevistos'];
+      const accounts = ['Banco do Brasil — Pablo','Banco do Brasil — Ana','Itaú — Ana','Dinheiro','Outra conta'];
+      const methods = ['Pix','Débito','Crédito','Dinheiro','Outro'];
+      const $ = (id) => document.getElementById(id);
+      const currency = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+      const today = () => { const d=new Date(); const offset=d.getTimezoneOffset(); return new Date(d.getTime()-offset*60000).toISOString().slice(0,10); };
+      const read = () => { try { const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); return Array.isArray(v)?v:[]; } catch { return []; } };
+      let entries = read();
+
+      categories.forEach(v => $('category').add(new Option(v,v)));
+      accounts.forEach(v => $('account').add(new Option(v,v)));
+      methods.forEach(v => $('paymentMethod').add(new Option(v,v)));
+      $('date').value = today();
+      $('account').value = 'Banco do Brasil — Pablo';
+
+      const parseAmount = (value) => { const n=Number(String(value||'').replace(/\s/g,'').replace(/\./g,'').replace(',','.')); return Number.isFinite(n)?n:0; };
+      const save = () => localStorage.setItem(STORAGE_KEY,JSON.stringify(entries));
+      const showMessage = (text) => { $('message').textContent=text; $('message').style.display='block'; };
+      const esc = (value) => String(value??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+      function render() {
+        const month=today().slice(0,7);
+        const monthEntries=entries.filter(e=>String(e.date||'').startsWith(month));
+        const total=monthEntries.reduce((s,e)=>s+Number(e.amount||0),0);
+        const totals={}; monthEntries.forEach(e=>totals[e.category]=(totals[e.category]||0)+Number(e.amount||0));
+        const top=Object.entries(totals).sort((a,b)=>b[1]-a[1])[0];
+        $('monthTotal').textContent=currency.format(total);
+        $('monthCount').textContent=monthEntries.length;
+        $('topCategory').textContent=top?.[0]||'—';
+        $('topCategoryValue').textContent=top?currency.format(top[1]):'Nenhum gasto ainda';
+        if(!entries.length){ $('entries').innerHTML='<div class="empty">Nenhuma compra registrada neste aparelho.</div>'; return; }
+        $('entries').innerHTML=entries.slice(0,30).map(e=>`<article class="entry"><div><div class="entry-title">${esc(e.description)}</div><div class="meta">${esc(String(e.date||'').split('-').reverse().join('/'))} · ${esc(e.category)} · ${esc(e.person)}<br>${esc(e.account)} · ${esc(e.paymentMethod)}</div></div><div class="amount">${currency.format(Number(e.amount||0))}</div><button class="delete" data-delete="${esc(e.id)}" aria-label="Apagar">×</button></article>`).join('');
+      }
+
+      $('person').addEventListener('change',()=>{ $('account').value=$('person').value==='Pablo'?'Banco do Brasil — Pablo':'Banco do Brasil — Ana'; });
+      $('expenseForm').addEventListener('submit',(event)=>{
+        event.preventDefault();
+        const amount=parseAmount($('amount').value);
+        if(!$('description').value.trim()||amount<=0){ showMessage('Preencha a descrição e um valor maior que zero.'); return; }
+        const entry={ id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random()), date:$('date').value||today(), description:$('description').value.trim(), category:$('category').value, person:$('person').value, account:$('account').value, paymentMethod:$('paymentMethod').value, amount, notes:$('notes').value.trim(), createdAt:new Date().toISOString() };
+        entries=[entry,...entries]; save(); render();
+        $('description').value=''; $('amount').value=''; $('notes').value=''; $('date').value=today();
+        showMessage(`Registrado: ${entry.description} por ${currency.format(entry.amount)}.`);
+      });
+      $('entries').addEventListener('click',(event)=>{ const id=event.target.dataset.delete; if(!id)return; if(confirm('Apagar este lançamento?')){ entries=entries.filter(e=>e.id!==id); save(); render(); } });
+      $('exportButton').addEventListener('click',()=>{
+        if(!entries.length){ showMessage('Ainda não há lançamentos para exportar.'); return; }
+        const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+        const rows=[['Data','Descrição','Categoria','Quem','Conta','Pagamento','Valor','Observações'],...entries.map(e=>[e.date,e.description,e.category,e.person,e.account,e.paymentMethod,Number(e.amount||0).toFixed(2).replace('.',','),e.notes])];
+        const csv='\uFEFF'+rows.map(r=>r.map(quote).join(';')).join('\n');
+        const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); const a=document.createElement('a'); a.href=url; a.download=`gastos-pablo-ana-${today()}.csv`; a.click(); URL.revokeObjectURL(url);
+        showMessage('Arquivo CSV gerado.');
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>

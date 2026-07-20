@@ -26,6 +26,7 @@ import QuizCasal from './pages/QuizCasal';
 import SurpresaDiaria from './pages/SurpresaDiaria';
 import Dieta from './pages/Dieta';
 import Gastos from './pages/Gastos';
+import MilkaMaria from './pages/MilkaMaria';
 import { supabase, isSupabaseConfigured } from './supabase';
 
 const REALTIME_ROUTE_TABLES = {
@@ -34,6 +35,7 @@ const REALTIME_ROUTE_TABLES = {
   '/potepapel': ['potepapel'],
   '/links': ['links'],
   '/mural': ['mural'],
+  '/milka': ['mural'],
   '/cupons': ['cupons'],
   '/galeria': ['gallery'],
 };
@@ -151,6 +153,14 @@ export default function App() {
             <Route path="/linha-do-tempo" element={<LinhaDoTempo />} />
             <Route path="/quiz" element={<QuizCasal />} />
             <Route path="/surpresa-diaria" element={<SurpresaDiaria />} />
+            <Route
+              path="/milka"
+              element={
+                <ErrorBoundary>
+                  <MilkaMaria />
+                </ErrorBoundary>
+              }
+            />
             <Route
               path="/gastos"
               element={

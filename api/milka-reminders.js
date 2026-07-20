@@ -78,12 +78,18 @@ export default {
 
     try {
       const data = await readData();
-      const { dateKey, hour } = getBrasiliaParts();
+      const now = new Date();
+      const { dateKey, hour } = getBrasiliaParts(now);
       const results = [];
 
       for (const item of data.schedules) {
         if (!item.enabled || Number(String(item.time).slice(0, 2)) !== hour) continue;
         const dueAt = scheduleDate(dateKey, item.time);
+        if (now.getTime() < dueAt.getTime()) {
+          results.push({ scheduleId: item.id, skipped: 'not-due-yet' });
+          continue;
+        }
+
         const completed = data.activities.some(
           (activity) =>
             activity.action === item.action &&

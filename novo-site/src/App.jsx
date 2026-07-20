@@ -25,6 +25,7 @@ import LinhaDoTempo from './pages/LinhaDoTempo';
 import QuizCasal from './pages/QuizCasal';
 import SurpresaDiaria from './pages/SurpresaDiaria';
 import Dieta from './pages/Dieta';
+import Gastos from './pages/Gastos';
 import { supabase } from './supabase';
 
 const REALTIME_ROUTE_TABLES = {
@@ -136,6 +137,7 @@ export default function App() {
             <Route path="/linha-do-tempo" element={<LinhaDoTempo />} />
             <Route path="/quiz" element={<QuizCasal />} />
             <Route path="/surpresa-diaria" element={<SurpresaDiaria />} />
+            <Route path="/gastos" element={<Gastos />} />
             <Route
               path="/dieta"
               element={

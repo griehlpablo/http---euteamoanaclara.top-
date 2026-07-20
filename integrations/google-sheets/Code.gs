@@ -2,7 +2,6 @@ const CONFIG = Object.freeze({
   SPREADSHEET_ID: '1z5Z3pmTMMVJpX0CSulH4AhnJPoU6zmeKLdJeWPsq6y0',
   SHEET_NAME: 'Lançamentos',
   FIRST_DATA_ROW: 3,
-  TOKEN_PROPERTY: 'WRITE_TOKEN',
   DEDUPE_PREFIX: 'expense:',
 });
 
@@ -17,22 +16,19 @@ function doGet() {
 function doPost(event) {
   try {
     const payload = parsePayload_(event);
-    const expectedToken = PropertiesService.getScriptProperties().getProperty(CONFIG.TOKEN_PROPERTY);
+    validateRequest_(payload);
 
-    if (!expectedToken) {
-      throw new Error('O código secreto ainda não foi configurado nas propriedades do script.');
-    }
-    if (!payload.token || payload.token !== expectedToken) {
-      throw new Error('Código secreto inválido.');
-    }
     let result;
-  if (payload.action === 'appendExpense') {
-    result = appendExpense_(payload.expense || {});
-  } else if (payload.action === 'deleteExpense') {
-    result = deleteExpense_(payload.expenseId);
-  } else {
-    throw new Error('Ação não reconhecida.');
-  }
+    if (payload.action === 'appendExpense') {
+      result = appendExpense_(payload.expense || {});
+    } else if (payload.action === 'deleteExpense') {
+      result = deleteExpense_(payload.expenseId, payload.row);
+    } else if (payload.action === 'listExpenses') {
+      result = listExpenses_();
+    } else {
+      throw new Error('Ação não reconhecida.');
+    }
+
     return jsonResponse_({ ok: true, ...result });
   } catch (error) {
     console.error(error);
@@ -94,7 +90,62 @@ function appendExpense_(expense) {
   }
 }
 
-function deleteExpense_(expenseId) {
+function listExpenses_() {
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheetByName(CONFIG.SHEET_NAME);
+  if (!sheet) throw new Error('A aba "Lançamentos" não foi encontrada.');
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < CONFIG.FIRST_DATA_ROW) return { entries: [] };
+
+  const properties = PropertiesService.getScriptProperties().getProperties();
+  const idsByRow = {};
+
+  Object.keys(properties).forEach(function (key) {
+    if (key.indexOf(CONFIG.DEDUPE_PREFIX) !== 0) return;
+    const row = Number(properties[key]);
+    if (Number.isInteger(row)) {
+      idsByRow[row] = key.slice(CONFIG.DEDUPE_PREFIX.length);
+    }
+  });
+
+  const values = sheet
+    .getRange(CONFIG.FIRST_DATA_ROW, 1, lastRow - CONFIG.FIRST_DATA_ROW + 1, 11)
+    .getValues();
+  const entries = [];
+
+  values.forEach(function (columns, index) {
+    const row = CONFIG.FIRST_DATA_ROW + index;
+    const hasContent = columns.some(function (value) {
+      return String(value === null || value === undefined ? '' : value).trim() !== '';
+    });
+    if (!hasContent) return;
+
+    const date = formatDateKey_(columns[0]);
+    entries.push({
+      id: idsByRow[row] || 'sheet-row-' + row,
+      sheetRow: row,
+      synced: true,
+      date: date,
+      description: String(columns[1] || '').trim() || 'Lançamento da planilha',
+      category: String(columns[2] || '').trim() || 'Outros/imprevistos',
+      person: String(columns[4] || '').trim() || 'Pablo',
+      account: String(columns[5] || '').trim() || 'Outra conta',
+      paymentMethod: String(columns[7] || '').trim() || 'Outro',
+      amount: Number(columns[8]) || 0,
+      notes: String(columns[10] || '').trim(),
+      createdAt: date ? date + 'T12:00:00-03:00' : new Date().toISOString(),
+    });
+  });
+
+  entries.sort(function (a, b) {
+    return b.sheetRow - a.sheetRow;
+  });
+
+  return { entries: entries };
+}
+
+function deleteExpense_(expenseId, requestedRow) {
   const id = String(expenseId || '').trim();
   if (!id) throw new Error('Identificador do lançamento ausente.');
 
@@ -105,11 +156,10 @@ function deleteExpense_(expenseId) {
     const properties = PropertiesService.getScriptProperties();
     const dedupeKey = CONFIG.DEDUPE_PREFIX + id;
     const storedRow = properties.getProperty(dedupeKey);
-    if (!storedRow) return { deleted: false, missing: true };
+    const row = Number(storedRow || requestedRow);
 
-    const row = Number(storedRow);
     if (!Number.isInteger(row) || row < CONFIG.FIRST_DATA_ROW) {
-      throw new Error('Linha armazenada para o lançamento é inválida.');
+      return { deleted: false, missing: true };
     }
 
     const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
@@ -117,8 +167,9 @@ function deleteExpense_(expenseId) {
     if (!sheet) throw new Error('A aba "Lançamentos" não foi encontrada.');
 
     sheet.getRange(row, 1, 1, 11).clearContent();
-    properties.deleteProperty(dedupeKey);
+    if (storedRow) properties.deleteProperty(dedupeKey);
     SpreadsheetApp.flush();
+
     return { deleted: true, missing: false, row };
   } finally {
     lock.releaseLock();
@@ -169,6 +220,24 @@ function parseLocalDate_(value) {
   }
 
   return date;
+}
+
+function formatDateKey_(value) {
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    return Utilities.formatDate(
+      value,
+      Session.getScriptTimeZone() || 'America/Sao_Paulo',
+      'yyyy-MM-dd',
+    );
+  }
+
+  const text = String(value || '').trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
+  if (iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
+
+  const brazilian = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(text);
+  if (brazilian) return brazilian[3] + '-' + brazilian[2] + '-' + brazilian[1];
+  return '';
 }
 
 function validateExpense_(expense) {

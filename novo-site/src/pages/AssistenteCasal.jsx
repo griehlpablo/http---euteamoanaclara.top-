@@ -4,6 +4,7 @@ import { Send, Bot, ArrowLeft, Plus, Trash2, MessageSquare, X, Image as ImageIco
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '../supabase';
 import { callGeminiAPI } from '../services/gemini';
+import { sendPartnerNotification } from '../services/notifications';
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -16,12 +17,12 @@ export default function AssistenteCasal() {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
-  const [currentModelName, setCurrentModelName] = useState(""); // Exibe qual modelo respondeu
-  
+  const [currentModelName, setCurrentModelName] = useState('');
+
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -37,12 +38,12 @@ export default function AssistenteCasal() {
       }
       if (mounted) {
         setChats(data || []);
-        if (data && data.length > 0 && !activeChatId) setActiveChatId(data[0].id);
+        if (data?.length) setActiveChatId((current) => current || data[0].id);
       }
     })();
 
     return () => { mounted = false; };
-  }, [activeChatId]);
+  }, []);
 
   useEffect(() => {
     if (!activeChatId) {
@@ -57,29 +58,40 @@ export default function AssistenteCasal() {
         console.error('Supabase error fetching mensagens:', error);
         return;
       }
-      if (mounted) setMessages((data && data.length > 0) ? data : [{ role: 'assistant', text: "Olá, Ana Clara! 💕 Como posso ajudar o casal hoje?" }]);
+      if (mounted) setMessages((data?.length) ? data : [{ role: 'assistant', text: 'Olá, Ana Clara! 💕 Como posso ajudar o casal hoje?' }]);
     })();
 
     return () => { mounted = false; };
   }, [activeChatId]);
 
   const criarNovoChat = async () => {
-    const { data, error } = await supabase.from('chats').insert([{ title: 'Nova Conversa', createdAt: new Date().toISOString() }]).select().single();
+    const { data, error } = await supabase
+      .from('chats')
+      .insert([{ title: 'Nova Conversa', createdAt: new Date().toISOString() }])
+      .select()
+      .single();
+
     if (error) {
       console.error('Erro ao criar chat:', error);
       return;
     }
+
+    setChats((previous) => [data, ...previous.filter((chat) => chat.id !== data.id)]);
     setActiveChatId(data.id);
   };
 
   const deletarChatAtivo = async () => {
-    if (!activeChatId || !window.confirm("Quer mesmo apagar essa conversa inteira? 🧹")) return;
+    if (!activeChatId || !window.confirm('Quer mesmo apagar essa conversa inteira? 🧹')) return;
     try {
       const { error: delMsgError } = await supabase.from('mensagens').delete().eq('chat_id', activeChatId);
       if (delMsgError) throw delMsgError;
       const { error: delChatError } = await supabase.from('chats').delete().eq('id', activeChatId);
       if (delChatError) throw delChatError;
-      setActiveChatId(null);
+
+      const remaining = chats.filter((chat) => chat.id !== activeChatId);
+      setChats(remaining);
+      setActiveChatId(remaining[0]?.id || null);
+      setMessages([]);
     } catch (error) {
       console.error('Erro ao deletar conversa:', error);
     }
@@ -90,73 +102,93 @@ export default function AssistenteCasal() {
     if ((!prompt.trim() && !selectedFile) || isLoading || !activeChatId) return;
 
     setIsLoading(true);
-    let imageUrl = null, base64ForGemini = null, mimeTypeForGemini = null;
+    let imageUrl = null;
+    let base64ForGemini = null;
+    let mimeTypeForGemini = null;
 
-    if (selectedFile) {
-      base64ForGemini = await fileToBase64(selectedFile);
-      mimeTypeForGemini = selectedFile.type;
-      const bucket = 'chats';
-      const filePath = `chats/${activeChatId}/${Date.now()}_${selectedFile.name}`;
-      const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, selectedFile);
-      if (uploadError) {
-        console.error('Erro ao fazer upload do arquivo:', uploadError);
-      } else {
-        const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath);
-        imageUrl = publicData?.publicUrl || null;
+    try {
+      if (selectedFile) {
+        base64ForGemini = await fileToBase64(selectedFile);
+        mimeTypeForGemini = selectedFile.type;
+        const bucket = 'chats';
+        const filePath = `chats/${activeChatId}/${Date.now()}_${selectedFile.name}`;
+        const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, selectedFile);
+        if (uploadError) {
+          console.error('Erro ao fazer upload do arquivo:', uploadError);
+        } else {
+          const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+          imageUrl = publicData?.publicUrl || null;
+        }
       }
-    }
 
-    if (messages.length <= 1 && prompt) {
-      const { error: updateError } = await supabase.from('chats').update({ title: prompt.substring(0, 25) + (prompt.length > 25 ? "..." : "") }).eq('id', activeChatId);
-      if (updateError) console.error('Erro ao atualizar título do chat:', updateError);
-    }
-
-    const { error: insertError } = await supabase.from('mensagens').insert([
-      {
-        chat_id: activeChatId,
-        role: 'user',
-        text: prompt || "Enviou um arquivo",
-        imageUrl,
-        fileType: mimeTypeForGemini,
-        createdAt: new Date().toISOString()
+      const shouldRenameChat = messages.length <= 1 && prompt.trim();
+      if (shouldRenameChat) {
+        const nextTitle = prompt.substring(0, 25) + (prompt.length > 25 ? '...' : '');
+        const { error: updateError } = await supabase.from('chats').update({ title: nextTitle }).eq('id', activeChatId);
+        if (updateError) {
+          console.error('Erro ao atualizar título do chat:', updateError);
+        } else {
+          setChats((previous) => previous.map((chat) => chat.id === activeChatId ? { ...chat, title: nextTitle } : chat));
+        }
       }
-    ]);
-    if (insertError) console.error('Erro ao inserir mensagem:', insertError);
 
-    setInput("");
-    setSelectedFile(null);
-    setFilePreview(null);
+      const { data: insertedUserMessage, error: insertError } = await supabase
+        .from('mensagens')
+        .insert([{
+          chat_id: activeChatId,
+          role: 'user',
+          text: prompt || 'Enviou um arquivo',
+          imageUrl,
+          fileType: mimeTypeForGemini,
+          createdAt: new Date().toISOString(),
+        }])
+        .select()
+        .single();
 
-    const apiResult = await callGeminiAPI(messages, prompt || "Analise este arquivo.", base64ForGemini, mimeTypeForGemini);
-    let botResponse = apiResult.text;
-    setCurrentModelName(apiResult.modelUsed);
+      if (insertError) throw insertError;
+      setMessages((previous) => [...previous, insertedUserMessage]);
 
-    if (botResponse.includes('[AVISAR_PABLO]')) {
-      botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
-      
-      // Envia Push Notification via WhatsApp (CallMeBot)
-      try {
-        const phoneNumber = "+554497168417"; 
-        const apiKey = "8762883";
-        const mensagem = `💘 O Cupido avisa: Novo pedido -> "${prompt || 'Enviou um arquivo'}"\n\nResposta do Bot: "${botResponse}"`;
-        const url = `https://api.callmebot.com/whatsapp.php?phone=${phoneNumber}&text=${encodeURIComponent(mensagem)}&apikey=${apiKey}`;
+      setInput('');
+      setSelectedFile(null);
+      setFilePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
 
-        fetch(url, { mode: 'no-cors' }).catch(err => console.error('Erro na requisição do WhatsApp:', err));
-      } catch (error) {
-        console.error('Erro ao montar o aviso do WhatsApp:', error);
+      const apiResult = await callGeminiAPI(messages, prompt || 'Analise este arquivo.', base64ForGemini, mimeTypeForGemini);
+      let botResponse = apiResult.text;
+      setCurrentModelName(apiResult.modelUsed);
+
+      if (botResponse.includes('[AVISAR_PABLO]')) {
+        botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
+        await sendPartnerNotification({
+          targetUser: 'pablo',
+          title: 'Recado da Ana pelo Cupido 💘',
+          message: `${prompt || 'Ana enviou um arquivo'} — ${botResponse}`,
+          data: { source: 'assistente-casal', chatId: activeChatId },
+        });
       }
+
+      const { data: insertedAssistantMessage, error: insertAssistantError } = await supabase
+        .from('mensagens')
+        .insert([{
+          chat_id: activeChatId,
+          role: 'assistant',
+          text: botResponse,
+          createdAt: new Date().toISOString(),
+        }])
+        .select()
+        .single();
+
+      if (insertAssistantError) throw insertAssistantError;
+      setMessages((previous) => [...previous, insertedAssistantMessage]);
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    const { error: insertAssistantError } = await supabase.from('mensagens').insert([
-      { chat_id: activeChatId, role: 'assistant', text: botResponse, createdAt: new Date().toISOString() }
-    ]);
-    if (insertAssistantError) console.error('Erro ao inserir resposta do assistente:', insertAssistantError);
-    setIsLoading(false);
   };
 
   return (
     <div className="max-w-4xl mx-auto h-[85vh] flex flex-col md:flex-row gap-4 pt-4 px-2 relative z-10">
-      {/* SIDEBAR */}
       <div className="w-full md:w-64 bg-white/60 backdrop-blur-lg border border-white/50 shadow-xl rounded-[2rem] p-4 flex flex-col h-48 md:h-full flex-shrink-0">
         <button onClick={criarNovoChat} className="w-full bg-rose-500 text-white p-3 rounded-xl hover:bg-rose-600 transition-all font-bold flex items-center justify-center gap-2 mb-4"><Plus size={20} /> Nova Conversa</button>
         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
@@ -167,7 +199,6 @@ export default function AssistenteCasal() {
         <Link to="/central" className="mt-4 text-center text-slate-400 hover:text-rose-500 text-xs font-bold uppercase flex items-center justify-center gap-1"><ArrowLeft size={14} /> Menu</Link>
       </div>
 
-      {/* CHAT */}
       <div className="bg-white/60 backdrop-blur-lg border border-white/50 shadow-xl flex-1 overflow-hidden flex flex-col rounded-[2rem] p-4">
         <div className="flex items-center justify-between mb-4 px-2 border-b border-rose-100/50 pb-2">
           <div className="flex flex-col">
@@ -181,7 +212,7 @@ export default function AssistenteCasal() {
           <>
             <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 custom-scrollbar font-sans text-slate-800">
               {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div key={m.id || i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] p-4 rounded-2xl text-sm ${m.role === 'user' ? 'bg-rose-500 text-white rounded-br-none shadow-md' : 'bg-white border border-slate-100 shadow-sm'}`}>
                     {m.fileType && !m.fileType.startsWith('image/') ? (
                       <a href={m.imageUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-colors mb-2 text-white text-sm w-max">
@@ -209,19 +240,19 @@ export default function AssistenteCasal() {
                       <span className="truncate max-w-[120px]">{selectedFile.name}</span>
                     </div>
                   )}
-                  <button onClick={() => {setSelectedFile(null); setFilePreview(null);}} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md"><X size={14} /></button>
+                  <button onClick={() => { setSelectedFile(null); setFilePreview(null); }} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md"><X size={14} /></button>
                 </div>
               )}
               <div className="flex items-center w-full gap-2">
-                <input type="file" accept="image/*,.pdf,.txt,.docx" ref={fileInputRef} onChange={(e) => {const f = e.target.files[0]; if(f){setSelectedFile(f); if(f.type.startsWith('image/')){setFilePreview(URL.createObjectURL(f));}else{setFilePreview(null);}}}} className="hidden" />
-                <button onClick={() => fileInputRef.current.click()} className="text-rose-400 p-2 rounded-full hover:bg-rose-100"><ImageIcon size={24} /></button>
+                <input type="file" accept="image/*,.pdf,.txt,.docx" ref={fileInputRef} onChange={(e) => { const f = e.target.files[0]; if (f) { setSelectedFile(f); if (f.type.startsWith('image/')) { setFilePreview(URL.createObjectURL(f)); } else { setFilePreview(null); } } }} className="hidden" />
+                <button onClick={() => fileInputRef.current?.click()} className="text-rose-400 p-2 rounded-full hover:bg-rose-100"><ImageIcon size={24} /></button>
                 <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder="Fale com o Cupido..." className="flex-1 bg-transparent border-none px-2 py-2 text-sm focus:outline-none" />
                 <button onClick={handleSend} disabled={isLoading || (!input.trim() && !selectedFile)} className="bg-rose-500 text-white p-3 rounded-xl hover:bg-rose-600 disabled:opacity-50 transition-all flex-shrink-0"><Send size={20} /></button>
               </div>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-rose-300 font-serif"><Bot size={64} className="mb-4 opacity-50" /><p>Selecione um chat para começar.</p></div>
+          <div className="flex-1 flex flex-col items-center justify-center text-rose-300 font-serif"><Bot size={64} className="mb-4 opacity-50" /><p>Selecione ou crie um chat para começar.</p></div>
         )}
       </div>
     </div>

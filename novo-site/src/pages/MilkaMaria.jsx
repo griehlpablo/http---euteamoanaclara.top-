@@ -20,6 +20,8 @@ import { supabase } from '../supabase';
 
 const DEVICE_PERSON_KEY = 'milka-device-person-v1';
 const LOCAL_REMINDERS_KEY = 'milka-local-reminders-v1';
+const STORAGE_BUCKET = 'mural';
+const STORAGE_PATH = 'milka/data.json';
 
 const PEOPLE = ['Pedro', 'Ana', 'Pablo'];
 const EXTERNAL_IDS = {
@@ -46,13 +48,44 @@ const DEFAULT_SCHEDULES = [
   { id: 'litter-evening', action: 'litter', label: 'Limpar a areia', time: '21:00', enabled: true, notify: PEOPLE },
 ];
 
-const parsePayload = (record) => {
-  try {
-    const parsed = JSON.parse(record.text || '{}');
-    return { ...parsed, recordId: record.id, recordTimestamp: record.timestamp };
-  } catch {
-    return null;
+const emptyData = () => ({
+  version: 1,
+  activities: [],
+  schedules: DEFAULT_SCHEDULES,
+  updatedAt: new Date().toISOString(),
+});
+
+const normalizeData = (value) => ({
+  version: 1,
+  activities: Array.isArray(value?.activities) ? value.activities : [],
+  schedules: Array.isArray(value?.schedules) && value.schedules.length
+    ? value.schedules
+    : DEFAULT_SCHEDULES,
+  updatedAt: value?.updatedAt || new Date().toISOString(),
+});
+
+const readCloudData = async () => {
+  const { data, error } = await supabase.storage.from(STORAGE_BUCKET).download(STORAGE_PATH);
+  if (error) {
+    const status = Number(error.statusCode || error.status || 0);
+    if (status === 400 || status === 404 || String(error.message || '').toLowerCase().includes('not found')) {
+      return null;
+    }
+    throw error;
   }
+  return normalizeData(JSON.parse(await data.text()));
+};
+
+const writeCloudData = async (value) => {
+  const next = normalizeData({ ...value, updatedAt: new Date().toISOString() });
+  const blob = new Blob([JSON.stringify(next)], { type: 'application/json' });
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(STORAGE_PATH, blob, {
+    upsert: true,
+    contentType: 'application/json',
+    cacheControl: '0',
+  });
+  if (error) throw error;
+  return next;
 };
 
 const formatDateTime = (value) => {
@@ -74,21 +107,15 @@ const relativeTime = (value) => {
   return `Há ${days} dia${days === 1 ? '' : 's'}`;
 };
 
-const getBrasiliaParts = (date = new Date()) => {
+const getBrasiliaDateKey = (date = new Date()) => {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Sao_Paulo',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
   }).formatToParts(date);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return {
-    dateKey: `${values.year}-${values.month}-${values.day}`,
-    time: `${values.hour}:${values.minute}`,
-  };
+  return `${values.year}-${values.month}-${values.day}`;
 };
 
 const scheduleDate = (dateKey, time) => new Date(`${dateKey}T${time}:00-03:00`);
@@ -109,7 +136,7 @@ const showDeviceNotification = async (title, body, tag) => {
       });
       return;
     } catch {
-      // O navegador ainda pode exibir a notificação sem o service worker.
+      // Usa a API direta quando o navegador ainda não entregou o service worker.
     }
   }
 
@@ -125,55 +152,46 @@ export default function MilkaMaria() {
   const [loading, setLoading] = useState(true);
   const [savingAction, setSavingAction] = useState('');
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState('');
   const [notificationPermission, setNotificationPermission] = useState(
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
   );
 
-  const loadData = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('mural')
-      .select('*')
-      .like('author', 'milka:%')
-      .order('timestamp', { ascending: false })
-      .limit(500);
+  const applyData = (data) => {
+    const normalized = normalizeData(data);
+    setActivities(
+      [...normalized.activities].sort(
+        (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
+      ),
+    );
+    setSchedules(normalized.schedules);
+    setLastUpdate(normalized.updatedAt);
+  };
 
-    if (error) {
-      setStatus(`Não consegui carregar os registros: ${error.message}`);
-      setLoading(false);
-      return;
+  const loadData = async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
+    try {
+      let cloudData = await readCloudData();
+      if (!cloudData) cloudData = await writeCloudData(emptyData());
+      applyData(cloudData);
+      if (!silent) setStatus('');
+    } catch (error) {
+      if (!silent) setStatus(`Não consegui sincronizar os cuidados: ${error.message}`);
+    } finally {
+      if (!silent) setLoading(false);
     }
-
-    const parsed = (data || []).map(parsePayload).filter(Boolean);
-    const activityRows = parsed
-      .filter((item) => item.kind === 'milka-activity')
-      .sort((a, b) => new Date(b.occurredAt) - new Date(a.occurredAt));
-    const scheduleRow = parsed.find((item) => item.kind === 'milka-schedule-set');
-
-    setActivities(activityRows);
-    if (Array.isArray(scheduleRow?.schedules) && scheduleRow.schedules.length) {
-      setSchedules(scheduleRow.schedules);
-    }
-    setLoading(false);
   };
 
   useEffect(() => {
+    let mounted = true;
     loadData();
-
-    const channel = supabase
-      .channel('milka-care-live')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'mural' },
-        (payload) => {
-          const author = payload.new?.author || payload.old?.author || '';
-          if (String(author).startsWith('milka:')) loadData();
-        },
-      )
-      .subscribe();
-
+    const interval = window.setInterval(async () => {
+      if (!mounted || document.visibilityState === 'hidden') return;
+      await loadData({ silent: true });
+    }, 10000);
     return () => {
-      supabase.removeChannel(channel);
+      mounted = false;
+      window.clearInterval(interval);
     };
   }, []);
 
@@ -194,7 +212,7 @@ export default function MilkaMaria() {
 
     const checkReminders = async () => {
       const now = new Date();
-      const { dateKey } = getBrasiliaParts(now);
+      const dateKey = getBrasiliaDateKey(now);
       const sent = JSON.parse(localStorage.getItem(LOCAL_REMINDERS_KEY) || '{}');
 
       for (const item of schedules) {
@@ -235,47 +253,43 @@ export default function MilkaMaria() {
   const registerActivity = async (action) => {
     setSavingAction(action);
     setStatus('');
-    const occurredAt = new Date().toISOString();
-    const payload = {
-      kind: 'milka-activity',
-      action,
-      person,
-      note: note.trim(),
-      occurredAt,
-    };
-
-    const { data, error } = await supabase
-      .from('mural')
-      .insert([
-        {
-          text: JSON.stringify(payload),
-          author: `milka:activity:${person.toLowerCase()}`,
-          imageUrl: null,
-          timestamp: occurredAt,
-          likes: [],
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      setStatus(`Não consegui registrar: ${error.message}`);
-    } else {
-      setActivities((current) => [parsePayload(data), ...current].filter(Boolean));
+    try {
+      const current = (await readCloudData()) || emptyData();
+      const occurredAt = new Date().toISOString();
+      const activity = {
+        id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+        action,
+        person,
+        note: note.trim(),
+        occurredAt,
+      };
+      const next = await writeCloudData({
+        ...current,
+        activities: [activity, ...current.activities].slice(0, 1000),
+      });
+      applyData(next);
       setNote('');
       setStatus(`${ACTIONS[action].label} por ${person} às ${formatDateTime(occurredAt)}.`);
+    } catch (error) {
+      setStatus(`Não consegui registrar: ${error.message}`);
+    } finally {
+      setSavingAction('');
     }
-    setSavingAction('');
   };
 
-  const deleteActivity = async (recordId) => {
+  const deleteActivity = async (activityId) => {
     if (!window.confirm('Apagar este registro da Milka?')) return;
-    const { error } = await supabase.from('mural').delete().eq('id', recordId);
-    if (error) {
+    try {
+      const current = (await readCloudData()) || emptyData();
+      const next = await writeCloudData({
+        ...current,
+        activities: current.activities.filter((item) => item.id !== activityId),
+      });
+      applyData(next);
+      setStatus('Registro apagado para todos.');
+    } catch (error) {
       setStatus(`Não consegui apagar: ${error.message}`);
-      return;
     }
-    setActivities((current) => current.filter((item) => item.recordId !== recordId));
   };
 
   const updateSchedule = (id, changes) => {
@@ -287,31 +301,16 @@ export default function MilkaMaria() {
   const saveSchedules = async () => {
     setSavingSchedule(true);
     setStatus('');
-    const timestamp = new Date().toISOString();
-
-    const { error: deleteError } = await supabase
-      .from('mural')
-      .delete()
-      .eq('author', 'milka:schedule');
-
-    if (deleteError) {
-      setStatus(`Não consegui atualizar o cronograma: ${deleteError.message}`);
+    try {
+      const current = (await readCloudData()) || emptyData();
+      const next = await writeCloudData({ ...current, schedules });
+      applyData(next);
+      setStatus('Cronograma da Milka salvo para todos.');
+    } catch (error) {
+      setStatus(`Não consegui salvar o cronograma: ${error.message}`);
+    } finally {
       setSavingSchedule(false);
-      return;
     }
-
-    const { error } = await supabase.from('mural').insert([
-      {
-        text: JSON.stringify({ kind: 'milka-schedule-set', schedules, updatedAt: timestamp }),
-        author: 'milka:schedule',
-        imageUrl: null,
-        timestamp,
-        likes: [],
-      },
-    ]);
-
-    setStatus(error ? `Não consegui salvar: ${error.message}` : 'Cronograma da Milka salvo para todos.');
-    setSavingSchedule(false);
   };
 
   const enableNotifications = async () => {
@@ -362,6 +361,11 @@ export default function MilkaMaria() {
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Alimentação, higiene, compras e lembretes compartilhados.
           </p>
+          {lastUpdate && (
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-emerald-600">
+              Sincronizado em {formatDateTime(lastUpdate)}
+            </p>
+          )}
         </div>
       </header>
 
@@ -558,7 +562,7 @@ export default function MilkaMaria() {
               const Icon = config.icon;
               return (
                 <div
-                  key={activity.recordId}
+                  key={activity.id}
                   className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 dark:bg-slate-900/70"
                 >
                   <div className="rounded-xl bg-rose-50 p-2 text-rose-500 dark:bg-slate-800">
@@ -577,7 +581,7 @@ export default function MilkaMaria() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => deleteActivity(activity.recordId)}
+                    onClick={() => deleteActivity(activity.id)}
                     className="rounded-full p-2 text-slate-300 transition hover:bg-red-50 hover:text-red-500"
                     title="Apagar registro"
                   >

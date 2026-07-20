@@ -84,6 +84,8 @@ export default {
       return json({ ok: false, error: "Lançamento ou ação inválida." }, 400);
     }
 
+    const expenseId = String(body?.expenseId || "").trim();
+    const legacyRowMatch = /^sheet-row-(\d+)$/.exec(expenseId);
     const upstreamPayload = {
       action,
       token,
@@ -91,8 +93,8 @@ export default {
         ? { expense: body.expense }
         : validDelete
           ? {
-              expenseId: String(body.expenseId).trim(),
-              row: Number(body.row) || null,
+              expenseId,
+              row: Number(body.row || legacyRowMatch?.[1]) || null,
             }
           : {}),
     };

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "0 22 * * *"
+    },
+    {
+      "path": "/api/milka-reminders",
+      "schedule": "0 23 * * *"
+    }
+  ]
+}

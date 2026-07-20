@@ -1,12 +1,33 @@
 export const MODEL_TIERS = {
-  STANDARD: 'gemini-flash-latest',
+  STANDARD: 'gemini-3.1-flash-lite',
 };
 
-const DEFAULT_SYSTEM_INSTRUCTION = 'Instruções: Você é o assistente virtual criado pelo desenvolvedor Pablo Griehl para ajudar a namorada dele, Ana Clara. Seu tom deve ser prestativo, inteligente e gentil, com um leve toque romântico. Dê respostas curtas e práticas, EXCETO quando ela pedir uma receita, um roteiro ou detalhes específicos. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. NÃO REPITA sugestões. REGRA CRÍTICA: Se a Ana Clara pedir para avisar/notificar o namorado (ex: "fala pro pablo", "pede pro pablo", etc.), confirme que vai enviar e OBRIGATORIAMENTE inclua a tag secreta [AVISAR_PABLO] no final da sua resposta.';
+const DEFAULT_SYSTEM_INSTRUCTION = 'Você é o Cupido Virtual do site de Pablo e Ana Clara. Seja prestativo, inteligente, gentil e levemente romântico. Dê respostas curtas e práticas, exceto quando pedirem receita, roteiro ou detalhes. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. Evite repetir sugestões. Quando Ana pedir para avisar Pablo, confirme o envio e inclua [AVISAR_PABLO] no fim da resposta.';
 
 const getGeminiApiKey = () => {
   const reversedKey = 'wAxEMqIVpqDu10pdWXt3kF-cXyayrURyyIhT3tpqnl1I6NR8bA.QA';
   return reversedKey.split('').reverse().join('');
+};
+
+const getRuntimeContext = () => {
+  const now = new Date();
+  const localDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysSince = (year, month, day) => Math.max(0, Math.floor(
+    (localDay.getTime() - new Date(year, month - 1, day).getTime()) / 86400000,
+  ));
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'não informado';
+  const currentDateTime = new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'full',
+    timeStyle: 'long',
+  }).format(now);
+
+  return [
+    `Data e hora do aparelho: ${currentDateTime}.`,
+    `Fuso horário: ${timeZone}.`,
+    `Pablo e Ana ficaram pela primeira vez há ${daysSince(2023, 7, 6)} dias, em 06/07/2023.`,
+    `Eles namoram há ${daysSince(2023, 9, 23)} dias, desde 23/09/2023.`,
+    'Use esses dados para perguntas sobre hoje, horário, aniversário ou duração do relacionamento. Não invente outra data.',
+  ].join(' ');
 };
 
 const formatHistory = (historicoMensagens, novoPrompt, base64Image, mimeType) => {
@@ -34,7 +55,10 @@ export const callGeminiAPI = async (
   options = {},
 ) => {
   const modelId = MODEL_TIERS.STANDARD;
-  const systemInstruction = options.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION;
+  const systemInstruction = [
+    options.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION,
+    options.includeRuntimeContext === false ? '' : getRuntimeContext(),
+  ].filter(Boolean).join(' ');
   const contents = formatHistory(historicoMensagens, novoPrompt, base64Image, mimeType);
 
   try {

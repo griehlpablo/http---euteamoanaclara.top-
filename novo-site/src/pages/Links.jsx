@@ -3,57 +3,25 @@ import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Link as LinkIcon, ExternalLink, Plus, Trash2, ShieldCheck, ShieldAlert, Shield } from 'lucide-react';
 import { supabase } from '../supabase';
+import { callGeminiAPI } from '../services/gemini';
 
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
-const callGeminiForSummarization = async (rawUrl, rawTitle, rawDescription) => {
-  const chaveInvertida = "sv2r2tMOcflOigw23UaC1-uQXIplv7dGDySazIA";
-  const apiKey = chaveInvertida.split('').reverse().join('');
-  
-  const modelId = "gemini-flash-latest";
-  
-  // O prompt agora pede o resumo E a análise de confiabilidade baseada na URL
-  const prompt = "Analise o seguinte produto e o link de onde ele vem. 1) Resuma o título (máx 5 palavras). 2) Resuma a descrição (máx 15 palavras). 3) Classifique a confiabilidade do domínio do link para compras online como 'high' (sites famosos, oficiais e seguros como Amazon, MercadoLivre, Shopee oficial, etc), 'medium' (marketplaces genéricos, lojas menores mas legítimas) ou 'low' (sites suspeitos, desconhecidos, com nomes estranhos ou com cara de golpe). Retorne APENAS um JSON válido no formato {\"title\": \"titulo resumido\", \"description\": \"descricao resumida\", \"trust\": \"high\"}. Link: " + rawUrl + " Título: " + rawTitle + " Descrição: " + rawDescription;
-  
-  try {
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/" + modelId + ":generateContent";
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'X-goog-api-key': apiKey 
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }]
-          }
-        ]
-      })
-    });
+const summarizeLink = async (rawUrl, rawTitle, rawDescription) => {
+  const prompt = `Analise o produto e a origem do link. Resuma o título em até 5 palavras, a descrição em até 15 palavras e classifique a confiabilidade do domínio como high, medium ou low. Retorne somente JSON no formato {"title":"","description":"","trust":"medium"}. Link: ${rawUrl} Título: ${rawTitle} Descrição: ${rawDescription}`;
 
-    const data = await response.json();
-    
-    if (response.ok && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
-      const responseText = data.candidates[0].content.parts[0].text;
-      
-      const caractereCrase = String.fromCharCode(96);
-      const regexCrases = new RegExp(caractereCrase, 'g');
-      
-      const sanitized = responseText
-        .replace(regexCrases, '') 
-        .replace(/^json/i, '')
-        .replace(/\n+/g, ' ')
-        .trim();
-      
-      const parsed = JSON.parse(sanitized);
-      return parsed;
-    }
-    
-    throw new Error(data.error ? data.error.message : "Erro na resposta da API");
+  try {
+    const result = await callGeminiAPI([], prompt, null, null, {
+      includeRuntimeContext: false,
+      systemInstruction: 'Analise links de compras e responda somente com JSON válido, sem bloco de código ou explicação.',
+    });
+    const sanitized = String(result.text || '').replace(/```json|```/gi, '').trim();
+    const parsed = JSON.parse(sanitized);
+    if (!['high', 'medium', 'low'].includes(parsed.trust)) parsed.trust = 'medium';
+    return parsed;
   } catch (error) {
-    console.error('Erro ao chamar Gemini API:', error);
-    return { title: rawTitle, description: rawDescription, trust: 'medium' }; // Fallback
+    console.error('Erro ao analisar link:', error);
+    return { title: rawTitle, description: rawDescription, trust: 'medium' };
   }
 };
 
@@ -110,7 +78,7 @@ export default function Links() {
 
       try {
         setLoadingStatus('Analisando segurança...');
-        const summarized = await callGeminiForSummarization(newUrl, rawTitle, rawDescription);
+        const summarized = await summarizeLink(newUrl, rawTitle, rawDescription);
         rawTitle = summarized.title || rawTitle;
         rawDescription = summarized.description || rawDescription;
         trustLevel = summarized.trust || 'medium';

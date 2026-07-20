@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Bot, ArrowLeft, Plus, Trash2, MessageSquare, X, Image as ImageIcon, Cpu, FileText } from 'lucide-react';
+import { Send, Bot, ArrowLeft, Plus, Trash2, MessageSquare, X, Image as ImageIcon, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase, isSupabaseConfigured } from '../supabase';
 import { callGeminiAPI } from '../services/gemini';
@@ -8,6 +8,7 @@ import { sendPartnerNotification } from '../services/notifications';
 
 const LOCAL_CHATS_KEY = 'cupido-virtual-chats-v1';
 const LOCAL_MESSAGES_KEY = 'cupido-virtual-messages-v1';
+const LOCAL_MIGRATION_KEY = 'cupido-virtual-supabase-migration-v1';
 const WELCOME_TEXT = 'Olá, Ana Clara! 💕 Como posso ajudar o casal hoje?';
 
 const welcomeMessage = () => ({
@@ -49,6 +50,55 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
   reader.onerror = (error) => reject(error);
 });
 
+const migrateLocalChats = async () => {
+  if (localStorage.getItem(LOCAL_MIGRATION_KEY) === 'done') return;
+
+  let localChats = readLocalJson(LOCAL_CHATS_KEY, []);
+  if (!Array.isArray(localChats) || !localChats.length) {
+    localStorage.setItem(LOCAL_MIGRATION_KEY, 'done');
+    return;
+  }
+
+  const messageStore = readLocalMessageStore();
+  for (const localChat of [...localChats].reverse()) {
+    const { data: remoteChat, error: chatError } = await supabase
+      .from('chats')
+      .insert([{
+        title: localChat.title || 'Nova Conversa',
+        createdAt: localChat.createdAt || new Date().toISOString(),
+      }])
+      .select()
+      .single();
+    if (chatError) throw chatError;
+
+    const localMessages = Array.isArray(messageStore[localChat.id])
+      ? messageStore[localChat.id]
+      : [];
+    const payload = localMessages.map((message) => ({
+      chat_id: remoteChat.id,
+      role: message.role,
+      text: message.text || '',
+      imageUrl: message.imageUrl?.startsWith('data:') ? null : message.imageUrl || null,
+      fileType: message.fileType || null,
+      createdAt: message.createdAt || new Date().toISOString(),
+    }));
+
+    if (payload.length) {
+      const { error: messageError } = await supabase.from('mensagens').insert(payload);
+      if (messageError) throw messageError;
+    }
+
+    localChats = localChats.filter((chat) => chat.id !== localChat.id);
+    saveLocalChats(localChats);
+    delete messageStore[localChat.id];
+    localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(messageStore));
+  }
+
+  localStorage.removeItem(LOCAL_CHATS_KEY);
+  localStorage.removeItem(LOCAL_MESSAGES_KEY);
+  localStorage.setItem(LOCAL_MIGRATION_KEY, 'done');
+};
+
 export default function AssistenteCasal() {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
@@ -57,7 +107,6 @@ export default function AssistenteCasal() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
-  const [currentModelName, setCurrentModelName] = useState('');
 
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -74,7 +123,12 @@ export default function AssistenteCasal() {
 
     let mounted = true;
     (async () => {
-      const { data, error } = await supabase.from('chats').select('*').order('createdAt', { ascending: false });
+    try {
+      await migrateLocalChats();
+    } catch (error) {
+      console.warn('Não foi possível migrar as conversas locais:', error);
+    }
+    const { data, error } = await supabase.from('chats').select('*').order('createdAt', { ascending: false });
       if (error) {
         console.error('Supabase error fetching chats:', error);
         return;
@@ -264,19 +318,27 @@ export default function AssistenteCasal() {
         mimeTypeForGemini,
       );
       let botResponse = apiResult.text;
-      setCurrentModelName(apiResult.modelUsed);
 
-      if (botResponse.includes('[AVISAR_PABLO]')) {
-        botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
-        if (isSupabaseConfigured) {
-          await sendPartnerNotification({
-            targetUser: 'pablo',
-            title: 'Recado da Ana pelo Cupido 💘',
-            message: `${prompt || 'Ana enviou um arquivo'} — ${botResponse}`,
-            data: { source: 'assistente-casal', chatId: activeChatId },
-          });
-        }
+      const hasNotificationTag = botResponse.includes('[AVISAR_PABLO]');
+    const notificationRequested = /\b(?:avisa|avise|avisar|notifica|notifique|notificar|manda|mande|mandar|fala|fale|falar|pede|peça|pedir)\b[\s\S]{0,60}\bpablo\b/i.test(prompt);
+    if (hasNotificationTag) botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
+
+    if (hasNotificationTag || notificationRequested) {
+      const notificationResult = await sendPartnerNotification({
+        targetUser: 'pablo',
+        title: 'Recado da Ana pelo Cupido 💘',
+        message: `${prompt || 'Ana enviou um arquivo'} — ${botResponse}`,
+        data: { source: 'assistente-casal', chatId: activeChatId },
+      });
+
+      if (notificationResult.whatsApp?.ok) {
+        botResponse += '\n\nRecado enviado ao Pablo pelo WhatsApp. 💌';
+      } else if (notificationResult.push?.ok) {
+        botResponse += '\n\nEnviei uma notificação ao Pablo, mas o WhatsApp não confirmou o recebimento.';
+      } else {
+        botResponse += '\n\nNão consegui entregar o recado ao Pablo agora.';
       }
+    }
 
       const assistantMessage = {
         id: createLocalId(),
@@ -331,8 +393,9 @@ export default function AssistenteCasal() {
         <div className="flex items-center justify-between mb-4 px-2 border-b border-rose-100/50 pb-2">
           <div className="flex flex-col">
             <div className="flex items-center gap-2 font-bold text-rose-600 font-serif text-2xl"><Bot size={28} /> Cupido Virtual</div>
-            {!isSupabaseConfigured && <span className="text-[10px] text-slate-400">Conversas salvas neste navegador</span>}
-            {currentModelName && <span className="text-[10px] text-slate-400 flex items-center gap-1"><Cpu size={10} /> Processado por: {currentModelName}</span>}
+            <span className="text-[10px] text-slate-400">
+              {isSupabaseConfigured ? 'Conversas sincronizadas na nuvem' : 'Conversas salvas neste navegador'}
+            </span>
           </div>
           {activeChatId && <button onClick={deletarChatAtivo} className="p-2 text-rose-300 hover:text-rose-600 transition-all"><Trash2 size={20} /></button>}
         </div>

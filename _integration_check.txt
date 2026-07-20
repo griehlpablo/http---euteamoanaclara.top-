@@ -1,0 +1,7 @@
+supabase_read_status=200
+supabase_chat_insert_status=201
+supabase_message_insert_status=201
+supabase_message_delete_status=200
+supabase_chat_delete_status=200
+notify_route_https://euteamoanaclara.top_status=405
+notify_route_https://www.euteamoanaclara.top_status=405

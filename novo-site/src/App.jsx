@@ -38,6 +38,18 @@ const REALTIME_ROUTE_TABLES = {
   '/galeria': ['gallery'],
 };
 
+function NotFound() {
+  return (
+    <section className="mx-auto max-w-xl rounded-3xl border border-white/60 bg-white/75 p-8 text-center shadow-xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-800/75">
+      <h1 className="font-serif text-3xl font-bold text-slate-800 dark:text-slate-100">Página não encontrada</h1>
+      <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">O endereço aberto não corresponde a uma página disponível.</p>
+      <Link to="/central" className="mt-5 inline-flex rounded-2xl bg-rose-500 px-5 py-3 font-bold text-white hover:bg-rose-600">
+        Voltar para a Central
+      </Link>
+    </section>
+  );
+}
+
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [syncVersion, setSyncVersion] = useState(0);
@@ -137,7 +149,14 @@ export default function App() {
             <Route path="/linha-do-tempo" element={<LinhaDoTempo />} />
             <Route path="/quiz" element={<QuizCasal />} />
             <Route path="/surpresa-diaria" element={<SurpresaDiaria />} />
-            <Route path="/gastos" element={<Gastos />} />
+            <Route
+              path="/gastos"
+              element={
+                <ErrorBoundary>
+                  <Gastos />
+                </ErrorBoundary>
+              }
+            />
             <Route
               path="/dieta"
               element={
@@ -146,6 +165,7 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           <footer className="mt-10 border-t border-slate-200/70 pt-6 text-center text-sm text-slate-500 dark:border-slate-700/70 dark:text-slate-400">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

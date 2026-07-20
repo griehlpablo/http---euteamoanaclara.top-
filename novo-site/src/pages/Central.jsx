@@ -4,7 +4,7 @@ import {
   Clock, ImageIcon, MessageCircleHeart, ArrowLeft,
   TrendingUp, GitMerge, Link as LinkIcon, Sparkles,
   SmilePlus, Gift, Activity, Ticket, ListChecks,
-  CalendarDays, Gamepad2, HeartPulse, WalletCards,
+  CalendarDays, Gamepad2, HeartPulse, WalletCards, PawPrint,
 } from 'lucide-react';
 
 const glassClasses = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
@@ -16,6 +16,7 @@ const cards = [
   { path: '/surpresa-diaria', icon: Gift, title: 'Surpresa Diária', desc: 'Uma missão, cupom ou carinho por dia.' },
   { path: '/dieta', icon: HeartPulse, title: 'Plano do Casal', desc: 'Dieta, rotina, treino e água do dia.' },
   { path: '/gastos', icon: WalletCards, title: 'Gastos do Casal', desc: 'Registre compras e acompanhe o total do mês.' },
+  { path: '/milka', icon: PawPrint, title: 'Milka Maria', desc: 'Ração, sachê, água, areia, compras e lembretes.' },
   { path: '/galeria', icon: ImageIcon, title: 'Memórias', desc: 'Os nossos melhores momentos.' },
   { path: '/assistente', icon: Sparkles, title: 'Cupido Virtual ✨', desc: 'Conselhos e ideias para o casal.' },
   { path: '/retrospectiva', icon: TrendingUp, title: 'Retrospectiva', desc: 'A nossa história em números.' },

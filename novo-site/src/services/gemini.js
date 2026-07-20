@@ -1,15 +1,12 @@
 export const MODEL_TIERS = {
-  PREMIUM: 'gemini-1.5-pro',
-  STANDARD: 'gemini-3-flash',
-  LITE: 'gemini-3.1-flash-lite-preview',
+  STANDARD: 'gemini-flash-latest',
 };
 
 const DEFAULT_SYSTEM_INSTRUCTION = 'Instruções: Você é o assistente virtual criado pelo desenvolvedor Pablo Griehl para ajudar a namorada dele, Ana Clara. Seu tom deve ser prestativo, inteligente e gentil, com um leve toque romântico. Dê respostas curtas e práticas, EXCETO quando ela pedir uma receita, um roteiro ou detalhes específicos. Eles ficaram em 06/07/2023 e namoram desde 23/09/2023. NÃO REPITA sugestões. REGRA CRÍTICA: Se a Ana Clara pedir para avisar/notificar o namorado (ex: "fala pro pablo", "pede pro pablo", etc.), confirme que vai enviar e OBRIGATORIAMENTE inclua a tag secreta [AVISAR_PABLO] no final da sua resposta.';
 
 const getGeminiApiKey = () => {
-  // TODO: mover chamada da IA para backend futuramente para proteger a chave.
-  const chaveInvertida = 'QTuVoVZNCzC4i7gRA0sha6SBVXAMRJ0MBySazIA';
-  return chaveInvertida.split('').reverse().join('');
+  const reversedKey = 'wAxEMqIVpqDu10pdWXt3kF-cXyayrURyyIhT3tpqnl1I6NR8bA.QA';
+  return reversedKey.split('').reverse().join('');
 };
 
 const formatHistory = (historicoMensagens, novoPrompt, base64Image, mimeType) => {
@@ -36,50 +33,40 @@ export const callGeminiAPI = async (
   mimeType = null,
   options = {},
 ) => {
-  const apiKey = getGeminiApiKey();
+  const modelId = MODEL_TIERS.STANDARD;
   const systemInstruction = options.systemInstruction || DEFAULT_SYSTEM_INSTRUCTION;
-
-  let modelOrder = [MODEL_TIERS.LITE, MODEL_TIERS.STANDARD, MODEL_TIERS.PREMIUM];
-  if (base64Image || (novoPrompt && novoPrompt.length > 250)) {
-    modelOrder = [MODEL_TIERS.PREMIUM, MODEL_TIERS.STANDARD, MODEL_TIERS.LITE];
-  }
-
   const contents = formatHistory(historicoMensagens, novoPrompt, base64Image, mimeType);
 
-  for (const modelId of modelOrder) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents,
-        }),
-      });
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-goog-api-key': getGeminiApiKey(),
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents,
+      }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        return {
-          text: data.candidates?.[0]?.content?.parts?.[0]?.text || 'O amor me deixou sem palavras.',
-          modelUsed: modelId,
-        };
-      }
-
-      if (response.status === 429) {
-        console.warn(`Modelo ${modelId} atingiu o limite. Tentando próximo...`);
-        continue;
-      }
-
-      throw new Error(data.error?.message || 'Erro desconhecido');
-    } catch (error) {
-      console.error(`Erro com modelo ${modelId}:`, error);
-      if (modelId === modelOrder[modelOrder.length - 1]) {
-        return { text: 'Minha conexão falhou em todos os níveis. Tente novamente! 💔', modelUsed: 'none' };
-      }
+    if (!response.ok) {
+      const apiMessage = data.error?.message || `Erro HTTP ${response.status}`;
+      throw new Error(apiMessage);
     }
-  }
 
-  return { text: 'Minha conexão falhou em todos os níveis. Tente novamente! 💔', modelUsed: 'none' };
+    return {
+      text: data.candidates?.[0]?.content?.parts?.[0]?.text || 'O amor me deixou sem palavras.',
+      modelUsed: modelId,
+    };
+  } catch (error) {
+    console.error(`Erro com modelo ${modelId}:`, error);
+    return {
+      text: 'Minha conexão com o Cupido falhou. Tente novamente em instantes! 💔',
+      modelUsed: 'none',
+    };
+  }
 };

@@ -11,30 +11,25 @@ import { sendPartnerNotification } from '../services/notifications';
 export default function Humor() {
   const [currentUser, setCurrentUser] = useState(localStorage.getItem('satCurrentUser') || null);
   
-  // Nossos eixos de humor (1 a 5)
   const defaultMood = { carencia: 3, estresse: 1, energia: 3 };
   
   const [myMood, setMyMood] = useState(defaultMood);
   const [partnerMood, setPartnerMood] = useState(defaultMood);
   const [partnerHasData, setPartnerHasData] = useState(false);
 
-  // Define quem é o alvo
   const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
   const myName = currentUser === 'pablo' ? 'Pablo' : 'Ana Clara';
   const targetName = currentUser === 'pablo' ? 'Ana Clara' : 'Pablo';
 
-  // Sincroniza quem está logado no localStorage
   useEffect(() => {
     if (currentUser) localStorage.setItem('satCurrentUser', currentUser);
   }, [currentUser]);
 
-  // Busca os dados do Supabase
   useEffect(() => {
     if (!currentUser) return;
 
     let mounted = true;
     (async () => {
-      // Busca MEU humor
       const { data: myData, error: myError } = await supabase
         .from('humor')
         .select('*')
@@ -47,7 +42,6 @@ export default function Humor() {
         setMyMood({ carencia: myData.carencia, estresse: myData.estresse, energia: myData.energia });
       }
 
-      // Busca humor do PARCEIRO
       const { data: partnerData, error: partnerError } = await supabase
         .from('humor')
         .select('*')
@@ -67,14 +61,10 @@ export default function Humor() {
     return () => { mounted = false; };
   }, [currentUser, targetUser]);
 
-  // ==========================================
-  // O ALGORITMO DO MANUAL DE SOBREVIVÊNCIA
-  // ==========================================
   const calcularManual = (mood, nome, ehMulher) => {
     const { carencia, estresse, energia } = mood;
     const pronome = ehMulher ? 'ela' : 'ele';
 
-    // ALERTA VERMELHO
     if (estresse >= 4 && carencia <= 2) {
       return {
         titulo: "ALERTA VERMELHO 🚨",
@@ -85,7 +75,6 @@ export default function Humor() {
       };
     }
     
-    // BOMBA-RELÓGIO
     if (estresse >= 4 && carencia >= 4) {
       return {
         titulo: "BOMBA-RELÓGIO 💣❤️",
@@ -96,7 +85,6 @@ export default function Humor() {
       };
     }
 
-    // ANJINHO
     if (estresse <= 2 && carencia >= 4) {
       return {
         titulo: "ANJINHO NA TERRA ✨",
@@ -107,7 +95,6 @@ export default function Humor() {
       };
     }
 
-    // MODO PREGUIÇA
     if (estresse <= 2 && energia <= 2) {
       return {
         titulo: "MODO PREGUIÇA ATIVADO 💤",
@@ -118,7 +105,6 @@ export default function Humor() {
       };
     }
 
-    // CLIMA ESTÁVEL
     if (estresse === 3 && carencia === 3) {
       return {
         titulo: "CLIMA ESTÁVEL ⚖️",
@@ -129,7 +115,6 @@ export default function Humor() {
       };
     }
 
-    // MISTURA
     return {
       titulo: "MISTURA DE EMOÇÕES 🌪️",
       resumo: "O clima está misto. Use sua intuição de mozão!",
@@ -156,9 +141,7 @@ export default function Humor() {
     }
   };
 
-  // FUNÇÃO DE NOTIFICAÇÃO (ENVIA RESUMIDO)
   const dispararNotificacaoRadar = async () => {
-    // Pega as frases baseadas no MEU humor atual para avisar o outro
     const info = calcularManual(myMood, myName, currentUser === 'ana');
 
     await sendPartnerNotification({

@@ -38,7 +38,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.hostname.includes("supabase.co") || url.hostname.includes("openfoodfacts.org")) return;
   if (url.pathname.includes("/rest/v1/") || url.pathname.includes("/auth/v1/")) return;
-  // Requests to Open Food Facts, Supabase and any other external origin must go straight to the browser.
+  // Requisições externas não devem ser armazenadas pelo service worker.
   if (url.origin !== self.location.origin) return;
 
   if (event.request.mode === "navigate") {

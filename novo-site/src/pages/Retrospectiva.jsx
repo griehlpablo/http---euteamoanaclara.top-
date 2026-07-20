@@ -17,7 +17,6 @@ export default function Retrospectiva() {
     minutesThisYear: 0
   });
 
-  // 1. CÁLCULO DE DATAS
   useEffect(() => {
     const togetherSince = new Date(2023, 6, 6);   
     const datingSince = new Date(2023, 8, 23);    
@@ -46,7 +45,6 @@ export default function Retrospectiva() {
     });
   }, []);
 
-  // 2. BUSCAR FOTOS DA GALERIA
   useEffect(() => {
     const fallbackFotos = [
       '/images/us_beach.jpg',
@@ -83,7 +81,6 @@ export default function Retrospectiva() {
     loadFotos();
   }, []);
 
-  // NOVO: PRÉ-CARREGAMENTO (Image Preloading)
   useEffect(() => {
     if (fotos.length > 0) {
       const fotosParaPrecarregar = fotos.slice(0, 15);
@@ -94,7 +91,6 @@ export default function Retrospectiva() {
     }
   }, [fotos]);
 
-  // 3. MOTOR DO CARROSSEL & SLIDESHOW FINAL
   const TEMPO_POR_SLIDE = 6000;
   const TOTAL_SLIDES = 5;
 

@@ -86,7 +86,6 @@ export default function Links() {
         console.error('Erro ao resumir com IA:', aiError);
       }
 
-      // Trava de segurança para sites perigosos!
       if (trustLevel === 'low') {
         const proceed = window.confirm("⚠️ ALERTA DE SEGURANÇA ⚠️\n\nA Inteligência Artificial detectou que este site tem BAIXA confiabilidade (pode ser golpe ou loja falsa).\n\nTem certeza que deseja adicionar esse link à sua lista?");
         if (!proceed) {
@@ -127,7 +126,6 @@ export default function Links() {
     }
   };
 
-  // Função para renderizar a etiqueta de segurança correta
   const renderTrustBadge = (trust) => {
     if (trust === 'high') {
       return (

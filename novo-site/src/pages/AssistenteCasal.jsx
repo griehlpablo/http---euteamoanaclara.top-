@@ -66,7 +66,7 @@ const migrateLocalChats = async () => {
       .insert([{
         title: localChat.title || 'Nova Conversa',
         createdAt: localChat.createdAt || new Date().toISOString(),
-      }])
+          }])
       .select()
       .single();
     if (chatError) throw chatError;
@@ -81,12 +81,12 @@ const migrateLocalChats = async () => {
       imageUrl: message.imageUrl?.startsWith('data:') ? null : message.imageUrl || null,
       fileType: message.fileType || null,
       createdAt: message.createdAt || new Date().toISOString(),
-    }));
+      }));
 
     if (payload.length) {
       const { error: messageError } = await supabase.from('mensagens').insert(payload);
       if (messageError) throw messageError;
-    }
+      }
 
     localChats = localChats.filter((chat) => chat.id !== localChat.id);
     saveLocalChats(localChats);
@@ -119,25 +119,25 @@ export default function AssistenteCasal() {
       setChats(Array.isArray(localChats) ? localChats : []);
       if (localChats?.length) setActiveChatId(localChats[0].id);
       return undefined;
-    }
+      }
 
     let mounted = true;
     (async () => {
-    try {
-      await migrateLocalChats();
-    } catch (error) {
-      console.warn('Não foi possível migrar as conversas locais:', error);
-    }
-    const { data, error } = await supabase.from('chats').select('*').order('createdAt', { ascending: false });
+      try {
+        await migrateLocalChats();
+          } catch (error) {
+        console.warn('Não foi possível migrar as conversas locais:', error);
+          }
+      const { data, error } = await supabase.from('chats').select('*').order('createdAt', { ascending: false });
       if (error) {
         console.error('Supabase error fetching chats:', error);
         return;
-      }
+          }
       if (mounted) {
         setChats(data || []);
         if (data?.length) setActiveChatId((current) => current || data[0].id);
-      }
-    })();
+          }
+      })();
 
     return () => { mounted = false; };
   }, []);
@@ -146,7 +146,7 @@ export default function AssistenteCasal() {
     if (!activeChatId) {
       const timeoutId = window.setTimeout(() => setMessages([]), 0);
       return () => window.clearTimeout(timeoutId);
-    }
+      }
 
     if (!isSupabaseConfigured) {
       const storedMessages = readLocalMessageStore()[activeChatId];
@@ -155,7 +155,7 @@ export default function AssistenteCasal() {
         : [welcomeMessage()];
       const timeoutId = window.setTimeout(() => setMessages(nextMessages), 0);
       return () => window.clearTimeout(timeoutId);
-    }
+      }
 
     let mounted = true;
     (async () => {
@@ -167,9 +167,9 @@ export default function AssistenteCasal() {
       if (error) {
         console.error('Supabase error fetching mensagens:', error);
         return;
-      }
+          }
       if (mounted) setMessages(data?.length ? data : [welcomeMessage()]);
-    })();
+      })();
 
     return () => { mounted = false; };
   }, [activeChatId]);
@@ -180,14 +180,14 @@ export default function AssistenteCasal() {
         id: createLocalId(),
         title: 'Nova Conversa',
         createdAt: new Date().toISOString(),
-      };
+          };
       const nextChats = [data, ...chats];
       saveLocalChats(nextChats);
       saveLocalMessages(data.id, [welcomeMessage()]);
       setChats(nextChats);
       setActiveChatId(data.id);
       return;
-    }
+      }
 
     const { data, error } = await supabase
       .from('chats')
@@ -198,7 +198,7 @@ export default function AssistenteCasal() {
     if (error) {
       console.error('Erro ao criar chat:', error);
       return;
-    }
+      }
 
     setChats((previous) => [data, ...previous.filter((chat) => chat.id !== data.id)]);
     setActiveChatId(data.id);
@@ -217,7 +217,7 @@ export default function AssistenteCasal() {
       setActiveChatId(remaining[0]?.id || null);
       setMessages([]);
       return;
-    }
+      }
 
     try {
       const { error: delMsgError } = await supabase.from('mensagens').delete().eq('chat_id', activeChatId);
@@ -229,9 +229,9 @@ export default function AssistenteCasal() {
       setChats(remaining);
       setActiveChatId(remaining[0]?.id || null);
       setMessages([]);
-    } catch (error) {
+      } catch (error) {
       console.error('Erro ao deletar conversa:', error);
-    }
+      }
   };
 
   const handleSend = async () => {
@@ -255,14 +255,14 @@ export default function AssistenteCasal() {
           const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, selectedFile);
           if (uploadError) {
             console.error('Erro ao fazer upload do arquivo:', uploadError);
-          } else {
+                } else {
             const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath);
             imageUrl = publicData?.publicUrl || null;
-          }
-        } else if (selectedFile.type.startsWith('image/')) {
+              }
+            } else if (selectedFile.type.startsWith('image/')) {
           imageUrl = `data:${selectedFile.type};base64,${base64ForGemini}`;
-        }
-      }
+            }
+          }
 
       const shouldRenameChat = messages.length <= 1 && prompt.trim();
       if (shouldRenameChat) {
@@ -272,15 +272,15 @@ export default function AssistenteCasal() {
           const { error: updateError } = await supabase.from('chats').update({ title: nextTitle }).eq('id', activeChatId);
           if (updateError) {
             console.error('Erro ao atualizar título do chat:', updateError);
-          } else {
+                } else {
             setChats((previous) => previous.map((chat) => chat.id === activeChatId ? { ...chat, title: nextTitle } : chat));
-          }
-        } else {
+              }
+              } else {
           const nextChats = chats.map((chat) => chat.id === activeChatId ? { ...chat, title: nextTitle } : chat);
           saveLocalChats(nextChats);
           setChats(nextChats);
-        }
-      }
+            }
+          }
 
       const userMessage = {
         id: createLocalId(),
@@ -290,7 +290,7 @@ export default function AssistenteCasal() {
         imageUrl,
         fileType: mimeTypeForGemini,
         createdAt: new Date().toISOString(),
-      };
+          };
 
       if (isSupabaseConfigured) {
         const { data: insertedUserMessage, error: insertError } = await supabase
@@ -300,10 +300,10 @@ export default function AssistenteCasal() {
           .single();
         if (insertError) throw insertError;
         messagesAfterUser = [...messages, insertedUserMessage];
-      } else {
+            } else {
         messagesAfterUser = [...messages, userMessage];
         saveLocalMessages(activeChatId, messagesAfterUser);
-      }
+          }
 
       setMessages(messagesAfterUser);
       setInput('');
@@ -320,25 +320,25 @@ export default function AssistenteCasal() {
       let botResponse = apiResult.text;
 
       const hasNotificationTag = botResponse.includes('[AVISAR_PABLO]');
-    const notificationRequested = /\b(?:avisa|avise|avisar|notifica|notifique|notificar|manda|mande|mandar|fala|fale|falar|pede|peça|pedir)\b[\s\S]{0,60}\bpablo\b/i.test(prompt);
-    if (hasNotificationTag) botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
+      const notificationRequested = /\b(?:avisa|avise|avisar|notifica|notifique|notificar|manda|mande|mandar|fala|fale|falar|pede|peça|pedir)\b[\s\S]{0,60}\bpablo\b/i.test(prompt);
+      if (hasNotificationTag) botResponse = botResponse.replace('[AVISAR_PABLO]', '').trim();
 
-    if (hasNotificationTag || notificationRequested) {
-      const notificationResult = await sendPartnerNotification({
-        targetUser: 'pablo',
-        title: 'Recado da Ana pelo Cupido 💘',
-        message: `${prompt || 'Ana enviou um arquivo'} — ${botResponse}`,
-        data: { source: 'assistente-casal', chatId: activeChatId },
-      });
+      if (hasNotificationTag || notificationRequested) {
+        const notificationResult = await sendPartnerNotification({
+          targetUser: 'pablo',
+          title: 'Recado da Ana pelo Cupido 💘',
+          message: `${prompt || 'Ana enviou um arquivo'} — ${botResponse}`,
+          data: { source: 'assistente-casal', chatId: activeChatId },
+            });
 
-      if (notificationResult.whatsApp?.ok) {
-        botResponse += '\n\nRecado enviado ao Pablo pelo WhatsApp. 💌';
-      } else if (notificationResult.push?.ok) {
-        botResponse += '\n\nEnviei uma notificação ao Pablo, mas o WhatsApp não confirmou o recebimento.';
-      } else {
-        botResponse += '\n\nNão consegui entregar o recado ao Pablo agora.';
+        if (notificationResult.whatsApp?.ok) {
+          botResponse += '\n\nRecado enviado ao Pablo pelo WhatsApp. 💌';
+            } else if (notificationResult.push?.ok) {
+          botResponse += '\n\nEnviei uma notificação ao Pablo, mas o WhatsApp não confirmou o recebimento.';
+            } else {
+          botResponse += '\n\nNão consegui entregar o recado ao Pablo agora.';
+          }
       }
-    }
 
       const assistantMessage = {
         id: createLocalId(),
@@ -346,7 +346,7 @@ export default function AssistenteCasal() {
         role: 'assistant',
         text: botResponse,
         createdAt: new Date().toISOString(),
-      };
+          };
 
       if (isSupabaseConfigured) {
         const { data: insertedAssistantMessage, error: insertAssistantError } = await supabase
@@ -356,25 +356,25 @@ export default function AssistenteCasal() {
           .single();
         if (insertAssistantError) throw insertAssistantError;
         setMessages((previous) => [...previous, insertedAssistantMessage]);
-      } else {
+            } else {
         const completedMessages = [...messagesAfterUser, assistantMessage];
         saveLocalMessages(activeChatId, completedMessages);
         setMessages(completedMessages);
-      }
-    } catch (error) {
+          }
+      } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       const errorMessage = {
         id: createLocalId(),
         role: 'assistant',
         text: 'Não consegui enviar agora. Tente novamente em instantes. 💔',
         createdAt: new Date().toISOString(),
-      };
+          };
       const nextMessages = [...messagesAfterUser, errorMessage];
       if (!isSupabaseConfigured) saveLocalMessages(activeChatId, nextMessages);
       setMessages(nextMessages);
-    } finally {
+      } finally {
       setIsLoading(false);
-    }
+      }
   };
 
   return (

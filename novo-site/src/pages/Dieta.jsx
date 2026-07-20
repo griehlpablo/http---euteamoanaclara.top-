@@ -973,7 +973,7 @@ function buildReport(logs, selectedDate, mode) {
         `Recomendacoes do site: ${recommendations.join(' | ')}`,
         `Itens sem valor nutricional conhecido: ${unknownCustom.map((item) => item.label || 'Outro').join('; ') || '-'}`,
         `Observacoes: ${log.notes || '-'}`,
-        'Pergunta para o ChatGPT: Analise meu dia e me diga o que ajustar ainda hoje ou amanha.',
+        'Pergunta para análise: Avalie meu dia e diga o que ajustar ainda hoje ou amanhã.',
       ].filter(Boolean);
       return lines.join('\n');
     })
@@ -1861,7 +1861,7 @@ export default function Dieta() {
             </div>
             <h1 className="font-serif text-4xl font-bold text-slate-900 md:text-5xl">Plano do Casal - Pablo & Ana Clara</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Calendario diario com alimentacao, treino, agua, peso, calculos aproximados e relatorio pronto para mandar ao ChatGPT.
+              Calendário diário com alimentação, treino, água, peso, cálculos aproximados e relatório organizado para compartilhar.
             </p>
           </div>
           <div className="grid content-center gap-3 rounded-3xl bg-gradient-to-br from-rose-50 to-cyan-50 p-5">
@@ -2603,10 +2603,10 @@ export default function Dieta() {
         )}
       </section>
 
-      <CollapsibleSection title="Exportar relatorio" subtitle="Texto pronto para mandar ao ChatGPT." defaultOpen={false} storageKey={DIET_COLLAPSED_SECTIONS_KEY} sectionId="export">
+      <CollapsibleSection title="Exportar relatorio" subtitle="Texto organizado para copiar ou compartilhar." defaultOpen={false} storageKey={DIET_COLLAPSED_SECTIONS_KEY} sectionId="export">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-serif text-3xl font-bold text-slate-900">Exportar dia para o ChatGPT</h2>
+            <h2 className="font-serif text-3xl font-bold text-slate-900">Exportar relatório do dia</h2>
             <p className="text-sm text-slate-500">Gera um texto organizado com tudo que foi preenchido no dia.</p>
           </div>
           <div className="flex flex-wrap gap-2">

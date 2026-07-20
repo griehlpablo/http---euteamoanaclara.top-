@@ -15,7 +15,7 @@ export default function HelenaExportReport({ report, onGenerate, onCopy }) {
     <section className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lg">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-slate-900">Exportar Helena para ChatGPT</h2>
+          <h2 className="font-serif text-2xl font-bold text-slate-900">Exportar relatório da Helena</h2>
           <p className="text-sm text-slate-500">Relatorio proprio da Helena, com os dados do dia.</p>
         </div>
         <button onClick={onGenerate} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white">Gerar relatorio</button>

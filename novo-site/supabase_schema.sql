@@ -1,4 +1,4 @@
--- Supabase schema generated from Firestore usage in project
+-- Estrutura principal das tabelas do site.
 -- Enable pgcrypto for gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -139,7 +139,7 @@ ALTER TABLE IF EXISTS capsula ADD COLUMN IF NOT EXISTS "createdAt" timestamptz D
 ALTER TABLE IF EXISTS potepapel ADD COLUMN IF NOT EXISTS "createdAt" timestamptz DEFAULT now();
 ALTER TABLE IF EXISTS cupons ADD COLUMN IF NOT EXISTS "createdAt" timestamptz DEFAULT now();
 
--- Disable Row Level Security (RLS) for initial testing
+-- O acesso compartilhado atual depende de RLS desativado.
 ALTER TABLE IF EXISTS chats DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS mensagens DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS links DISABLE ROW LEVEL SECURITY;
@@ -154,7 +154,7 @@ ALTER TABLE IF EXISTS satisfacao_current DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS satisfacao_notes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS satisfacao_history DISABLE ROW LEVEL SECURITY;
 
--- Optional: small indexes to support common ordering queries
+-- Índices usados nas ordenações mais frequentes.
 CREATE INDEX IF NOT EXISTS idx_chats_created_at ON chats(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_mensagens_chat_created_at ON mensagens(chat_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_links_created_at ON links(created_at DESC);
@@ -163,10 +163,9 @@ CREATE INDEX IF NOT EXISTS idx_bucketlist_created_at ON bucketlist(created_at DE
 CREATE INDEX IF NOT EXISTS idx_cupons_created_at ON cupons(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_gallery_created_at ON gallery(created_at DESC);
 
--- End of schema
 
--- GENERAL SCHEMA REPAIR - SAFE TO RUN MULTIPLE TIMES
--- Does not delete data. Does not touch humor/satisfacao tables.
+-- Ajustes de compatibilidade do schema.
+-- Não remove dados nem altera as tabelas de humor e satisfação.
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 

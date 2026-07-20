@@ -1,7 +1,7 @@
 {
-  "name": "novo-site",
+  "name": "eu-te-amo-ana-clara",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
-    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.108.2",
     "@zxing/browser": "^0.2.0",
     "emoji-picker-react": "^4.19.1",

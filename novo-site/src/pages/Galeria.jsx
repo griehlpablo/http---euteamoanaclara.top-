@@ -12,7 +12,6 @@ export default function Galeria() {
   const [loading, setLoading] = useState(true);
   const [activeAlbum, setActiveAlbum] = useState('Todos');
   
-  // A MÁGICA AQUI: O estado inicial agora é 'carousel' ao invés de 'grid'
   const [viewMode, setViewMode] = useState('carousel');
 
   useEffect(() => {

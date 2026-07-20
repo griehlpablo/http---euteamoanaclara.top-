@@ -262,7 +262,6 @@ const Home = () => {
     setPlayed(duration > 0 ? Math.min(1, newTime / duration) : 0);
     requestSeek(newTime);
 
-    // Spawn notes if shaking
     if (Math.abs(delta) > 2) {
       const now = performance.now();
       if (now - lastNoteTimeRef.current > 100 && notes.length < 15) {

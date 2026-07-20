@@ -35,7 +35,6 @@ export function safeParseLocalStorage(key, fallback, onError) {
       if (raw !== null) localStorage.setItem(backupKey, raw);
       localStorage.removeItem(key);
     } catch {
-      // Ignore secondary storage failures; the caller still receives fallback.
     }
     onError?.({ key, backupKey, message: error.message, stack: error.stack });
     return fallback;

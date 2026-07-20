@@ -44,25 +44,8 @@ BEFORE UPDATE ON daily_health_logs
 FOR EACH ROW
 EXECUTE FUNCTION set_daily_health_logs_updated_at();
 
--- Current project tables are configured without RLS for simple shared use.
--- To keep the new page working the same way right now:
+-- O site usa acesso compartilhado sem autenticação.
 ALTER TABLE IF EXISTS daily_health_logs DISABLE ROW LEVEL SECURITY;
-
--- Safer auth-ready setup for later:
--- 1. Enable login in the app.
--- 2. Run the block below instead of the DISABLE statement above.
---
--- ALTER TABLE daily_health_logs ENABLE ROW LEVEL SECURITY;
---
--- CREATE POLICY "Users can read their own health logs"
---   ON daily_health_logs
---   FOR SELECT
---   USING (auth.uid() = user_id);
---
--- CREATE POLICY "Users can insert their own health logs"
---   ON daily_health_logs
---   FOR INSERT
---   WITH CHECK (auth.uid() = user_id);
 --
 -- CREATE POLICY "Users can update their own health logs"
 --   ON daily_health_logs

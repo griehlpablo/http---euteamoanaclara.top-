@@ -3,12 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, BookOpen, MapPin, History, FileText, Globe, Footprints, User, Download, ChevronRight, ChevronDown } from 'lucide-react';
 
-// ==========================================
-// DADOS DA ÁRVORE (CORRIGIDOS E MAPEADOS)
-// ==========================================
-// ==========================================
-// DADOS DA ÁRVORE (EXPANDIDOS COM TRISAVÓS E TETRAVÓS)
-// ==========================================
 const arvoreData = {
   nome: "Ana Clara Kovalek Santos", datas: "2005-Viva", foto: "/images/ana_e_eu_zoo.jpg", papel: "Geração Atual", posicaoFoto: "object-top",
   pai: {
@@ -78,9 +72,6 @@ const arvoreData = {
   }
 };
 
-// ==========================================
-// COMPONENTE DE NÓ DA ÁRVORE (ESTILO FAMILYSEARCH)
-// ==========================================
 const NoArvore = ({ membro, defaultExpanded = false }) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const temPais = membro.pai || membro.mae;
@@ -145,9 +136,6 @@ const NoArvore = ({ membro, defaultExpanded = false }) => {
   );
 };
 
-// ==========================================
-// PÁGINA PRINCIPAL
-// ==========================================
 export default function Genealogia() {
   const [activeTab, setActiveTab] = useState('arvore');
   const glassClasses = "bg-white/60 backdrop-blur-lg border border-white/50 shadow-sm rounded-3xl p-6";

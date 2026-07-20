@@ -6,14 +6,8 @@ import OneSignal from 'react-onesignal';
 import EmojiPicker from 'emoji-picker-react';
 import { sendPartnerNotification } from '../services/notifications';
 
-// ==========================================
-// CONSTANTES
-// ==========================================
 const GLASS_CLASSES = 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-white/50 dark:border-slate-600 shadow-lg';
 
-// ==========================================
-// USER PROFILES
-// ==========================================
 const USER_PROFILES = {
   '@griehl_': {
     nomeExibicao: 'Pablo',
@@ -29,9 +23,6 @@ const USER_PROFILES = {
   }
 };
 
-// ==========================================
-// HELPER: Formatar Timestamp
-// ==========================================
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return 'Enviando...';
 
@@ -48,9 +39,6 @@ const formatTimestamp = (timestamp) => {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 };
 
-// ==========================================
-// COMPONENTE: Avatar com Fallback
-// ==========================================
 function AvatarWithFallback({ userHandle, size = 12 }) {
   let profile = USER_PROFILES[userHandle];
   
@@ -90,9 +78,6 @@ function AvatarWithFallback({ userHandle, size = 12 }) {
   );
 }
 
-// ==========================================
-// COMPONENTE PRINCIPAL: MURAL
-// ==========================================
 export default function Mural() {
   const [currentUser, setCurrentUser] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -107,7 +92,6 @@ export default function Mural() {
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
-  // Fechar picker de emoji ao clicar fora
   useEffect(() => {
     function handleClickOutside(event) {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
@@ -120,7 +104,6 @@ export default function Mural() {
     };
   }, []);
 
-  // Ajustar largura do picker de emoji
   useEffect(() => {
     const updatePickerWidth = () => {
       const width = window.innerWidth < 640 ? Math.min(window.innerWidth - 40, 320) : 320;
@@ -131,7 +114,6 @@ export default function Mural() {
     return () => window.removeEventListener('resize', updatePickerWidth);
   }, []);
 
-  // OneSignal Login
   useEffect(() => {
     if (currentUser && OneSignal) {
       try {
@@ -142,7 +124,6 @@ export default function Mural() {
     }
   }, [currentUser]);
 
-  // Limpar URL do preview de imagem
   useEffect(() => {
     return () => {
       if (imagePreview) {
@@ -151,7 +132,6 @@ export default function Mural() {
     };
   }, [imagePreview]);
 
-  // Buscar posts (Supabase)
   useEffect(() => {
     if (!currentUser) return;
 
@@ -171,7 +151,6 @@ export default function Mural() {
     return () => { mounted = false; };
   }, [currentUser]);
 
-  // Manipular seleção de imagem
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -181,7 +160,6 @@ export default function Mural() {
     }
   };
 
-  // Limpar imagem selecionada
   const clearImage = () => {
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
@@ -193,13 +171,11 @@ export default function Mural() {
     }
   };
 
-  // Manipular clique no emoji
   const handleEmojiClick = (emojiObject) => {
     setNewPostText(prev => prev + emojiObject.emoji);
     setShowEmojiPicker(false);
   };
 
-  // Publicar post
   const handlePublish = async (e) => {
     e.preventDefault();
     if (!newPostText.trim() && !selectedImage) return;
@@ -253,7 +229,6 @@ export default function Mural() {
     }
   };
 
-  // Toggle Like
   const toggleLike = async (postId, currentLikes) => {
     if (!currentUser) return;
 
@@ -300,9 +275,6 @@ export default function Mural() {
     }
   };
 
-  // ==========================================
-  // TELA 1: SELEÇÃO DE PERFIL
-  // ==========================================
   if (!currentUser) {
     return (
       <motion.div 
@@ -372,9 +344,6 @@ export default function Mural() {
     );
   }
 
-  // ==========================================
-  // TELA 2: TIMELINE (MURAL)
-  // ==========================================
   const currentProfile = USER_PROFILES[currentUser];
 
   return (

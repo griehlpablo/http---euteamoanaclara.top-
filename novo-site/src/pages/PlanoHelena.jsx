@@ -1043,7 +1043,7 @@ export default function PlanoHelena() {
       `Itens sem valor nutricional conhecido: ${unknownItems.join(', ') || '-'}`,
       `Fontes dos alimentos calculados: ${items.map((item) => item.source).filter(Boolean).join(', ') || 'manual/estimativa local'}`,
       `Observacoes: ${log.notes || '-'}`,
-      'Pergunta para o ChatGPT: Analise meu dia e me diga o que ajustar ainda hoje ou amanha.',
+      'Pergunta para análise: Avalie meu dia e diga o que ajustar ainda hoje ou amanhã.',
       'Aviso: Valores nutricionais e hidratacao estimada sao aproximacoes e podem variar por marca, preparo e porcao.',
     ].join('\n');
     setReport(text);

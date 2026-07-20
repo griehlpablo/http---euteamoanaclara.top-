@@ -17,7 +17,7 @@ const cards = [
   { path: '/dieta', icon: HeartPulse, title: 'Plano do Casal', desc: 'Dieta, rotina, treino e água do dia.' },
   { path: '/gastos', icon: WalletCards, title: 'Gastos do Casal', desc: 'Registre compras e acompanhe o total do mês.' },
   { path: '/galeria', icon: ImageIcon, title: 'Memórias', desc: 'Os nossos melhores momentos.' },
-  { path: '/assistente', icon: Sparkles, title: 'Cupido Virtual ✨', desc: 'IA para dicas de encontros.' },
+  { path: '/assistente', icon: Sparkles, title: 'Cupido Virtual ✨', desc: 'Conselhos e ideias para o casal.' },
   { path: '/retrospectiva', icon: TrendingUp, title: 'Retrospectiva', desc: 'A nossa história em números.' },
   { path: '/satisfacao', icon: SmilePlus, title: 'Satisfação', desc: 'Como estamos hoje?' },
   { path: '/humor', icon: Activity, title: 'Radar de Humor', desc: 'Manual de sobrevivência diário.' },

@@ -1,5 +1,5 @@
--- GENERAL SCHEMA REPAIR - SAFE TO RUN MULTIPLE TIMES
--- Does not delete data. Does not touch humor/satisfacao tables.
+-- Ajustes de compatibilidade do schema.
+-- Não remove dados nem altera as tabelas de humor e satisfação.
 
 create extension if not exists "pgcrypto";
 
@@ -216,7 +216,7 @@ create index if not exists idx_potepapel_created_at on public.potepapel(created_
 create index if not exists idx_cupons_created_at on public.cupons(created_at desc);
 create index if not exists idx_gallery_created_at on public.gallery(created_at desc);
 
--- RLS disabled to keep compatibility with the current site behavior.
+-- O site usa acesso compartilhado sem autenticação.
 alter table if exists public.chats disable row level security;
 alter table if exists public.mensagens disable row level security;
 alter table if exists public.links disable row level security;

@@ -61,7 +61,6 @@ export default function Satisfacao() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      // Busca níveis atuais (pablo e ana)
       const { data: levelData, error: levelError } = await supabase
         .from('satisfacao_current')
         .select('*');
@@ -74,7 +73,6 @@ export default function Satisfacao() {
         setCurrentLevels(prev => ({ ...prev, ...levels }));
       }
 
-      // Busca notas de cadeia
       const { data: noteData, error: noteError } = await supabase
         .from('satisfacao_notes')
         .select('*');
@@ -87,7 +85,6 @@ export default function Satisfacao() {
         setJailNote(prev => ({ ...prev, ...notes }));
       }
 
-      // Busca histórico
       const { data: historyData, error: historyError } = await supabase
         .from('satisfacao_history')
         .select('*')
@@ -111,7 +108,6 @@ export default function Satisfacao() {
     const alvo = currentUser === 'pablo' ? 'ana' : 'pablo';
     const meuNome = currentUser === 'pablo' ? 'Pablo' : 'Ana Clara';
     
-    // Se tiver msgManual (como na fiança), envia ela. Senão, envia o resumo do nível.
     const msg = msgManual || `${meuNome} diz: ${LEVELS[levelKey].resumo}`;
 
     await sendPartnerNotification({
@@ -131,7 +127,6 @@ export default function Satisfacao() {
     const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
     
     try {
-      // Atualiza/insere o nível atual
       const { error: upsertError } = await supabase
         .from('satisfacao_current')
         .upsert(
@@ -140,7 +135,6 @@ export default function Satisfacao() {
         );
       if (upsertError) throw upsertError;
 
-      // Insere no histórico
       const { error: historyError } = await supabase
         .from('satisfacao_history')
         .insert([
@@ -153,11 +147,9 @@ export default function Satisfacao() {
         ]);
       if (historyError) throw historyError;
 
-      // Atualiza estado local
       setCurrentLevels(prev => ({ ...prev, [targetUser]: levelKey }));
       setHistory(prev => [...prev, { target: targetUser, level: levelKey, val: LEVELS[levelKey].val, timestamp: Date.now() }]);
 
-      // Notificação Automática
       enviarNotificacaoProAmor(levelKey);
     } catch (error) {
       console.error('Erro ao salvar voto:', error);
@@ -169,7 +161,6 @@ export default function Satisfacao() {
     const targetUser = currentUser === 'pablo' ? 'ana' : 'pablo';
     
     try {
-      // Salva no banco de dados
       const { error: upsertError } = await supabase
         .from('satisfacao_notes')
         .upsert(
@@ -178,10 +169,8 @@ export default function Satisfacao() {
         );
       if (upsertError) throw upsertError;
 
-      // Atualiza estado local
       setJailNote(prev => ({ ...prev, [targetUser]: jailInput }));
 
-      // Envia a notificação com O TEXTO DA FIANÇA!
       const msgCadeia = `🚨 Missão da Cadeia: "${jailInput}"`;
       enviarNotificacaoProAmor('jail', msgCadeia); 
       

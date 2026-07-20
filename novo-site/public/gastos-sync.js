@@ -8,6 +8,8 @@
   let syncing = false;
   let lastPath = '';
 
+  class RemoteSyncError extends Error {}
+
   const readJson = (key, fallback) => {
     try {
       const parsed = JSON.parse(localStorage.getItem(key) || 'null');
@@ -39,12 +41,6 @@
     const synced = readSynced();
     return readEntries().filter((entry) => entry?.id && !synced.has(entry.id));
   };
-
-  const escapeHtml = (value) => String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 
   const styles = `
     #${ROOT_ID}{position:fixed;right:18px;bottom:18px;z-index:99999;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#334155}
@@ -171,12 +167,20 @@
         body: JSON.stringify(payload),
         redirect: 'follow',
       });
-      if (!response.ok) throw new Error(`status ${response.status}`);
+      if (!response.ok) throw new RemoteSyncError(`Google respondeu com status ${response.status}.`);
+
       const text = await response.text();
-      const result = text ? JSON.parse(text) : { ok: true };
-      if (!result.ok) throw new Error(result.error || 'lançamento recusado');
+      let result;
+      try {
+        result = text ? JSON.parse(text) : { ok: true };
+      } catch {
+        throw new RemoteSyncError('O Apps Script respondeu em um formato inválido. Confira as permissões da implantação.');
+      }
+      if (!result.ok) throw new RemoteSyncError(result.error || 'O lançamento foi recusado pelo Apps Script.');
       return true;
     } catch (firstError) {
+      if (firstError instanceof RemoteSyncError) throw firstError;
+
       await fetch(config.endpoint, {
         method: 'POST',
         mode: 'no-cors',
@@ -217,7 +221,7 @@
       }
       setStatus(usedFallback ? 'Enviado. Abra a planilha para confirmar.' : 'Sincronização confirmada na planilha.');
     } catch (error) {
-      setStatus(`Falha ao sincronizar: ${escapeHtml(error?.message || error)}`, true);
+      setStatus(`Falha ao sincronizar: ${error?.message || String(error)}`, true);
     } finally {
       syncing = false;
       refreshUi();

@@ -25,11 +25,14 @@ function doPost(event) {
     if (!payload.token || payload.token !== expectedToken) {
       throw new Error('Código secreto inválido.');
     }
-    if (payload.action !== 'appendExpense') {
-      throw new Error('Ação não reconhecida.');
-    }
-
-    const result = appendExpense_(payload.expense || {});
+    let result;
+  if (payload.action === 'appendExpense') {
+    result = appendExpense_(payload.expense || {});
+  } else if (payload.action === 'deleteExpense') {
+    result = deleteExpense_(payload.expenseId);
+  } else {
+    throw new Error('Ação não reconhecida.');
+  }
     return jsonResponse_({ ok: true, ...result });
   } catch (error) {
     console.error(error);
@@ -86,6 +89,37 @@ function appendExpense_(expense) {
     SpreadsheetApp.flush();
 
     return { duplicate: false, row };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function deleteExpense_(expenseId) {
+  const id = String(expenseId || '').trim();
+  if (!id) throw new Error('Identificador do lançamento ausente.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    const properties = PropertiesService.getScriptProperties();
+    const dedupeKey = CONFIG.DEDUPE_PREFIX + id;
+    const storedRow = properties.getProperty(dedupeKey);
+    if (!storedRow) return { deleted: false, missing: true };
+
+    const row = Number(storedRow);
+    if (!Number.isInteger(row) || row < CONFIG.FIRST_DATA_ROW) {
+      throw new Error('Linha armazenada para o lançamento é inválida.');
+    }
+
+    const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = spreadsheet.getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error('A aba "Lançamentos" não foi encontrada.');
+
+    sheet.getRange(row, 1, 1, 11).clearContent();
+    properties.deleteProperty(dedupeKey);
+    SpreadsheetApp.flush();
+    return { deleted: true, missing: false, row };
   } finally {
     lock.releaseLock();
   }

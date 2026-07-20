@@ -172,6 +172,33 @@ const markAsSynced = (id) => {
   localStorage.setItem(SHEET_SYNCED_KEY, JSON.stringify([...next]));
 };
 
+const isMarkedAsSynced = (id) => {
+  const synced = readJson(SHEET_SYNCED_KEY, []);
+  return Array.isArray(synced) && synced.includes(id);
+};
+
+const unmarkAsSynced = (id) => {
+  const synced = readJson(SHEET_SYNCED_KEY, []);
+  const next = Array.isArray(synced)
+    ? synced.filter((item) => item !== id)
+    : [];
+  localStorage.setItem(SHEET_SYNCED_KEY, JSON.stringify(next));
+};
+
+const deleteSyncedExpense = async (id) => {
+  const response = await fetch("/api/gastos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "deleteExpense", expenseId: id }),
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error || `Erro HTTP ${response.status}`);
+  }
+  return result;
+};
+
 const syncExpense = async (entry) => {
   const response = await fetch("/api/gastos", {
     method: "POST",
@@ -211,6 +238,7 @@ export default function Gastos() {
   const [receiptFile, setReceiptFile] = useState(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const receiptInputRef = useRef(null);
@@ -489,12 +517,32 @@ export default function Gastos() {
     }
   };
 
-  const deleteEntry = (id) => {
-    if (!window.confirm("Apagar este lançamento deste aparelho?")) return;
-    setEntries((previous) => previous.filter((entry) => entry.id !== id));
-    setMessage(
-      "Lançamento removido deste aparelho. A exclusão não altera uma linha já enviada à planilha.",
-    );
+  const deleteEntry = async (entry) => {
+    const synced = isMarkedAsSynced(entry.id);
+    const confirmation = synced
+      ? "Apagar este lançamento do site e também da planilha?"
+      : "Apagar este lançamento deste aparelho?";
+    if (!window.confirm(confirmation)) return;
+
+    setDeletingId(entry.id);
+    setMessage("");
+
+    try {
+      if (synced) await deleteSyncedExpense(entry.id);
+      setEntries((previous) => previous.filter((item) => item.id !== entry.id));
+      unmarkAsSynced(entry.id);
+      setMessage(
+        synced
+          ? `Lançamento apagado do site e da planilha: ${entry.description}.`
+          : `Lançamento apagado antes de ser enviado à planilha: ${entry.description}.`,
+      );
+    } catch (error) {
+      setMessage(
+        `Não consegui apagar da planilha. O lançamento foi mantido no site: ${error?.message || String(error)}`,
+      );
+    } finally {
+      setDeletingId("");
+    }
   };
 
   const exportCsv = () => {
@@ -942,11 +990,17 @@ export default function Gastos() {
                       </p>
                     </div>
                     <button
-                      onClick={() => deleteEntry(entry.id)}
-                      className="rounded-full p-2 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
-                      title="Apagar lançamento"
+                      type="button"
+                      onClick={() => deleteEntry(entry)}
+                      disabled={deletingId === entry.id}
+                      className="rounded-full p-2 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors disabled:cursor-wait disabled:opacity-50"
+                      title="Apagar do site e da planilha"
                     >
-                      <Trash2 size={17} />
+                      {deletingId === entry.id ? (
+                        <Loader2 size={17} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={17} />
+                      )}
                     </button>
                   </div>
                 ))

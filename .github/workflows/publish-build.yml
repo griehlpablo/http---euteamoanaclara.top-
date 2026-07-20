@@ -1,0 +1,53 @@
+name: Publicar build na raiz
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'novo-site/**'
+      - '.github/workflows/publish-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-root-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: novo-site/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: novo-site
+        run: npm ci
+
+      - name: Compilar e copiar para a raiz
+        working-directory: novo-site
+        run: npm run build:root
+
+      - name: Salvar build publicado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração de build para publicar."
+            exit 0
+          fi
+          git commit -m "build: atualizar arquivos publicados [skip ci]"
+          git push

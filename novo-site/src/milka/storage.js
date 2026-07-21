@@ -1,9 +1,8 @@
 import { supabase } from "../supabase";
 import { DATA_VERSION, DEFAULT_SCHEDULES, PEOPLE } from "./config";
 
-const STORAGE_BUCKET = "mural";
-const STORAGE_PATH = "milka/data.json";
 const LOCAL_STORAGE_KEY = "milka-data-v4";
+const CLOUD_MARKER = "__MILKA_DATA_V4__:";
 
 export const emptyMilkaData = () => ({
   version: DATA_VERSION,
@@ -42,17 +41,6 @@ export const normalizeMilkaData = (value) => {
   };
 };
 
-const isMissingBucketError = (error) => {
-  const status = Number(error?.statusCode || error?.status || 0);
-  const message = String(error?.message || "").toLowerCase();
-  return (
-    status === 400 ||
-    status === 404 ||
-    message.includes("bucket not found") ||
-    message.includes("not found")
-  );
-};
-
 const readLocalData = () => {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -66,29 +54,47 @@ const writeLocalData = (value) => {
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
   } catch {
-    // O salvamento na nuvem continua sendo tentado mesmo se o navegador bloquear o armazenamento local.
+    // A sincronização na nuvem continua sendo tentada.
   }
+};
+
+const decodeCloudText = (text) => {
+  if (typeof text !== "string" || !text.startsWith(CLOUD_MARKER)) return null;
+  try {
+    return normalizeMilkaData(JSON.parse(text.slice(CLOUD_MARKER.length)));
+  } catch {
+    return null;
+  }
+};
+
+const findCloudRow = async () => {
+  const { data, error } = await supabase
+    .from("bucketlist")
+    .select("id,text,createdAt")
+    .like("text", `${CLOUD_MARKER}%`)
+    .order("createdAt", { ascending: false })
+    .limit(1);
+
+  if (error) throw error;
+  return Array.isArray(data) && data.length ? data[0] : null;
 };
 
 export const readMilkaData = async () => {
   const localData = readLocalData();
 
   try {
-    const { data, error } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .download(STORAGE_PATH);
+    const row = await findCloudRow();
+    const cloudData = decodeCloudText(row?.text);
+    if (!cloudData) return localData;
 
-    if (error) {
-      if (isMissingBucketError(error)) return localData;
-      throw error;
-    }
+    const cloudTime = new Date(cloudData.updatedAt || 0).getTime();
+    const localTime = new Date(localData?.updatedAt || 0).getTime();
+    const newest = localData && localTime > cloudTime ? localData : cloudData;
 
-    const cloudData = normalizeMilkaData(JSON.parse(await data.text()));
-    writeLocalData(cloudData);
-    return cloudData;
+    writeLocalData(newest);
+    return newest;
   } catch (error) {
     if (localData) return localData;
-    if (isMissingBucketError(error)) return null;
     throw error;
   }
 };
@@ -101,23 +107,26 @@ export const writeMilkaData = async (value) => {
   });
   const { needsWrite: _needsWrite, ...next } = normalized;
 
-  // Salva primeiro no aparelho para que cronograma, peso e prontuário nunca
-  // sejam perdidos por uma falha temporária ou ausência do bucket no Supabase.
   writeLocalData(next);
 
-  try {
-    const blob = new Blob([JSON.stringify(next)], { type: "application/json" });
-    const { error } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(STORAGE_PATH, blob, {
-        upsert: true,
-        contentType: "application/json",
-        cacheControl: "0",
-      });
+  const text = `${CLOUD_MARKER}${JSON.stringify(next)}`;
+  const row = await findCloudRow();
 
-    if (error && !isMissingBucketError(error)) throw error;
-  } catch (error) {
-    if (!isMissingBucketError(error)) throw error;
+  if (row?.id) {
+    const { error } = await supabase
+      .from("bucketlist")
+      .update({ text, completed: true })
+      .eq("id", row.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("bucketlist").insert([
+      {
+        text,
+        completed: true,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    if (error) throw error;
   }
 
   return next;

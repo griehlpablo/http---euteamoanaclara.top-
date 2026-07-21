@@ -36,22 +36,8 @@ jobs:
         working-directory: novo-site
         run: npm ci
 
-      - name: Verificar configuração do Supabase
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: |
-          if [ -n "$VITE_SUPABASE_URL" ] && [ -n "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "Supabase configurado para este build."
-          else
-            echo "Aviso: secrets do Supabase ausentes. O site usará a configuração pública de reserva."
-          fi
-
       - name: Compilar e copiar para a raiz
         working-directory: novo-site
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build:root
 
       - name: Salvar build publicado

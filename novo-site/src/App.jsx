@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import OneSignal from 'react-onesignal';
 
 import Navbar from './components/Navbar';
 import HeartRain from './components/HeartRain';
 import ErrorBoundary from './components/ErrorBoundary';
+import SharedStorageSync from './components/SharedStorageSync';
 import Home from './pages/Home';
 import Blog from './pages/Blog';
 import Central from './pages/Central';
@@ -56,6 +57,9 @@ function NotFound() {
 export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [syncVersion, setSyncVersion] = useState(0);
+  const handleSharedRemoteChange = useCallback(() => {
+    setSyncVersion((version) => version + 1);
+  }, []);
 
   useEffect(() => {
     const redirect = sessionStorage.getItem('spaRedirect');
@@ -131,6 +135,7 @@ export default function App() {
   return (
     <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-slate-900 dark:to-slate-950 min-h-screen text-slate-700 dark:text-slate-200 antialiased overflow-x-hidden font-sans relative transition-colors duration-300">
       <HeartRain />
+      <SharedStorageSync onRemoteChange={handleSharedRemoteChange} />
       <Router>
         <Navbar theme={theme} toggleTheme={toggleTheme} />
         <main className="pt-24 pb-12 px-4 max-w-5xl mx-auto relative z-10">

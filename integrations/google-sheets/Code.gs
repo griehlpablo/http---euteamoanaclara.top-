@@ -62,15 +62,18 @@ function appendExpense_(expense) {
     const date = parseLocalDate_(expense.date);
     const month = new Date(date.getFullYear(), date.getMonth(), 1, 12, 0, 0);
     const amount = Number(expense.amount);
+    const type = normalizeType_(expense.type);
+    const sourceAccount = String(expense.sourceAccount || '').trim();
+    const destinationAccount = String(expense.destinationAccount || '').trim();
 
     sheet.getRange(row, 1, 1, 11).setValues([[
       date,
       String(expense.description || '').trim(),
       String(expense.category || '').trim(),
-      'Gasto',
+      type,
       String(expense.person || '').trim(),
-      String(expense.sourceAccount || '').trim(),
-      String(expense.destinationAccount || '').trim(),
+      sourceAccount,
+      destinationAccount,
       String(expense.paymentMethod || '').trim(),
       amount,
       month,
@@ -84,7 +87,7 @@ function appendExpense_(expense) {
     properties.setProperty(dedupeKey, String(row));
     SpreadsheetApp.flush();
 
-    return { duplicate: false, row };
+    return { duplicate: false, row: row };
   } finally {
     lock.releaseLock();
   }
@@ -122,15 +125,22 @@ function listExpenses_() {
     if (!hasContent) return;
 
     const date = formatDateKey_(columns[0]);
+    const type = normalizeType_(columns[3]);
+    const account =
+      type === 'Entrada'
+        ? String(columns[6] || columns[5] || '').trim()
+        : String(columns[5] || columns[6] || '').trim();
+
     entries.push({
       id: idsByRow[row] || 'sheet-row-' + row,
       sheetRow: row,
       synced: true,
+      type: type,
       date: date,
       description: String(columns[1] || '').trim() || 'Lançamento da planilha',
-      category: String(columns[2] || '').trim() || 'Outros/imprevistos',
+      category: String(columns[2] || '').trim() || (type === 'Entrada' ? 'Outras entradas' : 'Outros/imprevistos'),
       person: String(columns[4] || '').trim() || 'Pablo',
-      account: String(columns[5] || '').trim() || 'Outra conta',
+      account: account || 'Outra conta',
       paymentMethod: String(columns[7] || '').trim() || 'Outro',
       amount: Number(columns[8]) || 0,
       notes: String(columns[10] || '').trim(),
@@ -171,7 +181,7 @@ function deleteExpense_(expenseId, requestedRow) {
     if (storedRow) properties.deleteProperty(dedupeKey);
     SpreadsheetApp.flush();
 
-    return { deleted: true, missing: false, row };
+    return { deleted: true, missing: false, row: row };
   } finally {
     lock.releaseLock();
   }
@@ -183,7 +193,9 @@ function findNextEmptyRow_(sheet) {
   const values = sheet
     .getRange(CONFIG.FIRST_DATA_ROW, 1, count, 1)
     .getDisplayValues();
-  const emptyIndex = values.findIndex((row) => !String(row[0] || '').trim());
+  const emptyIndex = values.findIndex(function (row) {
+    return !String(row[0] || '').trim();
+  });
 
   if (emptyIndex >= 0) return CONFIG.FIRST_DATA_ROW + emptyIndex;
 
@@ -241,14 +253,31 @@ function formatDateKey_(value) {
   return '';
 }
 
+function normalizeType_(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized.indexOf('entrada') >= 0 ||
+    normalized.indexOf('receita') >= 0 ||
+    normalized === 'income'
+    ? 'Entrada'
+    : 'Gasto';
+}
+
 function validateExpense_(expense) {
   if (!expense || typeof expense !== 'object') throw new Error('Lançamento ausente.');
   if (!String(expense.id || '').trim()) throw new Error('Identificador do lançamento ausente.');
   if (!String(expense.description || '').trim()) throw new Error('Descrição obrigatória.');
   if (!String(expense.category || '').trim()) throw new Error('Categoria obrigatória.');
-  if (!String(expense.person || '').trim()) throw new Error('Quem pagou é obrigatório.');
-  if (!String(expense.sourceAccount || '').trim()) throw new Error('Conta de saída obrigatória.');
-  if (!String(expense.paymentMethod || '').trim()) throw new Error('Forma de pagamento obrigatória.');
+  if (!String(expense.person || '').trim()) throw new Error('Pessoa obrigatória.');
+  if (!String(expense.paymentMethod || '').trim()) throw new Error('Forma obrigatória.');
+
+  const type = normalizeType_(expense.type);
+  if (type === 'Entrada') {
+    if (!String(expense.destinationAccount || '').trim()) {
+      throw new Error('Conta de entrada obrigatória.');
+    }
+  } else if (!String(expense.sourceAccount || '').trim()) {
+    throw new Error('Conta de saída obrigatória.');
+  }
 
   const amount = Number(expense.amount);
   if (!Number.isFinite(amount) || amount <= 0) throw new Error('Valor inválido.');

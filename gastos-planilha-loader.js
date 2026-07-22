@@ -1,6 +1,15 @@
 (() => {
   const ENTRIES_KEY = 'financas-casal-lancamentos-v1';
   const SYNCED_KEY = 'financas-casal-google-synced-v1';
+  const INCOME_CATEGORIES = new Set([
+    'Salário',
+    'Freelance',
+    'Reembolso',
+    'Venda',
+    'Presente',
+    'Benefício',
+    'Outras entradas',
+  ]);
 
   const readList = (key) => {
     try {
@@ -9,6 +18,19 @@
     } catch {
       return [];
     }
+  };
+
+  const normalizeType = (entry, localEntry) => {
+    const raw = String(entry?.type || localEntry?.type || '').toLocaleLowerCase('pt-BR');
+    if (
+      raw.includes('entrada') ||
+      raw.includes('receita') ||
+      raw === 'income' ||
+      INCOME_CATEGORIES.has(String(entry?.category || localEntry?.category || ''))
+    ) {
+      return 'income';
+    }
+    return 'expense';
   };
 
   const updateFromSheet = async () => {
@@ -22,16 +44,29 @@
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.ok || !Array.isArray(result.entries)) return;
 
+    const localEntries = readList(ENTRIES_KEY);
+    const localById = new Map(
+      localEntries.filter((entry) => entry?.id).map((entry) => [entry.id, entry]),
+    );
     const synced = new Set(readList(SYNCED_KEY));
-    const localOnly = readList(ENTRIES_KEY).filter(
+    const localOnly = localEntries.filter(
       (entry) => entry?.id && !entry.synced && !synced.has(entry.id),
     );
     const merged = new Map();
 
     result.entries.forEach((entry) => {
       if (!entry?.id) return;
+      const localEntry = localById.get(entry.id);
       synced.add(entry.id);
-      merged.set(entry.id, { ...entry, synced: true });
+      merged.set(entry.id, {
+        ...entry,
+        type: normalizeType(entry, localEntry),
+        account:
+          localEntry?.type === 'income' && localEntry?.account
+            ? localEntry.account
+            : entry.account || localEntry?.account || 'Outra conta',
+        synced: true,
+      });
     });
     localOnly.forEach((entry) => {
       if (!merged.has(entry.id)) merged.set(entry.id, entry);

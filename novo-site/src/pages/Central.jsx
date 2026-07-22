@@ -5,6 +5,7 @@ import {
   TrendingUp, GitMerge, Link as LinkIcon, Sparkles,
   SmilePlus, Gift, Activity, Ticket, ListChecks,
   CalendarDays, Gamepad2, HeartPulse, WalletCards, PawPrint,
+  UtensilsCrossed,
 } from 'lucide-react';
 
 const glassClasses = 'bg-white/60 backdrop-blur-lg border border-white/50 shadow-lg';
@@ -15,7 +16,8 @@ const cards = [
   { path: '/quiz', icon: Gamepad2, title: 'Quiz do Casal', desc: 'Perguntas para testar a sintonia.' },
   { path: '/surpresa-diaria', icon: Gift, title: 'Surpresa Diária', desc: 'Uma missão, cupom ou carinho por dia.' },
   { path: '/dieta', icon: HeartPulse, title: 'Plano do Casal', desc: 'Dieta, rotina, treino e água do dia.' },
-  { path: '/gastos', icon: WalletCards, title: 'Gastos do Casal', desc: 'Registre compras e acompanhe o total do mês.' },
+  { path: '/gastos', icon: WalletCards, title: 'Finanças do Casal', desc: 'Registre entradas, gastos e acompanhe o ciclo do dia 5.' },
+  { path: '/cardapio', icon: UtensilsCrossed, title: 'Nosso Cardápio', desc: 'Refeições e compras planejadas até 31 de julho.' },
   { path: '/milka', icon: PawPrint, title: 'Milka Maria', desc: 'Ração, sachê, água, areia, compras e lembretes.' },
   { path: '/galeria', icon: ImageIcon, title: 'Memórias', desc: 'Os nossos melhores momentos.' },
   { path: '/assistente', icon: Sparkles, title: 'Cupido Virtual ✨', desc: 'Conselhos e ideias para o casal.' },

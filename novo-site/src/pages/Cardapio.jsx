@@ -22,8 +22,8 @@ const DAYS = [
       {
         id: "22-almoco",
         name: "Almoço",
-        text: "Bifes acebolados, arroz, feijão e brócolis.",
-        detail: "Usar 1 pacote de bifes e metade de uma cabeça de brócolis.",
+        text: "Bife acebolado ao molho de mel, shoyu e gengibre, com arroz.",
+        detail: "Feito com 1 pacote de bifes; sem feijão e sem brócolis.",
       },
       {
         id: "22-jantar",
@@ -32,7 +32,7 @@ const DAYS = [
         detail: "Omelete simples com 2 ovos; aproveitar pepino ou repolho.",
       },
     ],
-    note: "Separar o feijão que não será usado e congelar.",
+    note: "Almoço preparado diferente do planejado: só arroz e carne ao molho.",
   },
   {
     date: "2026-07-23",

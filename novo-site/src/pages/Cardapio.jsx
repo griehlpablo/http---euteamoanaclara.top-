@@ -12,118 +12,209 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const STORAGE_KEY = "cardapio-22-31-julho-2026-v1";
+const STORAGE_KEY = "cardapio-final-22-31-julho-2026-v2";
 
 const DAYS = [
   {
     date: "2026-07-22",
     label: "22/07 · quarta-feira",
     meals: [
-      { id: "22-almoco", name: "Almoço", text: "1 pacote de bifes acebolados, arroz e 1 cabeça de brócolis." },
-      { id: "22-jantar", name: "Jantar", text: "Tapioca com 2 ovos mexidos e salada de pepino." },
+      {
+        id: "22-almoco",
+        name: "Almoço",
+        text: "Bifes acebolados, arroz, feijão e brócolis.",
+        detail: "Usar 1 pacote de bifes e metade de uma cabeça de brócolis.",
+      },
+      {
+        id: "22-jantar",
+        name: "Jantar",
+        text: "Omelete com arroz e salada.",
+        detail: "Omelete simples com 2 ovos; aproveitar pepino ou repolho.",
+      },
     ],
-    prep: "Descongele apenas o pacote de bifes. Use o pepino e o brócolis primeiro.",
+    note: "Separar o feijão que não será usado e congelar.",
   },
   {
     date: "2026-07-23",
     label: "23/07 · quinta-feira",
     meals: [
-      { id: "23-almoco", name: "Almoço", text: "Sassami ensopado, aproximadamente 500 g, com 4 batatas, cenoura, cebola e repolho." },
-      { id: "23-jantar", name: "Jantar", text: "Repetir o ensopado com arroz." },
+      {
+        id: "23-almoco",
+        name: "Almoço",
+        text: "Sassami grelhado com alho, arroz e pepino.",
+        detail: "Retirar apenas os filés necessários do pacote congelado.",
+      },
+      {
+        id: "23-jantar",
+        name: "Jantar",
+        text: "Sassami acebolado, arroz e repolho refogado.",
+        detail: "Dourar o frango; não fazer ensopado.",
+      },
     ],
-    prep: "Retire do pacote somente os sassamis necessários; não descongele o pacote inteiro.",
+    note: "Usar aproximadamente metade do pacote de sassami no total do dia.",
   },
   {
     date: "2026-07-24",
     label: "24/07 · sexta-feira",
     meals: [
-      { id: "24-almoco", name: "Almoço", text: "Arroz, feijão, atum e salada de repolho com pepino." },
-      { id: "24-jantar", name: "Jantar", text: "Omelete de 2 ovos com repolho refogado." },
+      {
+        id: "24-almoco",
+        name: "Almoço",
+        text: "2 ossobucos cozidos, arroz, feijão e cenoura.",
+        detail: "Cozinhar lentamente com alho e cebola para formar bastante caldo.",
+      },
+      {
+        id: "24-jantar",
+        name: "Jantar",
+        text: "Arroz de panela com carne desfiada.",
+        detail: "Aproveitar a carne e o caldo do almoço com um pouco de repolho.",
+      },
     ],
-    prep: "Deixe 1 ossobuco descongelando na geladeira para o jantar especial do dia seguinte.",
+    note: "Guardar 1 ossobuco para o aniversário e 1 para o dia 29.",
   },
   {
     date: "2026-07-25",
-    label: "25/07 · sábado · aniversário",
+    label: "25/07 · sábado · aniversário do Pablo",
     special: true,
     meals: [
-      { id: "25-almoco", name: "Almoço", text: "1 pacote de bifes acebolados, arroz e cenoura ou repolho." },
-      { id: "25-jantar", name: "Jantar", text: "Risoto de funghi com 1 ossobuco cozido, desfiado e incorporado ao risoto." },
+      {
+        id: "25-almoco",
+        name: "Almoço",
+        text: "Almoço leve com sobras ou arroz com ovo.",
+        detail: "Poupar apetite e ingredientes para o jantar especial.",
+      },
+      {
+        id: "25-jantar",
+        name: "Jantar",
+        text: "Risoto de funghi com ossobuco desfiado.",
+        detail: "Usar 1 ossobuco. Finalizar o risoto com manteiga e parmesão.",
+      },
     ],
-    prep: "Cozinhe o ossobuco até ficar macio. Hidrate o funghi, use a água coada no caldo e finalize o risoto com parmesão.",
+    note: "O vinho de casa só entra no risoto se for branco e seco.",
   },
   {
     date: "2026-07-26",
     label: "26/07 · domingo",
     meals: [
-      { id: "26-almoco", name: "Almoço", text: "Creme de batatas com costela desfiada." },
-      { id: "26-jantar", name: "Jantar", text: "Repetir o creme de batatas com costela desfiada; acompanhar com arroz, se necessário." },
+      {
+        id: "26-almoco",
+        name: "Almoço",
+        text: "Creme de batata com costela desfiada.",
+        detail: "Usar 8 batatas pequenas. Amassar com caldo da costela e leite ou creme.",
+      },
+      {
+        id: "26-jantar",
+        name: "Jantar",
+        text: "Repetir o creme com costela.",
+        detail: "Preparar quantidade suficiente para as duas refeições.",
+      },
     ],
-    prep: "Cozinhe a costela até desmanchar. Cozinhe 5 batatas no caldo, amasse, ajuste com o caldo e misture a costela desfiada.",
+    note: "Não usar batatas em outros pratos antes deste dia.",
   },
   {
     date: "2026-07-27",
     label: "27/07 · segunda-feira",
     meals: [
-      { id: "27-almoco", name: "Almoço", text: "2 fígados acebolados, arroz, feijão e repolho." },
-      { id: "27-jantar", name: "Jantar", text: "Tapioca com banana ou uma pequena sobra do almoço." },
+      {
+        id: "27-almoco",
+        name: "Almoço",
+        text: "Fígado acebolado, arroz, feijão e repolho.",
+        detail: "Usar os 2 fígados e bastante cebola.",
+      },
+      {
+        id: "27-jantar",
+        name: "Jantar",
+        text: "Arroz com atum e salada de pepino.",
+        detail: "Usar a lata de atum e o pepino restante.",
+      },
     ],
-    prep: "Descongele o fígado na geladeira e prepare apenas na hora da refeição.",
+    note: "Consumir primeiro os legumes já cortados ou mais maduros.",
   },
   {
     date: "2026-07-28",
     label: "28/07 · terça-feira",
     meals: [
-      { id: "28-almoco", name: "Almoço", text: "Sassami com shoyu, aproximadamente 500 g, brócolis, cenoura e arroz." },
-      { id: "28-jantar", name: "Jantar", text: "Repetir o sassami com arroz." },
+      {
+        id: "28-almoco",
+        name: "Almoço",
+        text: "Sassami dourado com shoyu, arroz e brócolis.",
+        detail: "Usar o restante do sassami e da segunda cabeça de brócolis.",
+      },
+      {
+        id: "28-jantar",
+        name: "Jantar",
+        text: "Sobras do sassami com arroz e salada.",
+        detail: "Reaquecer rapidamente para não ressecar.",
+      },
     ],
-    prep: "Retire somente os sassamis necessários do pacote ainda congelado.",
+    note: "O shoyu já salga: provar antes de acrescentar sal.",
   },
   {
     date: "2026-07-29",
     label: "29/07 · quarta-feira",
     meals: [
-      { id: "29-almoco", name: "Almoço", text: "2 ossobucos cozidos com as 2 batatas restantes, arroz e repolho." },
-      { id: "29-jantar", name: "Jantar", text: "Caldo do ossobuco com arroz e carne desfiada." },
+      {
+        id: "29-almoco",
+        name: "Almoço",
+        text: "Ossobuco com 3 batatas, arroz e cenoura.",
+        detail: "Usar o último ossobuco e todas as batatas restantes.",
+      },
+      {
+        id: "29-jantar",
+        name: "Jantar",
+        text: "Carne desfiada com arroz e caldo.",
+        detail: "Aproveitar completamente o caldo do cozimento.",
+      },
     ],
-    prep: "Descongele os 2 ossobucos na geladeira na noite anterior. O quarto ossobuco fica como reserva.",
+    note: "As batatas já estarão totalmente utilizadas depois desta refeição.",
   },
   {
     date: "2026-07-30",
     label: "30/07 · quinta-feira",
     meals: [
-      { id: "30-almoco", name: "Almoço", text: "Carne moída com bastante repolho, cenoura e arroz." },
-      { id: "30-jantar", name: "Jantar", text: "Tapioca com 2 ovos mexidos." },
+      {
+        id: "30-almoco",
+        name: "Almoço",
+        text: "Carne moída com repolho e cenoura, acompanhada de arroz.",
+        detail: "Os 250 g rendem mais quando misturados aos legumes.",
+      },
+      {
+        id: "30-jantar",
+        name: "Jantar",
+        text: "Omelete com arroz.",
+        detail: "Usar 2 ou 3 ovos, conforme a quantidade restante.",
+      },
     ],
-    prep: "Use bastante repolho para os 250 g de carne moída renderem para os dois.",
+    note: "Pode transformar as sobras do almoço em mexidão.",
   },
   {
     date: "2026-07-31",
     label: "31/07 · sexta-feira",
     meals: [
-      { id: "31-almoco", name: "Almoço", text: "1 pacote de bifes acebolados, arroz e os legumes restantes." },
-      { id: "31-jantar", name: "Jantar", text: "Sobras do almoço; se faltar, arroz com ovo ou tapioca." },
+      {
+        id: "31-almoco",
+        name: "Almoço",
+        text: "Bifes acebolados, arroz e legumes restantes.",
+        detail: "Usar 1 pacote de bifes. Os demais ficam como reserva.",
+      },
+      {
+        id: "31-jantar",
+        name: "Jantar",
+        text: "Noite de aproveitar as sobras.",
+        detail: "Montar os pratos com o que restar antes de abrir novos alimentos.",
+      },
     ],
-    prep: "Mantenha 1 pacote de bifes e 1 ossobuco como reserva até confirmar que não serão necessários antes.",
+    note: "Depois do pagamento, conferir o que sobrou antes da próxima compra.",
   },
 ];
 
-const RISOTTO_SHOPPING = [
-  { id: "buy-arroz", text: "300 g de arroz arbóreo ou carnaroli." },
-  { id: "buy-funghi", text: "30 a 50 g de funghi secchi." },
-  { id: "buy-parmesao", text: "100 g de queijo parmesão para ralar." },
-  { id: "buy-manteiga", text: "Manteiga, caso não tenham em casa." },
-  { id: "buy-caldo", text: "Caldo de legumes ou carne para cerca de 1 litro." },
-  { id: "buy-vinho", text: "Vinho branco seco pequeno, somente se o vinho de casa não for branco e seco." },
-];
-
-const SNACKS = [
-  { id: "snack-tapioca", text: "Tapioca pequena com banana amassada." },
-  { id: "snack-iogurte", text: "Iogurte natural dividido com banana ou manga." },
-  { id: "snack-fruta", text: "Maçã, manga ou banana como lanche." },
-  { id: "snack-abacate", text: "Abacate temperado com sal ou usado na tapioca." },
-  { id: "snack-sobras", text: "Usar sobras pequenas de frango ou carne como recheio." },
-  { id: "snack-reserva", text: "Reserva prevista: 1 pacote de bifes, 1 ossobuco e 3 ovos." },
+const SHOPPING = [
+  { id: "buy-funghi", text: "30 a 40 g de funghi seco." },
+  { id: "buy-arroz", text: "250 g de arroz arbóreo ou carnaroli." },
+  { id: "buy-parmesao", text: "80 a 100 g de parmesão." },
+  { id: "buy-manteiga", text: "1 pacote pequeno de manteiga." },
+  { id: "buy-vinho", text: "Vinho branco seco, caso o atual não seja branco e seco." },
+  { id: "buy-leite", text: "Leite ou 1 caixa de creme de leite." },
 ];
 
 const readChecks = () => {
@@ -146,15 +237,13 @@ export default function Cardapio() {
   const today = localToday();
 
   const allItems = useMemo(
-    () => [
-      ...DAYS.flatMap((day) => day.meals),
-      ...RISOTTO_SHOPPING,
-      ...SNACKS,
-    ],
+    () => [...DAYS.flatMap((day) => day.meals), ...SHOPPING],
     [],
   );
   const completed = allItems.filter((item) => checks[item.id]).length;
-  const progress = allItems.length ? Math.round((completed / allItems.length) * 100) : 0;
+  const progress = allItems.length
+    ? Math.round((completed / allItems.length) * 100)
+    : 0;
 
   const toggle = (id) => {
     setChecks((previous) => {
@@ -178,11 +267,15 @@ export default function Cardapio() {
           <ArrowLeft size={22} />
         </Link>
         <div className="text-right">
+          <p className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] text-emerald-800/70 dark:text-emerald-300/70">
+            Pablo & Ana · planejamento de refeições
+          </p>
           <h1 className="flex items-center justify-end gap-2 font-serif text-3xl font-bold text-slate-800 dark:text-slate-100 sm:text-4xl">
-            Nosso Cardápio <UtensilsCrossed className="text-emerald-700" />
+            Cardápio até o pagamento
+            <UtensilsCrossed className="text-emerald-700" />
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            22 a 31 de julho · para duas pessoas
+            De 22 a 31 de julho · para duas pessoas
           </p>
         </div>
       </div>
@@ -195,10 +288,10 @@ export default function Cardapio() {
             </div>
             <div>
               <h2 className="font-serif text-2xl font-bold text-slate-800 dark:text-slate-100">
-                Planejamento até o dia 31
+                Marquem cada refeição depois de comer
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Marque cada refeição, compra ou opção de lanche conforme usar.
+                Marquem também os itens comprados para o aniversário e a costela.
               </p>
             </div>
           </div>
@@ -227,14 +320,20 @@ export default function Cardapio() {
             key={day.date}
             className={`rounded-[2rem] border p-5 shadow-lg backdrop-blur-xl ${
               day.special
-                ? "border-rose-300 bg-rose-50/85 dark:border-rose-800 dark:bg-rose-950/30"
+                ? "border-orange-300 bg-orange-50/85 dark:border-orange-800 dark:bg-orange-950/30"
                 : day.date === today
                   ? "border-emerald-400 bg-emerald-50/90 dark:border-emerald-700 dark:bg-emerald-950/30"
                   : "border-white/70 bg-white/70 dark:border-slate-700 dark:bg-slate-800/70"
             }`}
           >
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className={`font-serif text-xl font-bold ${day.special ? "text-rose-700 dark:text-rose-300" : "text-emerald-800 dark:text-emerald-300"}`}>
+              <h2
+                className={`font-serif text-xl font-bold ${
+                  day.special
+                    ? "text-orange-800 dark:text-orange-300"
+                    : "text-emerald-800 dark:text-emerald-300"
+                }`}
+              >
                 {day.label}
               </h2>
               {day.date === today && (
@@ -251,33 +350,34 @@ export default function Cardapio() {
                   onClick={() => toggle(meal.id)}
                   title={meal.name}
                   text={meal.text}
+                  detail={meal.detail}
                 />
               ))}
             </div>
-            <div className="mt-4 rounded-2xl bg-amber-50/80 px-4 py-3 text-xs leading-relaxed text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-              <strong>Preparo:</strong> {day.prep}
+            <div className="mt-4 rounded-2xl bg-stone-100/90 px-4 py-3 text-xs leading-relaxed text-stone-700 dark:bg-slate-950/35 dark:text-slate-300">
+              {day.note}
             </div>
           </article>
         ))}
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
-        <section className="rounded-[2rem] border border-rose-100 bg-rose-50/80 p-5 shadow-xl dark:border-rose-900/50 dark:bg-rose-950/25">
+        <section className="rounded-[2rem] border border-orange-200 bg-orange-50/85 p-5 shadow-xl dark:border-orange-900/50 dark:bg-orange-950/25">
           <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-2xl bg-white p-3 text-rose-600 shadow-sm dark:bg-slate-900">
+            <div className="rounded-2xl bg-white p-3 text-orange-700 shadow-sm dark:bg-slate-900">
               <ShoppingCart />
             </div>
             <div>
-              <h2 className="font-serif text-2xl font-bold text-rose-800 dark:text-rose-300">
-                Compras para o risoto · 25/07
+              <h2 className="font-serif text-2xl font-bold text-orange-900 dark:text-orange-300">
+                Compras para o aniversário e a costela
               </h2>
-              <p className="text-xs text-rose-700/70 dark:text-rose-300/70">
-                Já há cebola, alho e 1 ossobuco em casa.
+              <p className="text-xs text-orange-800/70 dark:text-orange-300/70">
+                Marque cada item depois de comprar.
               </p>
             </div>
           </div>
           <div className="space-y-3">
-            {RISOTTO_SHOPPING.map((item) => (
+            {SHOPPING.map((item) => (
               <CheckRow
                 key={item.id}
                 checked={Boolean(checks[item.id])}
@@ -295,34 +395,45 @@ export default function Cardapio() {
             </div>
             <div>
               <h2 className="font-serif text-2xl font-bold text-emerald-800 dark:text-emerald-300">
-                Café, lanches e reserva
+                Controle das 11 batatas
               </h2>
               <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
-                Consuma as frutas conforme amadurecerem.
+                As 3 batatas restantes ficam reservadas para o ossobuco do dia 29.
               </p>
             </div>
           </div>
-          <div className="space-y-3">
-            {SNACKS.map((item) => (
-              <CheckRow
-                key={item.id}
-                checked={Boolean(checks[item.id])}
-                onClick={() => toggle(item.id)}
-                text={item.text}
+
+          <div className="mb-4 flex flex-wrap gap-2" aria-label="Onze batatas planejadas">
+            {Array.from({ length: 11 }, (_, index) => (
+              <span
+                key={index}
+                className={`h-8 w-8 rounded-[45%] border-2 ${
+                  index < 8
+                    ? "border-orange-300 bg-orange-200 dark:border-orange-700 dark:bg-orange-900/60"
+                    : "border-dashed border-emerald-400 bg-white/60 dark:bg-slate-900/50"
+                }`}
+                title={index < 8 ? "Creme com costela" : "Ossobuco do dia 29"}
               />
             ))}
           </div>
+
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+            8 para o creme com costela · 3 para o ossobuco do dia 29
+          </p>
+          <p className="mt-4 rounded-2xl bg-white/70 px-4 py-3 text-sm leading-relaxed text-slate-600 dark:bg-slate-900/40 dark:text-slate-300">
+            <strong>Café e lanches:</strong> frutas, iogurte e tapioca com banana ou com alguma carne desfiada. A tapioca não precisa entrar como jantar e não será combinada com ovo.
+          </p>
         </section>
       </div>
 
       <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">
-        Planejado para aproveitar primeiro os alimentos mais perecíveis e manter uma pequena reserva para imprevistos.
+        Planejado com o que já há em casa.
       </p>
     </motion.div>
   );
 }
 
-function CheckRow({ checked, onClick, title = "", text }) {
+function CheckRow({ checked, onClick, title = "", text, detail = "" }) {
   return (
     <button
       type="button"
@@ -334,13 +445,25 @@ function CheckRow({ checked, onClick, title = "", text }) {
       }`}
     >
       {checked ? (
-        <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} />
+        <CheckCircle2
+          className="mt-0.5 shrink-0 text-emerald-600"
+          size={20}
+        />
       ) : (
         <Circle className="mt-0.5 shrink-0 text-slate-300" size={20} />
       )}
       <span className={checked ? "line-through opacity-75" : ""}>
-        {title && <strong className="mr-1 uppercase">{title}:</strong>}
-        {text}
+        {title && (
+          <strong className="mr-1 block text-xs uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
+            {title}
+          </strong>
+        )}
+        <span className="font-semibold">{text}</span>
+        {detail && (
+          <span className="mt-1 block text-xs font-normal leading-relaxed text-slate-500 dark:text-slate-400">
+            {detail}
+          </span>
+        )}
       </span>
     </button>
   );

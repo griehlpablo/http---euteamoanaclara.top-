@@ -1,11 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/calendarios/brasil-volei-feminino.ics",
-      "destination": "/api/brasil-volei-feminino"
-    }
-  ],
   "crons": [
     {
       "path": "/api/milka-reminders",

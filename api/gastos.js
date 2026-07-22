@@ -15,15 +15,29 @@ const json = (data, status = 200) =>
     },
   });
 
-const isValidExpense = (expense) => {
-  if (!expense || typeof expense !== "object") return false;
-  if (!String(expense.id || "").trim()) return false;
-  if (!String(expense.description || "").trim()) return false;
-  if (!String(expense.category || "").trim()) return false;
-  if (!String(expense.person || "").trim()) return false;
-  if (!String(expense.sourceAccount || "").trim()) return false;
-  if (!String(expense.paymentMethod || "").trim()) return false;
-  const amount = Number(expense.amount);
+const normalizeType = (value) => {
+  const normalized = String(value || "").trim().toLocaleLowerCase("pt-BR");
+  return normalized.includes("entrada") ||
+    normalized.includes("receita") ||
+    normalized === "income"
+    ? "Entrada"
+    : "Gasto";
+};
+
+const isValidEntry = (entry) => {
+  if (!entry || typeof entry !== "object") return false;
+  if (!String(entry.id || "").trim()) return false;
+  if (!String(entry.description || "").trim()) return false;
+  if (!String(entry.category || "").trim()) return false;
+  if (!String(entry.person || "").trim()) return false;
+  if (!String(entry.paymentMethod || "").trim()) return false;
+
+  const type = normalizeType(entry.type);
+  const account =
+    type === "Entrada" ? entry.destinationAccount : entry.sourceAccount;
+  if (!String(account || "").trim()) return false;
+
+  const amount = Number(entry.amount);
   return Number.isFinite(amount) && amount > 0;
 };
 
@@ -74,7 +88,7 @@ export default {
 
     const action = body?.action;
     const validAppend =
-      action === "appendExpense" && isValidExpense(body?.expense);
+      action === "appendExpense" && isValidEntry(body?.expense);
     const validDelete =
       action === "deleteExpense" &&
       Boolean(String(body?.expenseId || "").trim());
@@ -86,11 +100,18 @@ export default {
 
     const expenseId = String(body?.expenseId || "").trim();
     const legacyRowMatch = /^sheet-row-(\d+)$/.exec(expenseId);
+    const normalizedExpense = validAppend
+      ? {
+          ...body.expense,
+          type: normalizeType(body.expense.type),
+        }
+      : null;
+
     const upstreamPayload = {
       action,
       token,
       ...(validAppend
-        ? { expense: body.expense }
+        ? { expense: normalizedExpense }
         : validDelete
           ? {
               expenseId,

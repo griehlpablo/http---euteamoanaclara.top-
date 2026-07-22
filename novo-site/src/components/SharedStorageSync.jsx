@@ -135,6 +135,7 @@ const applyEntriesRaw = (stateValue, rawEntries, clientId, changedAt, initial) =
   const state = normalizeEntriesState(clone(stateValue));
   const list = Array.isArray(rawEntries) ? rawEntries : [];
   const incomingIds = new Set();
+  let stateChanged = false;
 
   for (const entry of list) {
     if (!entry?.id) continue;
@@ -149,9 +150,13 @@ const applyEntriesRaw = (stateValue, rawEntries, clientId, changedAt, initial) =
         updatedAt: initial && !previous ? fallbackTime : changedAt,
         source: clientId,
       };
+      stateChanged = true;
     }
     const entryTime = timestampOf(state.entries[id]?.updatedAt);
-    if (timestampOf(state.deleted[id]) <= entryTime) delete state.deleted[id];
+    if (timestampOf(state.deleted[id]) <= entryTime && id in state.deleted) {
+      delete state.deleted[id];
+      stateChanged = true;
+    }
   }
 
   if (!initial) {
@@ -159,10 +164,13 @@ const applyEntriesRaw = (stateValue, rawEntries, clientId, changedAt, initial) =
       if (incomingIds.has(id)) continue;
       state.deleted[id] = changedAt;
       delete state.entries[id];
+      stateChanged = true;
     }
   }
 
-  state.updatedAt = Math.max(timestampOf(state.updatedAt), changedAt);
+  if (stateChanged) {
+    state.updatedAt = Math.max(timestampOf(state.updatedAt), changedAt);
+  }
   return state;
 };
 
@@ -220,6 +228,7 @@ const applyChecksRaw = (stateValue, rawChecks, clientId, changedAt, initial) => 
   const state = normalizeChecksState(clone(stateValue));
   const values = rawChecks && typeof rawChecks === "object" ? rawChecks : {};
   const keys = new Set([...Object.keys(state.values), ...Object.keys(values)]);
+  let stateChanged = false;
 
   for (const key of keys) {
     const nextValue = Boolean(values[key]);
@@ -231,11 +240,14 @@ const applyChecksRaw = (stateValue, rawChecks, clientId, changedAt, initial) => 
           ? changedAt
           : timestampOf(state.stamps[key])
         : changedAt;
+      if (!initial || nextValue) stateChanged = true;
     }
   }
 
-  state.source = clientId;
-  state.updatedAt = Math.max(timestampOf(state.updatedAt), changedAt);
+  if (stateChanged) {
+    state.source = clientId;
+    state.updatedAt = Math.max(timestampOf(state.updatedAt), changedAt);
+  }
   return state;
 };
 
@@ -295,7 +307,8 @@ export default function SharedStorageSync({ onRemoteChange }) {
     const runtimes = CONFIGS.map((config) => ({
       config,
       state: null,
-      lastRaw: localStorage.getItem(config.storageKey) || JSON.stringify(config.fallback),
+      lastRaw:
+        localStorage.getItem(config.storageKey) || JSON.stringify(config.fallback),
       writing: Promise.resolve(),
     }));
 
@@ -352,7 +365,10 @@ export default function SharedStorageSync({ onRemoteChange }) {
             now,
             true,
           );
-          merged = mergeEntriesStates(localState, cloudState || emptyEntriesState());
+          merged = mergeEntriesStates(
+            localState,
+            cloudState || emptyEntriesState(),
+          );
           markRemoteExpensesAsSynced(cloudState, clientId);
         } else {
           localState = applyChecksRaw(
@@ -362,14 +378,20 @@ export default function SharedStorageSync({ onRemoteChange }) {
             now,
             true,
           );
-          merged = mergeChecksStates(localState, cloudState || emptyChecksState());
+          merged = mergeChecksStates(
+            localState,
+            cloudState || emptyChecksState(),
+          );
         }
 
         const localChanged = persistLocal(runtime, merged, !initial);
         if (!cloudState || !same(merged, cloudState)) queueWrite(runtime);
         else if (localChanged && initial) notify(runtime.config);
       } catch (error) {
-        console.warn(`Falha ao carregar ${runtime.config.name} compartilhado:`, error);
+        console.warn(
+          `Falha ao carregar ${runtime.config.name} compartilhado:`,
+          error,
+        );
       }
     };
 
@@ -400,6 +422,12 @@ export default function SharedStorageSync({ onRemoteChange }) {
       runtimes.forEach((runtime) => loadRemote(runtime, false));
     }, 5000);
 
+    const refreshVisibleData = () => {
+      if (document.visibilityState !== "visible") return;
+      runtimes.forEach((runtime) => loadRemote(runtime, false));
+    };
+    document.addEventListener("visibilitychange", refreshVisibleData);
+
     const channel = supabase
       .channel(`shared-storage-${clientId}`)
       .on(
@@ -419,6 +447,7 @@ export default function SharedStorageSync({ onRemoteChange }) {
       window.clearInterval(localInterval);
       window.clearInterval(remoteInterval);
       window.clearTimeout(cloudTimer);
+      document.removeEventListener("visibilitychange", refreshVisibleData);
       supabase.removeChannel(channel);
     };
   }, [onRemoteChange]);

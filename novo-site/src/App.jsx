@@ -25,7 +25,8 @@ import LinhaDoTempo from './pages/LinhaDoTempo';
 import QuizCasal from './pages/QuizCasal';
 import SurpresaDiaria from './pages/SurpresaDiaria';
 import Dieta from './pages/Dieta';
-import Gastos from './pages/Gastos';
+import Gastos from './pages/GastosV2';
+import Cardapio from './pages/Cardapio';
 import MilkaMaria from './pages/MilkaMaria';
 import { supabase, isSupabaseConfigured } from './supabase';
 
@@ -166,6 +167,14 @@ export default function App() {
               element={
                 <ErrorBoundary>
                   <Gastos />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/cardapio"
+              element={
+                <ErrorBoundary>
+                  <Cardapio />
                 </ErrorBoundary>
               }
             />

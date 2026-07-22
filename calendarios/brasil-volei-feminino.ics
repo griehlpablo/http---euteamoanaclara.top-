@@ -1,0 +1,31 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//euteamoanaclara.top//Brasil Volei Feminino Atualizado//PT-BR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:🇧🇷 Vôlei feminino do Brasil
+X-WR-CALDESC:Jogos da Seleção Brasileira feminina de vôlei atualizados automaticamente.
+X-WR-TIMEZONE:America/Sao_Paulo
+REFRESH-INTERVAL;VALUE=DURATION:PT15M
+X-PUBLISHED-TTL:PT15M
+BEGIN:VEVENT
+UID:vnl2026-bra-jpn-qf-20260722@euteamoanaclara.top
+DTSTAMP:20260722T110000Z
+LAST-MODIFIED:20260722T110000Z
+SEQUENCE:1
+DTSTART:20260722T113000Z
+DTEND:20260722T140000Z
+SUMMARY:🏐 Brasil x Japão — Quartas de final da VNL Feminina
+LOCATION:Macau East Asian Games Dome\, Macau\, China
+DESCRIPTION:Quartas de final da VNL Feminina 2026. Jogo único valendo vaga na semifinal. Horário de Brasília: 8h30. Fonte: Volleyball World / CBV.
+URL:https://br.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/
+CATEGORIES:Vôlei,VNL,Brasil,Ana Clara
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Daqui a 1 hora tem Brasil x Japão pelas quartas da VNL 🇧🇷🏐
+END:VALARM
+END:VEVENT
+END:VCALENDAR
